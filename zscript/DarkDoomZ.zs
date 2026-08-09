@@ -42,6 +42,35 @@ class DarkDoomZ_Handler : EventHandler {
 		}
 	}
 
+	// [GITD] REASSERT EVERY TIC.
+	//
+	// ChangeLighting only wrote sector light when one of ITS OWN settings
+	// changed. Anything that wrote a light level afterwards therefore won
+	// permanently -- and Doom's Lighting thinkers (blink, flicker, glow,
+	// strobe) do exactly that, every tic, in the handful of sectors a mapper
+	// marked. Those sectors climbed back to full brightness and stayed there
+	// while everything around them stayed dark, which is why it was PARTICULAR
+	// walls rather than all of them.
+	//
+	// Re-applying costs one pass of integer arithmetic over the sector list at
+	// 35Hz. Fog is deliberately NOT reapplied here -- SetFogDensity is the
+	// expensive part and nothing else competes for it, so it stays on the
+	// settings-changed path.
+	override void WorldTick() {
+		// Toggling Sector Effects off used to need a map reload, because the
+		// thinkers were only destroyed in WorldLoaded. Do it here and it takes
+		// effect at once. Turning it back ON still needs a reload -- a
+		// destroyed thinker cannot be un-destroyed, and that is worth saying
+		// out loud rather than pretending the toggle is symmetric.
+		if (!ddz_lighting) {
+			ThinkerIterator it = ThinkerIterator.Create("Lighting");
+			Lighting effect;
+			while (effect = Lighting(it.Next())) { effect.Destroy(); }
+		}
+
+		ApplyLightLevels();
+	}
+
 	override void PlayerEntered(PlayerEvent e) {
 		PlayerInfo player = players[e.PlayerNumber];
 		let FlashlightClass = (class<Inventory>)(Actor.GetReplacement("DarkDoomZ_Flashlight"));
@@ -78,6 +107,31 @@ class DarkDoomZ_Handler : EventHandler {
 			OldMinLight != MinLight);
 
 		if (changed) {
+			ApplyLightLevels();
+			ApplyFog();
+		}
+		OldMode = Mode;
+		OldPreset = Preset;
+		OldPreGain = PreGain;
+		OldPostGain = PostGain;
+		OldSkyMode = SkyMode;
+		OldFogDensity = FogDensity;
+		OldMinLight = MinLight;
+	}
+
+	// Fog only moves when a setting moves, so it stays off the per-tic path.
+	void ApplyFog() {
+		for(int i = 0; i < BaseLightLevels.Size(); i++) {
+			bool sky = (level.Sectors[i].GetTexture(0) == skyflatnum ||
+						level.Sectors[i].GetTexture(1) == skyflatnum);
+			double d = FogDensity;
+			if (sky) { d *= SkyMode; }
+			level.Sectors[i].SetFogDensity(int(d));
+		}
+	}
+
+	void ApplyLightLevels() {
+		{
 			BaseAdjustment = 32 * Preset;
 			for(int i = 0; i < BaseLightLevels.Size(); i++) {
 				int BaseLightLevel = BaseLightLevels[i];
@@ -120,19 +174,8 @@ class DarkDoomZ_Handler : EventHandler {
 
 				Level.Sectors[i].Lightlevel = max(Level.Sectors[i].Lightlevel, MinLight);
 				Level.Sectors[i].Lightlevel += PostGain;
-
-				double FinalFogDensity = FogDensity;
-				if(IsSky) { FinalFogDensity *= SkyMode; }
-				level.Sectors[i].SetFogDensity(int(FinalFogDensity));
 			}
 		}
-		OldMode = Mode;
-		OldPreset = Preset;
-		OldPreGain = PreGain;
-		OldPostGain = PostGain;
-		OldSkyMode = SkyMode;
-		OldFogDensity = FogDensity;
-		OldMinLight = MinLight;
 	}
 }
 
