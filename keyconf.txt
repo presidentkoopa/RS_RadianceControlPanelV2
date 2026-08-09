@@ -1,4 +1,4 @@
 addkeysection "Glow In The Dark" "glowinthedark"
 addmenukey "Toggle Flashlight" ddz_toggleflashlight
-alias ddz_toggleflashlight "use DarkDoomZ_Flashlight"
+alias ddz_toggleflashlight "toggle fl_enabled"
 defaultbind "f" ddz_toggleflashlight

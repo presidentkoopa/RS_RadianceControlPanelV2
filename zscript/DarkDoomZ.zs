@@ -36,10 +36,10 @@ class DarkDoomZ_Handler : EventHandler {
 
 		ChangeLighting();
 
-		if(e.isReopen) {
-			let iterator = ThinkerIterator.Create("DarkDoomZ_Spotlight");
-			for (Thinker mo; (mo = iterator.Next());) { mo.Destroy(); }
-		}
+		// Always, not just on reopen -- a save made before the second
+		// flashlight was removed still has its lights in it.
+		let iterator = ThinkerIterator.Create("DarkDoomZ_Spotlight");
+		for (Thinker mo; (mo = iterator.Next());) { mo.Destroy(); }
 	}
 
 	// [GITD] REASSERT EVERY TIC.
@@ -112,10 +112,21 @@ class DarkDoomZ_Handler : EventHandler {
 		}
 	}
 
+	// [GITD] THE SECOND FLASHLIGHT IS GONE.
+	//
+	// DarkDoomZ shipped its own CustomInventory torch driving two
+	// DynamicLights, and GITD_Flashlight already does everything it did and
+	// more -- GITD_FlashlightSpot for surface light, GITD_FlashlightBounce for
+	// the spill, and Level.SetVolumetricBeam for the cone you can actually
+	// see in the air. Both ran at once, on separate menu pages, so setting
+	// "Position" on one and "Mounted on" the other configured two different
+	// lights that did not agree.
+	//
+	// The key still works: ddz_toggleflashlight now toggles fl_enabled rather
+	// than using an inventory item that no longer exists.
 	override void PlayerEntered(PlayerEvent e) {
-		PlayerInfo player = players[e.PlayerNumber];
-		let FlashlightClass = (class<Inventory>)(Actor.GetReplacement("DarkDoomZ_Flashlight"));
-		player.mo.GiveInventory(FlashlightClass, 1);
+		// Nothing to give any more. Kept as an override so it is obvious this
+		// was removed rather than never written.
 	}
 
 	override void UiTick() {
