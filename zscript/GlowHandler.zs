@@ -835,6 +835,18 @@ class GITD_Handler : StaticEventHandler
 		ambient.drift     = CVar.FindCVar("gitd_ss_drift").GetFloat();
 		ambient.trail     = CVar.FindCVar("gitd_ss_trail").GetInt();
 		ambient.subBands  = clamp(CVar.FindCVar("gitd_ss_count").GetInt(), 1, 8);
+
+		// TrainClear judges "has the whole train left" from subGap, but the
+		// ambient wave's spacing lives in per-band gap cvars rather than the
+		// uniform subGap a scripted wave carries. Left at zero, a wave with
+		// followers ended the moment its LEADER left the range and cut the
+		// rest off mid-room. The mean gap makes TrainClear's
+		// subGap * (subBands - 1) exactly the sum of the real gaps.
+		double gapSum = 0;
+		for (int g = 1; g < ambient.subBands; g++)
+			gapSum += CVar.FindCVar("gitd_ss_gap" .. g).GetInt();
+		ambient.subGap = (ambient.subBands > 1) ? gapSum / (ambient.subBands - 1) : 0;
+
 		ambient.pingpong  = (dirMode == 2);
 		ambient.loop      = (trigger == 0);
 		ambient.driven    = false;
@@ -982,6 +994,7 @@ class GITD_Handler : StaticEventHandler
 	{
 		if (w.shape == 2)      return abs(c.x - w.origin.x);
 		else if (w.shape == 3) return abs(c.y - w.origin.y);
+		else if (w.shape == 4) return (c - w.origin).Length();   // shell: 3D
 		else if (w.shape == 5) return c.z - w.origin.z;   // rising, signed
 		return (c.xy - w.origin.xy).Length();
 	}
