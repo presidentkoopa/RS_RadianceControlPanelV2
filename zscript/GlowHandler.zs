@@ -1546,7 +1546,8 @@ class GITD_ResetHandler : EventHandler
 			"gitd_ambush_radius", "gitd_ambush_budget", "gitd_ambush_tierup",
 			"gitd_ambush_tier", "gitd_ambush_timer", "gitd_ambush_color",
 			"gitd_ambush_tint", "gitd_ambush_light", "gitd_ambush_desat",
-			"gitd_ambush_speed", "gitd_ambush_badge", "gitd_ambush_class" };
+			"gitd_ambush_speed", "gitd_ambush_badge", "gitd_ambush_class",
+			"gitd_ambush_wall", "gitd_ambush_gap", "gitd_ambush_gap_drift" };
 		for (int i = 0; i < amb.Size(); i++) Rst(amb[i]);
 		for (int b = 1; b <= 8; b++) { Rst("gitd_ss_fx" .. b); Rst("gitd_ss_script" .. b); }
 

@@ -565,3 +565,8 @@ server int   gitd_law_rain_x = 4;        // pickup rain grid, columns
 server int   gitd_law_rain_y = 4;        // rows
 server float gitd_law_rain_every = 6.0;  // seconds between rains while active
 server float gitd_law_rain_life = 10.0;  // seconds a dropped pickup survives
+
+// The standing lockdown ring and its break.
+server bool  gitd_ambush_wall = true;      // show the ring while the HOLD lasts
+server float gitd_ambush_gap = 0.0;        // break width in degrees; 0 = sealed
+server float gitd_ambush_gap_drift = 10.0; // degrees/second the break orbits

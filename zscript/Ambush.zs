@@ -534,6 +534,93 @@ class GITD_Ambush : GITD_Setpiece
 	{
 		aPhase = APH_IDLE;
 		aRoom = null;
+		wallWaveId = 0;
+		pillarA = -1;
+		pillarB = -1;
+	}
+
+	// ---- the standing ring and its break ----------------------------------
+	//
+	// During the HOLD the lockdown boundary is VISIBLE: a stationary wave
+	// parked at the radius (speed zero -- the wave system simply never
+	// advances it). The break is a gap in that ring, marked by two glowing
+	// pillar billboards, and it may drift around the perimeter. The RULE for
+	// the break lives in the controller; this owns only the look.
+	//
+	// The pillars are pure billboards -- no actors. If a break ever needs to
+	// be interactive beyond crossing it (touched, shot, closed), the engine's
+	// Touch/Aim/SweepBillboard queries answer that without an actor too.
+
+	int wallWaveId;
+	int pillarA, pillarB;
+	double gapAngle;        // centre of the break, degrees; unbounded, compare
+	                        // with deltaangle so wrap never matters
+
+	void StartWall()
+	{
+		if (!CvB("gitd_ambush_wall", true)) return;
+		int col = CvI("gitd_ambush_color", 0xFF2010);
+		wallWaveId = GITD_Sweep.Fire(aOrigin, 1, col, 0.0, aRadius, 20.0,
+			1, 0.0, 0, 20, true, "gitd_ambush_wall");
+		let h = GITD_Handler(StaticEventHandler.Find("GITD_Handler"));
+		if (h && wallWaveId > 0)
+		{
+			let w = h.WaveById(wallWaveId);
+			if (w) w.pos = aRadius;   // parked AT the boundary
+		}
+		gapAngle = frandom(0, 360);
+		PlacePillars();
+	}
+
+	void StepWall()
+	{
+		if (CvF("gitd_ambush_gap", 0) <= 0) return;
+		double drift = CvF("gitd_ambush_gap_drift", 10.0);
+		if (drift == 0) return;
+		gapAngle += drift / 35.0;
+		// Re-seat the pillars once a second. The rule reads gapAngle live,
+		// so the door itself is exact even between re-seats.
+		if ((level.maptime % 35) == 0) PlacePillars();
+	}
+
+	void EndWall()
+	{
+		if (wallWaveId > 0)
+		{
+			GITD_Sweep.Cancel("gitd_ambush_wall");
+			wallWaveId = 0;
+		}
+		RemovePillars();
+	}
+
+	private void PlacePillars()
+	{
+		RemovePillars();
+		double gap = CvF("gitd_ambush_gap", 0);
+		if (gap <= 0) return;
+		int col = CvI("gitd_ambush_color", 0xFF2010);
+		Color pc = Color(255, (col >> 16) & 255, (col >> 8) & 255, col & 255);
+		pillarA = PlacePillar(gapAngle - gap * 0.5, pc);
+		pillarB = PlacePillar(gapAngle + gap * 0.5, pc);
+	}
+
+	private int PlacePillar(double ang, Color pc)
+	{
+		Vector2 p = aOrigin.xy + (cos(ang), sin(ang)) * aRadius;
+		Sector sec = level.PointInSector(p);
+		if (!sec) return -1;
+		double fz = sec.floorplane.ZatPoint(p);
+		// A thin tall panel, glowing, facing the player: a gatepost.
+		int id = level.AddBillboardPersistent((p.x, p.y, fz + 60), 14, 120,
+			0, 0, 1, 0, 10 | (2 << 8), pc, 0, 0);
+		if (id >= 0) level.SetBillboardGlow(id, 96, 1.4);
+		return id;
+	}
+
+	private void RemovePillars()
+	{
+		if (pillarA >= 0) { level.RemoveBillboard(pillarA); pillarA = -1; }
+		if (pillarB >= 0) { level.RemoveBillboard(pillarB); pillarB = -1; }
 	}
 
 	private void BuildPlan(int budget)
@@ -699,7 +786,13 @@ class GITD_Ambush : GITD_Setpiece
 			if (!mon.TestMobjLocation()) { mon.Destroy(); continue; }
 
 			// It is an ambush: it arrives knowing where you are.
-			let pmo = players[consoleplayer].mo;
+			// The standing ring exists only while the HOLD does. EndWall is
+		// idempotent, so calling it on every non-HOLD tic is the simplest
+		// way to cover victory, abandonment, timers, leashes and aborts
+		// with one line.
+		if (ph != GITD_Ambush.APH_HOLD) amb.EndWall();
+
+		let pmo = players[consoleplayer].mo;
 			if (pmo && mon.bISMONSTER)
 			{
 				mon.target = pmo;
@@ -856,6 +949,7 @@ class GITD_AmbushControl : EventHandler
 	int holdStart;        // maptime when the lockdown finished arriving
 	int lastEnd;          // maptime when the last ambush ended
 	int fleeTics;         // how long the player has been outside the leash
+	double prevDist;      // last tic's distance from the origin, for the break
 	int wins;             // ambushes cleared this map -- the badge number
 
 	// The victory badge, when the Neon style is wgType 13: that payload has
@@ -891,6 +985,7 @@ class GITD_AmbushControl : EventHandler
 		activeName = canon;
 		prevPhase = GITD_Ambush.APH_IN;
 		fleeTics = 0;
+		prevDist = 0;
 	}
 
 	// ---- triggers ---------------------------------------------------------
@@ -965,6 +1060,7 @@ class GITD_AmbushControl : EventHandler
 		{
 			holdStart = level.maptime;
 			Console.Printf("\c[Red]LOCKDOWN. \c[Gold]Clear it to lift it.");
+			amb.StartWall();
 		}
 		if (prevPhase == GITD_Ambush.APH_OUT && ph == GITD_Ambush.APH_IDLE)
 		{
@@ -998,6 +1094,29 @@ class GITD_AmbushControl : EventHandler
 		}
 
 		if (ph != GITD_Ambush.APH_HOLD) return;
+
+		amb.StepWall();
+
+		// The break: crossing the boundary THROUGH the gap is the clean way
+		// out. The ambush lets you go on the spot and puts the room back --
+		// escape as a thing you steer for, not a thing you outwait. Any
+		// other crossing falls through to the leash below, unchanged.
+		double dNow = (pmo.pos.xy - amb.aOrigin.xy).Length();
+		double gapDeg = GITD_Ambush.CvF("gitd_ambush_gap", 0.0);
+		if (gapDeg > 0 && prevDist > 0
+			&& prevDist <= amb.aRadius && dNow > amb.aRadius)
+		{
+			double ang = VectorAngle(pmo.pos.x - amb.aOrigin.x,
+			                         pmo.pos.y - amb.aOrigin.y);
+			if (abs(deltaangle(ang, amb.gapAngle)) <= gapDeg * 0.5)
+			{
+				Console.Printf("\c[Gold]GITD ambush: you slipped the break. It lets you go.");
+				amb.BeginRevert();
+				prevDist = 0;
+				return;
+			}
+		}
+		prevDist = dNow;
 
 		// Win: everything the ambush put up, or promoted, is down.
 		if (amb.HadTracked() && amb.LiveTracked() == 0)

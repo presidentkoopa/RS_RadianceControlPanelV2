@@ -1025,6 +1025,18 @@ OptionMenu "GITDAmbush"
 	StaticText "0 = it never gives up. Otherwise", darkgray
 	StaticText "outlasting it also lifts the lockdown.", darkgray
 	StaticText ""
+	StaticText "The break", gold
+	StaticText ""
+	Option "Show the lockdown ring",	"gitd_ambush_wall", "OnOff"
+	Slider "Break in the ring (deg)",	"gitd_ambush_gap", 0, 180, 5, 0
+	StaticText "0 = sealed. Otherwise the standing ring", darkgray
+	StaticText "has one gap, marked by two pillars. Slip", darkgray
+	StaticText "out through it and the ambush lets you go", darkgray
+	StaticText "cleanly, on the spot. Leave any other way", darkgray
+	StaticText "and it leashes after you as usual.", darkgray
+	Slider "The break drifts (deg/s)",	"gitd_ambush_gap_drift", 0, 90, 5, 0
+	StaticText "The door moves. Escaping means chasing it.", darkgray
+	StaticText ""
 	StaticText "The look", gold
 	StaticText ""
 	ColorPicker "Sweep colour",		"gitd_ambush_color"
