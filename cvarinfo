@@ -471,3 +471,97 @@ server string gitd_ss_script7 = "";
 server string gitd_ss_script8 = "";
 
 server bool gitd_ss_demo = false;   // self-test: sweep the demo setpiece in and out
+
+// ---- Ambush setpieces ------------------------------------------------------
+// A wave sweeps a lockdown over the room you are in, spawns a fight sized to
+// that room, and clearing it sweeps the level back to what it was. Everything
+// journalled, everything reverted. All triggers ship OFF.
+server bool  gitd_ambush_enabled = false;   // master switch for the triggers
+server bool  gitd_ambush_ambient = false;   // random ambushes while you play
+server float gitd_ambush_period  = 30.0;    // seconds between ambient rolls
+server int   gitd_ambush_chance  = 15;      // percent chance per roll
+server float gitd_ambush_spacing = 120.0;   // quiet seconds between ambushes
+                                            // (also the grace at map start)
+server int   gitd_ambush_radius  = 1024;    // room flood / lockdown reach
+server float gitd_ambush_budget  = 1.0;     // spawn budget scale, 0-4
+server bool  gitd_ambush_tierup  = false;   // promote what already lives there
+server float gitd_ambush_tier    = 1.35;    // promotion factor when on
+server float gitd_ambush_timer   = 0.0;     // seconds before the ambush gives
+                                            // up; 0 = it never does
+server color gitd_ambush_color   = "ff 20 10";  // the sweep band
+server color gitd_ambush_tint    = "6e 28 28";  // lockdown tint (multiplies
+                                                // sector colour; authored
+                                                // ambushes may override)
+server int   gitd_ambush_light   = -70;     // lockdown light delta
+server int   gitd_ambush_desat   = 100;     // lockdown colour drain
+server float gitd_ambush_speed   = 700.0;   // wave speed, map units/second
+server bool  gitd_ambush_badge   = true;    // victory count via the Neon engine
+server string gitd_ambush_class  = "GITD_Ambush_Blackout";  // which ambush the
+                                            // triggers fire
+
+// ---- Per-colour hold times -------------------------------------------------
+// Each colour slot may linger before its transition begins, in seconds.
+// 0 = the old behaviour exactly: continuous cycling at the lane's speed.
+// The rotation's rhythm becomes composable: red for five seconds, white for
+// half of one -- and the colour-law system reads these as phase lengths.
+server float gitd_wb_hold1 = 0.0;
+server float gitd_wb_hold2 = 0.0;
+server float gitd_wb_hold3 = 0.0;
+server float gitd_wb_hold4 = 0.0;
+server float gitd_wb_hold5 = 0.0;
+server float gitd_wb_hold6 = 0.0;
+server float gitd_wb_hold7 = 0.0;
+server float gitd_wb_hold8 = 0.0;
+server float gitd_wt_hold1 = 0.0;
+server float gitd_wt_hold2 = 0.0;
+server float gitd_wt_hold3 = 0.0;
+server float gitd_wt_hold4 = 0.0;
+server float gitd_wt_hold5 = 0.0;
+server float gitd_wt_hold6 = 0.0;
+server float gitd_wt_hold7 = 0.0;
+server float gitd_wt_hold8 = 0.0;
+server float gitd_cg_hold1 = 0.0;
+server float gitd_cg_hold2 = 0.0;
+server float gitd_cg_hold3 = 0.0;
+server float gitd_cg_hold4 = 0.0;
+server float gitd_cg_hold5 = 0.0;
+server float gitd_cg_hold6 = 0.0;
+server float gitd_cg_hold7 = 0.0;
+server float gitd_cg_hold8 = 0.0;
+server float gitd_fg_hold1 = 0.0;
+server float gitd_fg_hold2 = 0.0;
+server float gitd_fg_hold3 = 0.0;
+server float gitd_fg_hold4 = 0.0;
+server float gitd_fg_hold5 = 0.0;
+server float gitd_fg_hold6 = 0.0;
+server float gitd_fg_hold7 = 0.0;
+server float gitd_fg_hold8 = 0.0;
+server float fl_hold1 = 0.0;
+server float fl_hold2 = 0.0;
+server float fl_hold3 = 0.0;
+server float fl_hold4 = 0.0;
+server float fl_hold5 = 0.0;
+server float fl_hold6 = 0.0;
+server float fl_hold7 = 0.0;
+server float fl_hold8 = 0.0;
+
+// ---- Colour law ------------------------------------------------------------
+// The conductor lane's ACTIVE COLOUR SLOT is a game phase, and each slot can
+// carry a rule that holds while the room wears that colour. "While on colour
+// three, everything is faster." The room's look and the fight's rules become
+// the same dial.
+server bool  gitd_law_enabled = false;
+server int   gitd_law_lane = 3;          // conductor: 0 wb, 1 wt, 2 cg, 3 floor
+server int   gitd_law_fx1 = 0;           // 0 none, 1 tougher, 2 frailer,
+server int   gitd_law_fx2 = 0;           // 3 faster, 4 slower, 5 health rain,
+server int   gitd_law_fx3 = 0;           // 6 armour rain
+server int   gitd_law_fx4 = 0;
+server int   gitd_law_fx5 = 0;
+server int   gitd_law_fx6 = 0;
+server int   gitd_law_fx7 = 0;
+server int   gitd_law_fx8 = 0;
+server float gitd_law_strength = 1.5;    // tough/fast multiplier
+server int   gitd_law_rain_x = 4;        // pickup rain grid, columns
+server int   gitd_law_rain_y = 4;        // rows
+server float gitd_law_rain_every = 6.0;  // seconds between rains while active
+server float gitd_law_rain_life = 10.0;  // seconds a dropped pickup survives

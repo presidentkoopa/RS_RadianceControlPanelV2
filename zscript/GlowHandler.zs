@@ -96,6 +96,7 @@ class GITD_Lane : Object
 	int slotIndex;
 	Color fromCol, toCol;
 	double phase;       // 0..1 through the current colour transition
+	int holdLeft;       // tics left parked on the current colour
 	double animClock;   // this lane's own animation clock
 
 	// Resolved once per tic, read by the handler when applying.
@@ -158,7 +159,19 @@ class GITD_Lane : Object
 		// point of it, so the lane's own slot count does not narrow them.
 		int count = (preset > 0) ? 8 : clamp(GetInt("_slots"), 1, 8);
 
-		phase += speed;
+		// A colour may LINGER. Each slot has a hold time, and while it runs
+		// the phase clock simply does not advance -- at phase 0 every pattern
+		// outputs fromCol steadily, so no per-pattern casing is needed. Zero
+		// hold (the default everywhere) is the old continuous cycling, bit
+		// for bit.
+		if (holdLeft > 0)
+		{
+			holdLeft--;
+		}
+		else
+		{
+			phase += speed;
+		}
 		if (phase >= 1.0)
 		{
 			phase -= 1.0;
@@ -168,6 +181,13 @@ class GITD_Lane : Object
 				? (slotIndex + count - 1) % count
 				: (slotIndex + 1) % count;
 			toCol = (preset > 0) ? GITD_Presets.SlotColor(preset, laneIndex, nextSlot) : SlotColor(nextSlot);
+
+			// We just ARRIVED on a colour (fromCol, slot slotIndex). Park on
+			// it for its hold before the next transition may begin. Read at
+			// the wrap, not per tic -- this path runs once per lane per
+			// transition, not per sector.
+			holdLeft = int(GetFloat("_hold" .. (slotIndex + 1)) * 35.0);
+			if (holdLeft > 0) phase = 0.0;
 		}
 
 		// HALF A COSINE, NOT A WHOLE ONE. This is why the glows used to fade
@@ -1510,6 +1530,24 @@ class GITD_ResetHandler : EventHandler
 			"gitd_pc_coverage", "gitd_pc_falloff", "gitd_pc_spread" };
 		for (int i = 0; i < rest.Size(); i++) Rst(rest[i]);
 		for (int c = 1; c <= 8; c++) Rst("fl_c" .. c);
+
+		// Colour holds, the colour law, and the ambushes -- newer systems,
+		// same promise: EVERYTHING means everything.
+		static const string holdpre[] = { "gitd_wb", "gitd_wt", "gitd_cg", "gitd_fg", "fl" };
+		for (int p = 0; p < holdpre.Size(); p++)
+			for (int c = 1; c <= 8; c++) Rst(holdpre[p] .. "_hold" .. c);
+		static const string law[] = { "gitd_law_enabled", "gitd_law_lane",
+			"gitd_law_strength", "gitd_law_rain_x", "gitd_law_rain_y",
+			"gitd_law_rain_every", "gitd_law_rain_life" };
+		for (int i = 0; i < law.Size(); i++) Rst(law[i]);
+		for (int c = 1; c <= 8; c++) Rst("gitd_law_fx" .. c);
+		static const string amb[] = { "gitd_ambush_enabled", "gitd_ambush_ambient",
+			"gitd_ambush_period", "gitd_ambush_chance", "gitd_ambush_spacing",
+			"gitd_ambush_radius", "gitd_ambush_budget", "gitd_ambush_tierup",
+			"gitd_ambush_tier", "gitd_ambush_timer", "gitd_ambush_color",
+			"gitd_ambush_tint", "gitd_ambush_light", "gitd_ambush_desat",
+			"gitd_ambush_speed", "gitd_ambush_badge", "gitd_ambush_class" };
+		for (int i = 0; i < amb.Size(); i++) Rst(amb[i]);
 		for (int b = 1; b <= 8; b++) { Rst("gitd_ss_fx" .. b); Rst("gitd_ss_script" .. b); }
 
 		// Bloom and exposure belong to the ENGINE, not to this mod, so they

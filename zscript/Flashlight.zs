@@ -24,6 +24,7 @@ class GITD_Flashlight : Thinker
 	int slotIndex;
 	Color fromCol, toCol;
 	double phase;
+	int holdLeft;   // tics parked on the current colour, per-slot fl_holdN
 
 	static GITD_Flashlight Get()
 	{
@@ -79,7 +80,10 @@ class GITD_Flashlight : Thinker
 		if (count <= 1) return SlotColor(0);
 
 		int pattern = CVar.FindCVar("fl_pattern").GetInt();
-		phase += CVar.FindCVar("fl_speed").GetFloat();
+		// Same hold mechanic as the glow lanes: while a hold runs the phase
+		// clock stands still, and at phase 0 every pattern returns fromCol.
+		if (holdLeft > 0) holdLeft--;
+		else phase += CVar.FindCVar("fl_speed").GetFloat();
 		if (phase >= 1.0)
 		{
 			phase -= 1.0;
@@ -89,6 +93,8 @@ class GITD_Flashlight : Thinker
 				? (slotIndex + count - 1) % count
 				: (slotIndex + 1) % count;
 			toCol = SlotColor(nextSlot);
+			holdLeft = int(CVar.FindCVar("fl_hold" .. (slotIndex + 1)).GetFloat() * 35.0);
+			if (holdLeft > 0) phase = 0.0;
 		}
 
 		switch (pattern)
