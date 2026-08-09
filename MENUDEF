@@ -195,7 +195,7 @@ OptionValue "GITDNeonStyle"
 }
 
 // ---------------------------------------------------------------------------
-// NEON NUMERIC ENGINE
+// NUMERIC VIOLENCE ENGINE
 //
 // In-world text and numbers -- floating, or burned into the floor. The three
 // styles are three engine payloads, but a player only ever meets one setting.
@@ -208,7 +208,7 @@ OptionValue "GITDNeonStyle"
 OptionMenu "GITDNeon"
 {
 	Class "DarkDoomZ_OptionMenu"
-	Title "Neon Numeric Engine"
+	Title "Numeric Violence Engine"
 	StaticText ""
 	Option "Numbers and text",		"gitd_neon_enabled", "OnOff"
 	StaticText ""
@@ -250,7 +250,7 @@ OptionMenu "GITDOptions"
 	Title "Glow In The Dark"
 	StaticText ""
 	StaticText ""
-	Submenu "Neon Numeric Engine Options",	"GITDNeon"
+	Submenu "Numeric Violence Engine",	"GITDNeon"
 	StaticText ""
 	Option "Glow",					"gitd_enabled", "OnOff"
 	Option "Darkness",				"gitd_dd_enabled", "OnOff"
