@@ -103,7 +103,11 @@ class GITD_Wave : Object play
 
 	Color col;
 	int fx;
-	GITD_SweepAction action;
+	// Not named `action`. That word is a ZScript KEYWORD -- the qualifier that
+	// declares action functions -- and the scanner tokenises it before the
+	// parser ever sees an identifier, so a field by that name is a parse error
+	// at load. Same trap as `play` and `states`, already paid for once.
+	GITD_SweepAction sweepAction;
 
 	bool ambient;            // the cvar-driven wave; there is exactly one
 	bool loop;               // restart at the far end instead of dying
@@ -163,7 +167,11 @@ class GITD_Wave : Object play
 		else alive = false;
 	}
 
-	double BandPos(int i)
+	// Not named BandPos: ZScript identifiers are CASE-INSENSITIVE, so a method
+	// BandPos and the field bandPos above are the same symbol to the compiler
+	// and the second declaration is a redefinition error. Same collision the
+	// codebase has hit before (a field `band` against a method `Band()`).
+	double CalcBandPos(int i)
 	{
 		double lag = subGap * i * speed / 35.0;
 		return pos * (1.0 + drift * i) - lag;
@@ -336,7 +344,7 @@ class GITD_Sweep play abstract
 		// By id, never by tag -- a setpiece sweeping out carries the same tag
 		// as the wave that swept it in, and that one may still be travelling.
 		let w = h.WaveById(id);
-		if (w) w.action = act;
+		if (w) w.sweepAction = act;
 		act.OnStart(h);
 		return id;
 	}

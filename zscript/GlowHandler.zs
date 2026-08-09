@@ -711,7 +711,7 @@ class GITD_Handler : StaticEventHandler
 
 	double WaveBandPos(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return w.BandPos(i);
+		if (!w.ambient) return w.CalcBandPos(i);
 		double lag = 0;
 		for (int g = 0; g < i; g++)
 			lag += CVar.FindCVar("gitd_ss_gap" .. (g + 1)).GetInt() * w.speed / 35.0;
@@ -738,7 +738,7 @@ class GITD_Handler : StaticEventHandler
 
 	GITD_SweepAction WaveBandAction(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return w.action;
+		if (!w.ambient) return w.sweepAction;
 		if (!CVar.FindCVar("gitd_ss_perband").GetBool()) return null;
 		return GITD_SweepAction.Resolve(CVar.FindCVar("gitd_ss_script" .. (i + 1)).GetString());
 	}
@@ -909,7 +909,7 @@ class GITD_Handler : StaticEventHandler
 			let w = waves[i];
 			if (!w) { waves.Delete(i); continue; }
 			if (w.alive) continue;
-			if (w.action) w.action.OnFinish(self);
+			if (w.sweepAction) w.sweepAction.OnFinish(self);
 			if (w == ambient) ambient = null;
 			waves.Delete(i);
 		}

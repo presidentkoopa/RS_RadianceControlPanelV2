@@ -41,13 +41,17 @@
 class GITD_Composite : StaticEventHandler
 {
 	// The map's own values, captured before anything touches them.
-	private Array<int> baseLight;
-	private Array<int> baseColor;
+	//
+	// NOT named baseLight/baseColor/addLight: ZScript identifiers are
+	// case-insensitive, so a private field baseLight and the public method
+	// BaseLight() below are the same symbol and the class refuses to compile.
+	private Array<int> mapLight;
+	private Array<int> mapColor;
 	private Array<int> baseDesat;
 
 	// This tic's accumulated wants.
 	private Array<double> mulR, mulG, mulB;
-	private Array<int> addLight;
+	private Array<int> deltaLight;
 	private Array<int> ovrLight;     // -1 = nobody is overriding
 	private Array<int> wantDesat;
 
@@ -64,19 +68,19 @@ class GITD_Composite : StaticEventHandler
 	override void WorldLoaded(WorldEvent e)
 	{
 		int n = level.Sectors.Size();
-		baseLight.Clear(); baseColor.Clear(); baseDesat.Clear();
+		mapLight.Clear(); mapColor.Clear(); baseDesat.Clear();
 		mulR.Clear(); mulG.Clear(); mulB.Clear();
-		addLight.Clear(); ovrLight.Clear(); wantDesat.Clear(); held.Clear();
+		deltaLight.Clear(); ovrLight.Clear(); wantDesat.Clear(); held.Clear();
 
 		for (int i = 0; i < n; i++)
 		{
 			Sector s = level.Sectors[i];
 			Color c = s.ColorMap.LightColor;
-			baseLight.Push(s.lightlevel);
-			baseColor.Push((c.r << 16) | (c.g << 8) | c.b);
+			mapLight.Push(s.lightlevel);
+			mapColor.Push((c.r << 16) | (c.g << 8) | c.b);
 			baseDesat.Push(s.ColorMap.Desaturation);
 			mulR.Push(1.0); mulG.Push(1.0); mulB.Push(1.0);
-			addLight.Push(0); ovrLight.Push(-1); wantDesat.Push(0);
+			deltaLight.Push(0); ovrLight.Push(-1); wantDesat.Push(0);
 			held.Push(false);
 		}
 		ready = (n > 0);
@@ -89,15 +93,15 @@ class GITD_Composite : StaticEventHandler
 	static int BaseLight(int idx)
 	{
 		let c = Get();
-		if (!c || idx < 0 || idx >= c.baseLight.Size()) return 0;
-		return c.baseLight[idx];
+		if (!c || idx < 0 || idx >= c.mapLight.Size()) return 0;
+		return c.mapLight[idx];
 	}
 
 	static Color BaseColor(int idx)
 	{
 		let c = Get();
-		if (!c || idx < 0 || idx >= c.baseColor.Size()) return Color(255, 255, 255, 255);
-		int p = c.baseColor[idx];
+		if (!c || idx < 0 || idx >= c.mapColor.Size()) return Color(255, 255, 255, 255);
+		int p = c.mapColor[idx];
 		return Color(255, (p >> 16) & 255, (p >> 8) & 255, p & 255);
 	}
 
@@ -127,8 +131,8 @@ class GITD_Composite : StaticEventHandler
 	static void AddLight(int idx, int delta)
 	{
 		let s = Get();
-		if (!s || !s.ready || idx < 0 || idx >= s.addLight.Size()) return;
-		s.addLight[idx] += delta;
+		if (!s || !s.ready || idx < 0 || idx >= s.deltaLight.Size()) return;
+		s.deltaLight[idx] += delta;
 	}
 
 	// Take the sector's light over completely for this tic. For effects that
@@ -157,7 +161,7 @@ class GITD_Composite : StaticEventHandler
 			Sector s = level.Sectors[i];
 
 			// Colour: always safe to write, nothing else animates it.
-			int bp = baseColor[i];
+			int bp = mapColor[i];
 			int br = (bp >> 16) & 255, bg = (bp >> 8) & 255, bb = bp & 255;
 			s.SetColor(Color(255,
 				clamp(int(br * mulR[i]), 0, 255),
@@ -173,21 +177,21 @@ class GITD_Composite : StaticEventHandler
 				s.SetLightLevel(ovrLight[i]);
 				held[i] = true;
 			}
-			else if (addLight[i] != 0)
+			else if (deltaLight[i] != 0)
 			{
-				s.SetLightLevel(clamp(baseLight[i] + addLight[i], 0, 255));
+				s.SetLightLevel(clamp(mapLight[i] + deltaLight[i], 0, 255));
 				held[i] = true;
 			}
 			else if (held[i])
 			{
 				// Released. Put the map's own level back ONCE and stop
 				// touching it -- keep writing and we are fighting thinkers.
-				s.SetLightLevel(baseLight[i]);
+				s.SetLightLevel(mapLight[i]);
 				held[i] = false;
 			}
 
 			mulR[i] = 1.0; mulG[i] = 1.0; mulB[i] = 1.0;
-			addLight[i] = 0;
+			deltaLight[i] = 0;
 			ovrLight[i] = -1;
 			wantDesat[i] = 0;
 		}
