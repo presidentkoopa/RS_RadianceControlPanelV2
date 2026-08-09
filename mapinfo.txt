@@ -1,9 +1,16 @@
 GameInfo
 {
-	// Order matters. DarkDoomZ rewrites every sector's light level from its
-	// own saved originals each tick, so it has to run FIRST -- otherwise it
-	// would wipe the per-sector light changes Sector Sweep makes on top.
-	// GITD_PresetCustomiser runs BEFORE GITD_Handler: it loads the selected
-	// preset into the working set, which the lanes then read that same tick.
-	AddEventHandlers = "DarkDoomZ_Handler", "GITD_PresetCustomiser", "GITD_Handler", "GITD_FlashlightHandler", "GITD_NeonKillCounter", "GITD_ResetHandler"
+	// Order MOSTLY does not matter any more, and that is the point.
+	//
+	// It used to: DarkDoomZ, Sector Sweep and setpieces each wrote sector
+	// light and colour directly, so whoever ran last won and this list decided
+	// what the player saw. They now declare into GITD_Composite instead --
+	// tints multiply, light deltas add, and both commute.
+	//
+	// Two orderings still matter, and only two:
+	//   GITD_Composite is LAST because it flushes. Everything that wants a
+	//     say must have had its tick before the write happens.
+	//   GITD_PresetCustomiser is before GITD_Handler because it loads the
+	//     selected preset into the working set the lanes read that same tick.
+	AddEventHandlers = "DarkDoomZ_Handler", "GITD_PresetCustomiser", "GITD_Handler", "GITD_FlashlightHandler", "GITD_NeonKillCounter", "GITD_ResetHandler", "GITD_SetpieceConsole", "GITD_SetpieceSelfTest", "GITD_Composite"
 }

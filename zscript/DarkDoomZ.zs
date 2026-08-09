@@ -159,9 +159,13 @@ class DarkDoomZ_Handler : EventHandler {
 			OldMinLight != MinLight);
 
 		if (changed) {
-			// ApplyLightLevels is deliberately NOT called any more -- see
-			// ApplyDarkness. Kept below only so an older save or a mode that
-			// wants the legacy behaviour has something to call.
+			// Fog only. The old ApplyLightLevels, which rewrote every
+			// sector's Lightlevel in place, is GONE -- it had had no caller
+			// for some time, and it is now actively dangerous: light belongs
+			// to GITD_Composite, and a second writer stamping raw values
+			// would resurrect the 35Hz wall flicker this mod already paid for
+			// once. ddz_mode still selects the darkness CURVE; see
+			// DarknessMul.
 			ApplyFog();
 		}
 		OldMode = Mode;
@@ -193,18 +197,21 @@ class DarkDoomZ_Handler : EventHandler {
 	// by overwriting them; this one dims them.
 	//========================================================================
 
-	bool restoredLevels;
 
+	// Darkness is now a TINT DECLARATION, not a paint job.
+	//
+	// This used to call SetColor on every sector every tic. That worked right
+	// up until anything else wanted a say, and then it silently won every
+	// argument by virtue of running last -- a sweep setpiece could tint a room
+	// red and be erased before the frame was drawn. Handing the multiplier to
+	// GITD_Composite instead means darkness composes with everything else
+	// rather than overwriting it, and the ordering of names in mapinfo.txt
+	// stops deciding what the player sees.
+	//
+	// The one-time LightLevel repair went with it. GITD_Composite snapshots
+	// the map's own levels at WorldLoaded and is the only thing that writes
+	// them now, so there is nothing left to repair.
 	void ApplyDarkness() {
-		// One-time repair. Any level whose LightLevel this mod already
-		// stamped on stays wrong until it is put back, and the tint would
-		// then be multiplying an already-damaged number.
-		if (!restoredLevels) {
-			restoredLevels = true;
-			for (int i = 0; i < BaseLightLevels.Size() && i < Level.Sectors.Size(); i++)
-				Level.Sectors[i].LightLevel = BaseLightLevels[i];
-		}
-
 		double m = DarknessMul();
 		int desat = clamp(ddz_desat, 0, 255);
 
@@ -217,7 +224,8 @@ class DarkDoomZ_Handler : EventHandler {
 			if (sky) mm = 1.0 - (1.0 - m) * SkyMode;
 
 			int v = clamp(int(mm * 255.0), 0, 255);
-			Level.Sectors[i].SetColor(Color(255, v, v, v), desat);
+			GITD_Composite.Tint(i, Color(255, v, v, v));
+			GITD_Composite.Desaturate(i, desat);
 		}
 	}
 
@@ -257,53 +265,6 @@ class DarkDoomZ_Handler : EventHandler {
 		}
 	}
 
-	void ApplyLightLevels() {
-		{
-			BaseAdjustment = 32 * Preset;
-			for(int i = 0; i < BaseLightLevels.Size(); i++) {
-				int BaseLightLevel = BaseLightLevels[i];
-				BaseLightLevel += PreGain;
-
-				IsSky = (level.Sectors[i].GetTexture(0) == skyflatnum ||
-						 level.Sectors[i].GetTexture(1) == skyflatnum);
-
-				FinalAdjustment = BaseAdjustment;
-				if(IsSky) { FinalAdjustment = int(FinalAdjustment * SkyMode); }
-
-				// Link to graphing calculator depiction of different modes
-				// https://www.desmos.com/calculator/v1ni4wftcg
-				switch(Mode) {
-					case 1: //subtract raw light level (simple fade)
-						Level.Sectors[i].Lightlevel = BaseLightLevel - FinalAdjustment;
-						break;
-					case 2: //linear compression
-						Level.Sectors[i].Lightlevel = int(BaseLightLevel * (1.0 - FinalAdjustment / 256.0));
-						break;
-					case 3: //clamp max brightness level
-						Level.Sectors[i].Lightlevel = clamp(BaseLightLevel, 0, 256 - FinalAdjustment);
-						break;
-					case 4: //apply exponential gamma curve
-						Level.Sectors[i].Lightlevel = int((256 - (FinalAdjustment ** (FinalAdjustment / 256))) * (BaseLightLevel / 256.0) ** (1 + (FinalAdjustment / (33 - (FinalAdjustment / 8)))));
-						break;
-					case 10: //DarkDoom Lite (fixed subtract mode)
-						Level.Sectors[i].Lightlevel = BaseLightLevel - 96;
-						break;
-					case 11: //DarkDoom Classic (fixed subtract mode)
-						Level.Sectors[i].Lightlevel = BaseLightLevel - 128;
-						break;
-					case 12: //DarkDoom Black (fixed subtract mode)
-						Level.Sectors[i].Lightlevel = BaseLightLevel - 256;
-						break;
-					default: //disable
-						Level.Sectors[i].Lightlevel = BaseLightLevel; //reset lightlevels
-						break;
-				}
-
-				Level.Sectors[i].Lightlevel = max(Level.Sectors[i].Lightlevel, MinLight);
-				Level.Sectors[i].Lightlevel += PostGain;
-			}
-		}
-	}
 }
 
 class DarkDoomZ_Flashlight : CustomInventory {

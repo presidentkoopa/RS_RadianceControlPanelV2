@@ -433,3 +433,41 @@ server bool gitd_dd_noflash = true;
 // low light, so draining saturation as the level darkens reads as genuinely
 // dark rather than merely dim. 0 keeps full colour.
 server int ddz_desat = 0;
+
+// --- Sector Sweep: behaviour ------------------------------------------------
+// Direction supersedes gitd_ss_pingpong, which stays declared so an existing
+// config carrying it does not start logging an unknown cvar. Default 2 keeps
+// the ping-pong that was the old default.
+server int   gitd_ss_direction = 2;     // 0 outward, 1 inward, 2 ping-pong
+server int   gitd_ss_trigger = 0;       // 0 continuous, 1 kill, 2 hurt, 3 you fire, 4 secret
+server int   gitd_ss_drive = 0;         // 0 time, 1 kills, 2 your health
+server float gitd_ss_health_speed = 0.0;// hurry up as you weaken
+server float gitd_ss_drift = 0.0;       // per-band speed spread
+server int   gitd_ss_trail = 0;         // wake length behind each band
+server bool  gitd_ss_actors = false;    // let bands touch monsters
+server int   gitd_ss_sonar_floor = 8;   // how dark sonar leaves a room
+server int   gitd_ss_sonar_fade = 70;   // tics for a revealed room to go dark
+
+// Per-band effects. Off by default, in which case every band uses
+// gitd_ss_light_mode as before.
+server bool  gitd_ss_perband = false;
+server int   gitd_ss_fx1 = 1;
+server int   gitd_ss_fx2 = 2;
+server int   gitd_ss_fx3 = 1;
+server int   gitd_ss_fx4 = 2;
+server int   gitd_ss_fx5 = 1;
+server int   gitd_ss_fx6 = 2;
+server int   gitd_ss_fx7 = 1;
+server int   gitd_ss_fx8 = 2;
+
+// The class name of a GITD_SweepAction each band runs. Empty = none.
+server string gitd_ss_script1 = "";
+server string gitd_ss_script2 = "";
+server string gitd_ss_script3 = "";
+server string gitd_ss_script4 = "";
+server string gitd_ss_script5 = "";
+server string gitd_ss_script6 = "";
+server string gitd_ss_script7 = "";
+server string gitd_ss_script8 = "";
+
+server bool gitd_ss_demo = false;   // self-test: sweep the demo setpiece in and out

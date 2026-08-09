@@ -54,6 +54,9 @@ OptionValue "GITDSweepOrigin"
 	0, "Map centre"
 	1, "Where you started"
 	2, "Follows you"
+	3, "Your last shot"
+	4, "The last monster that died"
+	5, "The nearest monster"
 }
 
 OptionValue "GITDSweepCount"
@@ -74,6 +77,10 @@ OptionValue "GITDSweepLight"
 	1, "Brighten as it passes"
 	2, "Darken as it passes"
 	3, "Re-colour glows to match"
+	4, "Sonar -- reveal, then fade to dark"
+	5, "Wake the monsters it passes"
+	6, "Mark the monsters it passes"
+	7, "Slow the monsters it passes"
 }
 
 OptionValue "GITDFLMount"
@@ -561,6 +568,63 @@ OptionMenu "GITDSweep"
 	StaticText "Re-colour drives all four lanes to shades", darkgray
 	StaticText "of the passing sweep's own colour", darkgray
 	StaticText ""
+
+	StaticText "When it runs", gold
+	Option "Fires",					"gitd_ss_trigger", "GITDSweepTrigger"
+	StaticText "Anything but the first turns the sweep from", darkgray
+	StaticText "weather into the room answering you.", darkgray
+	Option "Travels",				"gitd_ss_direction", "GITDSweepDir"
+	Option "Driven by",				"gitd_ss_drive", "GITDSweepDrive"
+	StaticText "Driven by kills or health, the band's", darkgray
+	StaticText "POSITION is the readout -- nothing on", darkgray
+	StaticText "screen has to say the number.", darkgray
+	Slider "Hurry as you weaken",	"gitd_ss_health_speed", 0.0, 3.0, 0.1, 1
+	StaticText ""
+
+	StaticText "Shape of each band", gold
+	Slider "Wake behind it",		"gitd_ss_trail", 0, 512, 8, 0
+	StaticText "Stretches each band backwards, so it reads", darkgray
+	StaticText "as something moving through the room", darkgray
+	StaticText "rather than a scan line.", darkgray
+	Slider "Spread the train",		"gitd_ss_drift", 0.0, 1.0, 0.05, 2
+	StaticText "Gives each band its own speed, so they", darkgray
+	StaticText "drift in and out of phase forever.", darkgray
+	StaticText ""
+
+	StaticText "Per-band effects", gold
+	Option "Each band does its own thing","gitd_ss_perband", "OnOff"
+	StaticText "Off, every band uses the one setting above.", darkgray
+	StaticText "On, set band 1 to darken and band 2 to", darkgray
+	StaticText "brighten and the room breathes as the", darkgray
+	StaticText "train goes past.", darkgray
+	Option "  Band 1",				"gitd_ss_fx1", "GITDSweepFx", "gitd_ss_perband"
+	Option "  Band 2",				"gitd_ss_fx2", "GITDSweepFx", "gitd_ss_perband"
+	Option "  Band 3",				"gitd_ss_fx3", "GITDSweepFx", "gitd_ss_perband"
+	Option "  Band 4",				"gitd_ss_fx4", "GITDSweepFx", "gitd_ss_perband"
+	Option "  Band 5",				"gitd_ss_fx5", "GITDSweepFx", "gitd_ss_perband"
+	Option "  Band 6",				"gitd_ss_fx6", "GITDSweepFx", "gitd_ss_perband"
+	Option "  Band 7",				"gitd_ss_fx7", "GITDSweepFx", "gitd_ss_perband"
+	Option "  Band 8",				"gitd_ss_fx8", "GITDSweepFx", "gitd_ss_perband"
+	StaticText ""
+
+	StaticText "Sonar", gold
+	Slider "Leaves rooms at",		"gitd_ss_sonar_floor", 0, 64, 2, 0
+	Slider "Fades over",			"gitd_ss_sonar_fade", 5, 210, 5, 0
+	StaticText "A revealed room dims back to the level", darkgray
+	StaticText "above over this many tics.", darkgray
+	StaticText ""
+
+	StaticText "Monsters", gold
+	Option "Bands can touch monsters","gitd_ss_actors", "OnOff"
+	StaticText "Needed by wake, mark and slow. Costs a walk", darkgray
+	StaticText "of every monster each tic, so it is off", darkgray
+	StaticText "until something asks for it.", darkgray
+	StaticText ""
+	SafeCommand "Demo: sweep a setpiece in and out","netevent gitd_setpiece"
+	StaticText "Recolours the level as it passes and puts it", darkgray
+	StaticText "back on the second run. A worked example of", darkgray
+	StaticText "the scripting hooks -- see SweepEngine.zs.", darkgray
+	StaticText ""
 	Submenu "Advanced",				"GITDSweepAdv"
 }
 
@@ -837,4 +901,39 @@ OptionMenu "GITDFloorAdv"
 AddOptionMenu "OptionsMenu"
 {
 	Submenu "Glow In The Dark", "GITDOptions"
+}
+
+OptionValue "GITDSweepTrigger"
+{
+	0, "Never stops"
+	1, "Each time you kill something"
+	2, "Each time you are hurt"
+	3, "Each time you pull the trigger"
+	4, "Each time you find a secret"
+}
+
+OptionValue "GITDSweepDir"
+{
+	0, "Outward, then restart"
+	1, "Inward -- collapsing"
+	2, "Out and back"
+}
+
+OptionValue "GITDSweepDrive"
+{
+	0, "Time -- travels at a steady speed"
+	1, "Kills -- position is your progress"
+	2, "Health -- position is how hurt you are"
+}
+
+OptionValue "GITDSweepFx"
+{
+	0, "Nothing"
+	1, "Brighten"
+	2, "Darken"
+	3, "Re-colour glows"
+	4, "Sonar reveal"
+	5, "Wake monsters"
+	6, "Mark monsters"
+	7, "Slow monsters"
 }

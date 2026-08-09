@@ -1,5 +1,7 @@
 version "4.14"
 
+#include "zscript/SectorComposite.zs"
+#include "zscript/SweepEngine.zs"
 #include "zscript/GlowHandler.zs"
 #include "zscript/Flashlight.zs"
 #include "zscript/DarkDoomZ.zs"
