@@ -105,10 +105,10 @@ OptionValue "GITDPreset"
 OptionValue "GITDDarkMode"
 {
 	0,  "Off"
-	1,  "Subtract"
-	2,  "Compress"
-	3,  "Cap brightest"
-	4,  "Deepen shadows"
+	1,  "Use the How dark dial"
+	2,  "Use the How dark dial"
+	3,  "Use the How dark dial"
+	4,  "Use the How dark dial"
 	10, "DarkDoom Lite"
 	11, "DarkDoom Classic"
 	12, "DarkDoom Black"
@@ -166,8 +166,7 @@ OptionValue "GITDShadowQual"
 	128,  "128 (VR default)"
 	256,  "256"
 	512,  "512"
-	1024, "1024"
-	2048, "2048 (sharpest)"
+	1024, "1024 (sharpest)"
 }
 
 OptionValue "GITDNeonDmgMode"
@@ -289,7 +288,7 @@ OptionMenu "GITDOptions"
 	StaticText "a weapon fires. Unnoticeable when lit,", darkgray
 	StaticText "ruinous in the dark.", darkgray
 	StaticText ""
-	Option "Darkness mode",			"ddz_mode", "GITDDarkMode"
+	Option "Darkness curve",		"ddz_mode", "GITDDarkMode"
 	Option "How dark",				"ddz_preset", "GITDDarkLevel"
 	Slider "Colour drain",			"ddz_desat", 0, 255, 15, 0
 	StaticText "Colour vision fails in low light --", darkgray
@@ -824,11 +823,8 @@ OptionMenu "DarkDoomZ_Advanced_Settings"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Advanced Settings"
 	StaticText " "
-	Slider "Pre-Gain",				"ddz_pregain", -255, 255, 1, 0
-	Slider "Post-Gain",				"ddz_postgain", -255, 255, 1, 0
 	StaticText "Adjust initial and final light levels.", darkgray
 	StaticText " "
-	Slider "Min. Lightlevel",		"ddz_minlight", 0, 16, 1, 0
 	StaticText "Clamps darkest lightlevel to this minimum.", darkgray
 	StaticText " "
 	Slider "Sky Sectors",			"ddz_skymode", 0.0, 1.0, 0.1, 1

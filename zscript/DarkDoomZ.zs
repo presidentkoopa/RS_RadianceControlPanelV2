@@ -217,7 +217,13 @@ class DarkDoomZ_Handler : EventHandler {
 	double DarknessMul() {
 		if (!CVar.FindCVar("gitd_dd_enabled").GetBool()) return 1.0;
 
-		switch (ddz_mode) {
+		// A cvar reference is not assignable, so modes 1-4 are folded on READ
+		// rather than written back. The menu shows the right thing either way
+		// now that all four are labelled identically.
+		int mode = ddz_mode;
+		if (mode >= 1 && mode <= 4) mode = 2;
+
+		switch (mode) {
 			case 0:  return 1.0;
 			case 10: return 0.62;   // DarkDoom Lite
 			case 11: return 0.45;   // DarkDoom Classic
