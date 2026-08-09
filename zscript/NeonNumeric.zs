@@ -261,3 +261,96 @@ class GITD_NeonKillCounter : EventHandler
 		}
 	}
 }
+
+// ============================================================================
+// GITD_SeamStrip -- a seam that survives stairs.
+//
+// A billboard is one flat plane, so a long seam laid across stepped ground
+// clips into the high step and floats over the low one. That is not fixable in
+// the shader and never was: the quad genuinely is flat.
+//
+// So this is not one seam. It is N short ones laid end to end along a line,
+// each asking the floor UNDER ITSELF how high it is. Steps come out stepped
+// and slopes come out faceted, and with enough segments a faceted slope is
+// indistinguishable from a smooth one.
+//
+// Sampling is against the sector's FLOORPLANE rather than its floor height,
+// so a sloped sector gives the height at that exact point rather than the
+// height of the sector generally.
+//
+// NOT AN ACTOR, and not a thinker. It is a plain Object holding handles --
+// whoever owns it calls Open() and Remove(). Billboards already have their own
+// lifetimes; adding a thinker per seam would put load on the playsim for
+// something that is a picture.
+// ============================================================================
+
+class GITD_SeamStrip
+{
+	Array<int> parts;
+	Vector2 dir;			// along the seam
+	double segLen;
+	double width;			// full open width, per segment
+
+	// centre/angle describe the LINE the seam runs along; length is how far it
+	// runs; openWidth is how wide it gets when fully open.
+	static GITD_SeamStrip Create(Vector3 centre, double length, double angle,
+		double openWidth = 70, int segments = 8, bool hole = true, Color col = 0)
+	{
+		if (!GITD_Neon.Enabled()) return null;
+		if (segments < 1) segments = 1;
+
+		let st = new("GITD_SeamStrip");
+		st.dir = (cos(angle), sin(angle));
+		st.segLen = length / segments;
+		st.width = openWidth;
+
+		Color use = (col == 0) ? GITD_Neon.MenuColor() : col;
+		int glow = GITD_Neon.Glow();
+		int flags = hole ? LevelLocals.BBFL_VOID : 0;
+
+		for (int i = 0; i < segments; i++)
+		{
+			// Centre of this segment along the line.
+			double t = (i + 0.5) / segments - 0.5;
+			Vector2 xy = centre.xy + st.dir * (t * length);
+
+			// The whole point: this segment's OWN floor, not the strip's.
+			double fz = centre.z;
+			let sec = level.PointInSector(xy);
+			if (sec) fz = sec.floorplane.ZatPoint(xy) + 4;
+
+			// Starts closed -- a hairline. Open() widens it.
+			int id = level.AddBillboardPersistent((xy.x, xy.y, fz),
+				2, st.segLen * 1.04, angle, 90,
+				LevelLocals.BBF_FIXED, LevelLocals.BB_SEAM, glow,
+				use, flags | LevelLocals.BBFL_NOHIT, 0);
+			if (id != 0) st.parts.Push(id);
+		}
+		return st;
+	}
+
+	// t 0..1. Segments overlap slightly (1.04 above) so the join between them
+	// does not show as a dark seam in the seam.
+	void Open(double t)
+	{
+		t = clamp(t, 0.0, 1.0);
+		double w = 2 + (width - 2) * t;
+		for (int i = 0; i < parts.Size(); i++)
+			level.ResizeBillboard(parts[i], w, segLen * 1.04);
+	}
+
+	void Recolor(Color col, Color grad = 0)
+	{
+		for (int i = 0; i < parts.Size(); i++)
+		{
+			level.UpdateBillboard(parts[i], 0, col);
+			if (grad != 0) level.SetBillboardGradient(parts[i], grad);
+		}
+	}
+
+	void Remove()
+	{
+		for (int i = 0; i < parts.Size(); i++) level.RemoveBillboard(parts[i]);
+		parts.Clear();
+	}
+}
