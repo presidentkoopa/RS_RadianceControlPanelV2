@@ -114,17 +114,21 @@ OptionValue "GITDDarkMode"
 	12, "DarkDoom Black"
 }
 
+// Numbered, not named. The words were "Slightly dark / Dark / Very dark /
+// Gloomy / Very gloomy / Near black / Almost pitch / Pitch black" -- and
+// nothing in that list tells you whether Gloomy is darker than Very dark. A
+// number cannot be misread and the row already says "How dark".
 OptionValue "GITDDarkLevel"
 {
 	0, "Off"
-	1, "Slightly dark"
-	2, "Dark"
-	3, "Very dark"
-	4, "Gloomy"
-	5, "Very gloomy"
-	6, "Near black"
-	7, "Almost pitch"
-	8, "Pitch black"
+	1, "1"
+	2, "2"
+	3, "3"
+	4, "4"
+	5, "5"
+	6, "6"
+	7, "7"
+	8, "8 (darkest)"
 }
 
 OptionValue "Nice_Flashlight_Quality"

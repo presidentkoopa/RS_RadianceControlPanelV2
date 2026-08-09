@@ -159,30 +159,50 @@ class GITD_Lane : Object
 			toCol = (preset > 0) ? GITD_Presets.SlotColor(preset, laneIndex, nextSlot) : SlotColor(nextSlot);
 		}
 
+		// HALF A COSINE, NOT A WHOLE ONE. This is why the glows used to fade
+		// nicely and then jump.
+		//
+		// cos(phase * 360) runs a FULL cycle as phase goes 0..1, so t went
+		// 0 -> 1 -> 0 and the colour travelled A -> B -> back to A. But the
+		// slot advance above assumes the transition ENDED on B: it does
+		// fromCol = toCol and moves to C. So the lane arrived back at A, then
+		// snapped to B to begin the next leg. Every cycle, on every lane.
+		//
+		// cos(phase * 180) goes 0 -> 1 across the phase and stops there, so
+		// the last frame of one transition and the first frame of the next are
+		// the same colour and nothing jumps. It keeps the ease in and out.
 		switch (pattern)
 		{
 			default:
-			case 0: // Snap
+			case 0: // Snap -- discontinuous ON PURPOSE, holds then cuts.
 				outColor = fromCol;
 				break;
 			case 1: // Fade
 			case 4: // Ping-pong: same blend, different slot order
 			{
-				double t = 0.5 - 0.5 * cos(phase * 360.0);
+				double t = 0.5 - 0.5 * cos(phase * 180.0);
 				outColor = GITD_Palette.Lerp(fromCol, toCol, t);
 				break;
 			}
-			case 2: // Flash -- snap to the new colour, decay back
+			case 2: // Flash -- rush to the new colour, then hold it
 			{
-				double t = max(0.0, 1.0 - phase * 3.0);
+				// Was max(0, 1 - phase*3), which started ON toCol and decayed
+				// back to fromCol -- so it ended on the OLD colour and then
+				// jumped to the next one, the same fault as the fade but
+				// running backwards. Ramping to toCol and holding lands the
+				// cycle where the next one begins.
+				double t = min(1.0, phase * 3.0);
 				outColor = GITD_Palette.Lerp(fromCol, toCol, t);
 				break;
 			}
 			case 3: // Breathe -- dip through darkness between colours
 			{
-				double t = 0.5 - 0.5 * cos(phase * 360.0);
+				double t = 0.5 - 0.5 * cos(phase * 180.0);
 				outColor = GITD_Palette.Lerp(fromCol, toCol, t);
-				outColor = GITD_Palette.Scale(outColor, 0.35 + 0.65 * abs(cos(phase * 360.0)));
+				// One dip per transition, at the halfway point. abs(cos(x*360))
+				// gave TWO dips per cycle and neither of them lined up with
+				// the colour change they were supposed to be hiding.
+				outColor = GITD_Palette.Scale(outColor, 0.35 + 0.65 * abs(cos(phase * 180.0)));
 				break;
 			}
 		}
