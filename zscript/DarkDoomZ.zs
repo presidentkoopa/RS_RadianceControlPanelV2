@@ -69,6 +69,34 @@ class DarkDoomZ_Handler : EventHandler {
 		}
 
 		ApplyLightLevels();
+
+		// [GITD] KILL THE MUZZLE FLASH BRIGHTENING.
+		//
+		// Vanilla Doom raises player.extralight while a weapon is in its flash
+		// state, which lifts the light level of the WHOLE VIEW. Firing
+		// continuously keeps re-entering that state, so it never decays -- the
+		// scene just sits brighter for as long as you hold the trigger, which
+		// is why it looked like it "stopped after 30 shots" when what actually
+		// stopped was the ammo.
+		//
+		// It is invisible in a normally lit game and enormous here: going from
+		// near-black to lit is a far bigger jump than from lit to lighter, so
+		// the darker the mod makes the level the more the flash wrecks it.
+		//
+		// Nothing in the engine gates it, so it is zeroed here every tic.
+		//
+		// INT_MIN IS LEFT ALONE. The renderer uses that exact value as the
+		// sentinel for the inverse colormap -- hw_drawinfo.cpp:339 -- so
+		// clobbering it would break the invulnerability sphere.
+		let nf = CVar.FindCVar("gitd_dd_noflash");
+		if (!nf || nf.GetBool())
+		{
+			for (int i = 0; i < MAXPLAYERS; i++)
+			{
+				if (!playeringame[i]) continue;
+				if (players[i].extralight > 0) players[i].extralight = 0;
+			}
+		}
 	}
 
 	override void PlayerEntered(PlayerEvent e) {

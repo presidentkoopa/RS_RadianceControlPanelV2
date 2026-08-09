@@ -423,3 +423,8 @@ server int  gitd_neon_kc_place  = 0;   // 0 flat on the ground, 1 above the corp
 server int  gitd_neon_kc_linger = 0;   // 0 close again, 1 fade out, 2 stay put
 server int  gitd_neon_kc_digits = 4;   // zero-padded width, so it does not
                                        // change size as it counts
+
+// Suppress vanilla's muzzle-flash view brightening (player.extralight). ON by
+// default: it is barely noticeable in a lit game and ruins a dark one, since
+// near-black to lit is a far larger jump than lit to lighter.
+server bool gitd_dd_noflash = true;

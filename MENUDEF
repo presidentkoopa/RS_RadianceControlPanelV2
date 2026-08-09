@@ -284,6 +284,11 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	Submenu "Flashlight Options",	"GITDFlashlight"
 	StaticText ""
+	Option "No muzzle flash glow",	"gitd_dd_noflash", "OnOff"
+	StaticText "Vanilla brightens the whole view while", darkgray
+	StaticText "a weapon fires. Unnoticeable when lit,", darkgray
+	StaticText "ruinous in the dark.", darkgray
+	StaticText ""
 	Option "Darkness mode",			"ddz_mode", "GITDDarkMode"
 	Option "How dark",				"ddz_preset", "GITDDarkLevel"
 	StaticText "Classic DarkDoom modes ignore", darkgray
