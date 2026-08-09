@@ -786,13 +786,7 @@ class GITD_Ambush : GITD_Setpiece
 			if (!mon.TestMobjLocation()) { mon.Destroy(); continue; }
 
 			// It is an ambush: it arrives knowing where you are.
-			// The standing ring exists only while the HOLD does. EndWall is
-		// idempotent, so calling it on every non-HOLD tic is the simplest
-		// way to cover victory, abandonment, timers, leashes and aborts
-		// with one line.
-		if (ph != GITD_Ambush.APH_HOLD) amb.EndWall();
-
-		let pmo = players[consoleplayer].mo;
+			let pmo = players[consoleplayer].mo;
 			if (pmo && mon.bISMONSTER)
 			{
 				mon.target = pmo;
@@ -1078,6 +1072,12 @@ class GITD_AmbushControl : EventHandler
 			return;
 		}
 
+		// The standing ring exists only while the HOLD does. EndWall is
+		// idempotent, so calling it on every non-HOLD tic (IN or OUT, since
+		// IDLE already returned above) is the simplest way to cover victory,
+		// abandonment, timers, leashes and aborts with one line.
+		if (ph != GITD_Ambush.APH_HOLD) amb.EndWall();
+
 		let pmo = players[consoleplayer].mo;
 
 		// Death ends it bluntly, whatever phase it was in. A death screen
@@ -1108,7 +1108,11 @@ class GITD_AmbushControl : EventHandler
 		{
 			double ang = VectorAngle(pmo.pos.x - amb.aOrigin.x,
 			                         pmo.pos.y - amb.aOrigin.y);
-			if (abs(deltaangle(ang, amb.gapAngle)) <= gapDeg * 0.5)
+			// deltaangle is an ACTOR method, not a global function -- the
+			// engine registers it that way (vmthunks_actors.cpp even asks
+			// "should this be global?" next to the definition, and answers
+			// no). Called on pmo, which is already in scope here.
+			if (abs(pmo.deltaangle(ang, amb.gapAngle)) <= gapDeg * 0.5)
 			{
 				Console.Printf("\c[Gold]GITD ambush: you slipped the break. It lets you go.");
 				amb.BeginRevert();
