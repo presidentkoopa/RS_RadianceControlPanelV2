@@ -389,16 +389,22 @@ class GITD_Handler : StaticEventHandler
 
 	override void WorldLoaded(WorldEvent e)
 	{
-		// Turn bloom on the first time this mod is ever loaded. gl_bloom is
-		// archived and ships off, so a fresh default alone never reaches
-		// anyone who has run the engine before -- and without bloom the glow
-		// looks flat and wrong out of the box. Done once, so if you turn it
-		// off later it stays off.
-		if (!CVar.FindCVar("gitd_bloom_forced").GetBool())
-		{
-			CVar.FindCVar("gl_bloom").SetInt(1);
-			CVar.FindCVar("gitd_bloom_forced").SetInt(1);
-		}
+		// BLOOM IS NO LONGER FORCED HERE, and taking it out was not a tidy-up
+		// -- it was fatal. Setting an engine cvar from play scope throws
+		// "Attempt to change CVAR 'gl_bloom' outside of menu code", which
+		// ABORTS THIS ENTIRE FUNCTION. Everything below never ran: no lanes,
+		// no map centre, no sweep. GITD was loading and then silently doing
+		// nothing whatsoever.
+		//
+		// The premise had expired too. This existed because gl_bloom shipped
+		// OFF, so a fresh default could never reach anyone who had already run
+		// the engine. On this engine it ships ON --
+		// hw_postprocess_cvars.cpp: CVAR(Bool, gl_bloom, true, CVAR_ARCHIVE)
+		// -- so the block was fighting for something it had already been
+		// given, and killing the mod to do it.
+		//
+		// gitd_bloom_forced stays declared and unused, so an existing config
+		// carrying it does not start logging an unknown cvar.
 
 		overridden.Clear();
 
