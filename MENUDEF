@@ -291,6 +291,9 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	Option "Darkness mode",			"ddz_mode", "GITDDarkMode"
 	Option "How dark",				"ddz_preset", "GITDDarkLevel"
+	Slider "Colour drain",			"ddz_desat", 0, 255, 15, 0
+	StaticText "Colour vision fails in low light --", darkgray
+	StaticText "draining it reads as dark, not just dim.", darkgray
 	StaticText "Classic DarkDoom modes ignore", darkgray
 	StaticText "the darkness level above", darkgray
 	StaticText ""

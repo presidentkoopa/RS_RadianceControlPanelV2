@@ -428,3 +428,8 @@ server int  gitd_neon_kc_digits = 4;   // zero-padded width, so it does not
 // default: it is barely noticeable in a lit game and ruins a dark one, since
 // near-black to lit is a far larger jump than lit to lighter.
 server bool gitd_dd_noflash = true;
+
+// Desaturation applied with the darkness tint, 0-255. Colour vision fails at
+// low light, so draining saturation as the level darkens reads as genuinely
+// dark rather than merely dim. 0 keeps full colour.
+server int ddz_desat = 0;

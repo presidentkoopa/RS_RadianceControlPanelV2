@@ -68,6 +68,8 @@ class DarkDoomZ_Handler : EventHandler {
 			while (effect = Lighting(it.Next())) { effect.Destroy(); }
 		}
 
+		ApplyDarkness();
+
 		// PER-TIC REASSERT REVERTED. It fought Doom's own Lighting thinkers --
 		// blink, flicker, glow, strobe write their sector every tic from their
 		// own state, and this wrote the darkened snapshot every tic on top.
@@ -146,7 +148,9 @@ class DarkDoomZ_Handler : EventHandler {
 			OldMinLight != MinLight);
 
 		if (changed) {
-			ApplyLightLevels();
+			// ApplyLightLevels is deliberately NOT called any more -- see
+			// ApplyDarkness. Kept below only so an older save or a mode that
+			// wants the legacy behaviour has something to call.
 			ApplyFog();
 		}
 		OldMode = Mode;
@@ -156,6 +160,73 @@ class DarkDoomZ_Handler : EventHandler {
 		OldSkyMode = SkyMode;
 		OldFogDensity = FogDensity;
 		OldMinLight = MinLight;
+	}
+
+	//========================================================================
+	// DARKNESS BY TINT, NOT BY LIGHT LEVEL.
+	//
+	// This used to rewrite every sector's LightLevel. That is the same field
+	// Doom's own Lighting thinkers write -- blink, flicker, glow, strobe --
+	// so the two fought over one number. Apply once and the thinkers win
+	// permanently, leaving lit sectors in a dark level. Apply every tic and
+	// they alternate, and the walls strobe. There is no version of writing
+	// that field that is not a fight.
+	//
+	// Sector COLOR is a different field entirely. It multiplies the sector's
+	// rendering and NOTHING else writes it -- not the thinkers, not the
+	// playsim. So it can be reasserted every tic forever without a conflict.
+	//
+	// It is also better behaviour, not just safer: a flickering sector keeps
+	// flickering, because the thinker still moves LightLevel and the tint
+	// scales whatever it produces. The old approach flattened those effects
+	// by overwriting them; this one dims them.
+	//========================================================================
+
+	bool restoredLevels;
+
+	void ApplyDarkness() {
+		// One-time repair. Any level whose LightLevel this mod already
+		// stamped on stays wrong until it is put back, and the tint would
+		// then be multiplying an already-damaged number.
+		if (!restoredLevels) {
+			restoredLevels = true;
+			for (int i = 0; i < BaseLightLevels.Size() && i < Level.Sectors.Size(); i++)
+				Level.Sectors[i].LightLevel = BaseLightLevels[i];
+		}
+
+		double m = DarknessMul();
+		int desat = clamp(ddz_desat, 0, 255);
+
+		for (int i = 0; i < Level.Sectors.Size(); i++) {
+			double mm = m;
+			bool sky = (Level.Sectors[i].GetTexture(0) == skyflatnum ||
+						Level.Sectors[i].GetTexture(1) == skyflatnum);
+			// SkyMode scaled the ADJUSTMENT before; here it scales how much
+			// darkening the sky receives, which is the same intent.
+			if (sky) mm = 1.0 - (1.0 - m) * SkyMode;
+
+			int v = clamp(int(mm * 255.0), 0, 255);
+			Level.Sectors[i].SetColor(Color(255, v, v, v), desat);
+		}
+	}
+
+	// The old mode zoo -- subtract, compress, clamp, gamma -- existed because
+	// there was no multiply available. There is one now, so every mode
+	// collapses into "how much light survives", which is the only thing any
+	// of them was ever expressing.
+	double DarknessMul() {
+		if (!CVar.FindCVar("gitd_dd_enabled").GetBool()) return 1.0;
+
+		switch (ddz_mode) {
+			case 0:  return 1.0;
+			case 10: return 0.62;   // DarkDoom Lite
+			case 11: return 0.45;   // DarkDoom Classic
+			case 12: return 0.16;   // DarkDoom Black
+		}
+		// Modes 1-4 all read the preset; the curves differed only in shape and
+		// every one of them bottomed out at the same place.
+		double t = clamp(ddz_preset, 0, 8) / 8.0;
+		return clamp(1.0 - t * 0.92, 0.06, 1.0);
 	}
 
 	// Fog only moves when a setting moves, so it stays off the per-tic path.
