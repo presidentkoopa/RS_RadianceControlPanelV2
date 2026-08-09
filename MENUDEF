@@ -234,7 +234,13 @@ OptionMenu "GITDNeon"
 	StaticText "Reach above 1 does nothing -- past the", darkgray
 	StaticText "atlas spread there is no glow left to draw.", darkgray
 	StaticText ""
-	StaticText "Kill Counter", gold
+	StaticText "Readouts", gold
+	StaticText ""
+	StaticText "The engine draws numbers in the world.", darkgray
+	StaticText "These decide which numbers exist.", darkgray
+	StaticText ""
+	Option "Damage numbers",		"gitd_neon_damage", "OnOff"
+	StaticText "Overhead and brief, always.", darkgray
 	StaticText ""
 	Option "Kill counter",			"gitd_neon_killcount", "OnOff"
 	Option "Where",					"gitd_neon_kc_place", "GITDNeonPlace"

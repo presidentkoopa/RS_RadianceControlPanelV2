@@ -412,7 +412,10 @@ server float gitd_neon_glow_reach     = 0.6;
 server float gitd_neon_glow_strength  = 0.75;
 
 // Kill counter. Off by default -- it is a readout, not everyone wants one.
+// Readouts. Each is a different SOURCE feeding the same display -- the engine
+// draws numbers, these decide which numbers exist.
 server bool gitd_neon_killcount = false;
+server bool gitd_neon_damage    = false;   // damage numbers on hit, overhead, brief
 server int  gitd_neon_kc_place  = 0;   // 0 flat on the ground, 1 above the corpse.
                                        // Either, never both. A stale 2 reads as 0.
 server int  gitd_neon_kc_linger = 0;   // 0 close again, 1 fade out, 2 stay put

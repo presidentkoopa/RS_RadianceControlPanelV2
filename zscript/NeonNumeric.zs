@@ -277,6 +277,34 @@ class GITD_NeonKillCounter : EventHandler
 		bid.Clear(); bage.Clear(); blife.Clear();
 	}
 
+	// How much clear floor there is around a point, in map units.
+	//
+	// A flat badge is a QUAD, so it pokes through a wall it overlaps. GITD's
+	// original could not do that -- it was painted into the floor's own
+	// pixels, so it simply stopped at the floor's edge. It also never climbed
+	// walls: the badge lives in the shader's flats-only branch and a wall gets
+	// an entirely different pattern. So the faithful behaviour is to FIT the
+	// floor, not to wrap onto anything.
+	//
+	// Eight directions rather than four because the badge is camera-facing
+	// even when flat -- its footprint rotates as the player moves, so the
+	// clearance has to hold at any angle. The half-DIAGONAL is what gets
+	// clamped, for the same reason.
+	private static double Clearance(Actor from, double want)
+	{
+		if (from == null) return want;
+		double nearest = want;
+		for (int i = 0; i < 8; i++)
+		{
+			FLineTraceData d;
+			if (from.LineTrace(i * 45.0, want, 0, 0, 8, 0, 0, d))
+			{
+				if (d.Distance < nearest) nearest = d.Distance;
+			}
+		}
+		return nearest;
+	}
+
 	private void Spawn13(Vector3 pos, double w, double h, double tilt, int num, bool big)
 	{
 		int id = level.AddBillboardPersistent(pos, w, h, 0, tilt,
@@ -347,6 +375,42 @@ class GITD_NeonKillCounter : EventHandler
 		}
 	}
 
+	// DAMAGE NUMBERS -- the second readout, and the reason this is an engine
+	// rather than a kill counter. Same display, different source: what the
+	// number MEANS is the only thing that changes.
+	//
+	// Always overhead and always brief. A damage number on the floor would be
+	// a permanent mark for a transient event, and one that lingers turns a
+	// firefight into a wall of digits.
+	override void WorldThingDamaged(WorldEvent e)
+	{
+		let cv = CVar.FindCVar('gitd_neon_damage');
+		if (!cv || !cv.GetBool() || !GITD_Neon.Enabled()) return;
+		if (e.Thing == null || !e.Thing.bISMONSTER || e.Damage <= 0) return;
+		// Only what the player did. Infighting is not feedback.
+		if (e.DamageSource == null || !(e.DamageSource is "PlayerPawn")) return;
+
+		string txt = String.Format("%d", e.Damage);
+		Vector3 p = e.Thing.pos + (
+			frandom(-6, 6), frandom(-6, 6),
+			e.Thing.Height * 0.7 + frandom(0, 10));
+
+		if (GITD_Neon.IsWG13())
+		{
+			double w, h;
+			[w, h] = GITD_Neon.BadgeSize(txt.Length(), false);
+			int id = level.AddBillboardPersistent(p, w * 0.7, h * 0.7, 0, 0,
+				LevelLocals.BBF_CAMERAYAW, LevelLocals.BB_WG13, e.Damage,
+				GITD_Neon.MenuColor(), 0, 0);
+			if (id != 0)
+			{
+				level.SetBillboardProgress(id, 0.05);
+				bid.Push(id); bage.Push(0); blife.Push(30);
+			}
+		}
+		else GITD_Neon.Pop(p, txt);
+	}
+
 	override void WorldThingDied(WorldEvent e)
 	{
 		if (!Running()) return;
@@ -367,7 +431,20 @@ class GITD_NeonKillCounter : EventHandler
 			[w, h] = GITD_Neon.BadgeSize(txt.Length(), big);
 
 			if (place == 0)
+			{
+				// Shrink to whatever clear floor exists. Uniform on both axes
+				// so the lozenge keeps its proportions -- squashing one axis to
+				// fit would distort the digits, which is worse than a smaller
+				// badge.
+				double halfDiag = sqrt(w * w + h * h) * 0.5;
+				double room = Clearance(e.Thing, halfDiag);
+				if (room < halfDiag && halfDiag > 0)
+				{
+					double k = room / halfDiag;
+					w *= k; h *= k;
+				}
 				Spawn13((e.Thing.pos.x, e.Thing.pos.y, e.Thing.floorz + 4), w, h, 90, kills, big);
+			}
 			else
 				Spawn13(e.Thing.pos + (0, 0, e.Thing.Height + 12), w, h, 0, kills, big);
 			return;
