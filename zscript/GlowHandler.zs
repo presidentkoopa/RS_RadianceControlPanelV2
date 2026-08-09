@@ -434,10 +434,30 @@ class GITD_Handler : StaticEventHandler
 		fg = new("GITD_Lane"); fg.Init("gitd_fg", 3);
 
 		ComputeMapCentre();
+		CaptureSweepBase();
 		sweepPos = 0;
 		sweepDir = 1;
 		sweepOrigin = (mapCentre.x, mapCentre.y, 0);
 		Apply();
+	}
+
+	// [GITD] The sweep's brighten/darken modes used to do
+	//     sec.SetLightLevel(sec.lightlevel + delta)
+	// -- reading the LIVE value and adding to it, every tic, with no baseline
+	// and no restore. A sector under a band saturated to 255 in about four
+	// tics and stayed there for the rest of the map. It read as the level
+	// slowly corrupting rather than as an effect, and reloading was the only
+	// way back.
+	//
+	// Snapshot once, then always write base +/- delta, and put sectors back to
+	// base when no band is over them.
+	Array<int> sweepBase;
+
+	void CaptureSweepBase()
+	{
+		sweepBase.Clear();
+		for (int i = 0; i < level.Sectors.Size(); i++)
+			sweepBase.Push(level.Sectors[i].lightlevel);
 	}
 
 	void ComputeMapCentre()
@@ -672,19 +692,29 @@ class GITD_Handler : StaticEventHandler
 				if (d < nearest) { nearest = d; nearestBand = b; }
 			}
 
-			if (nearestBand < 0 || nearest > thickness * 3.0) continue;
+			if (nearestBand < 0 || nearest > thickness * 3.0)
+			{
+				// Out of range: put it back rather than leaving whatever the
+				// band last stamped on it.
+				if ((lightMode == 1 || lightMode == 2) && i < sweepBase.Size())
+					sec.SetLightLevel(sweepBase[i]);
+				continue;
+			}
 
 			// Strength falls off with distance from the band, so the effect
 			// travels with it rather than switching on and off.
 			double strength = 1.0 - clamp(nearest / (thickness * 3.0), 0.0, 1.0);
 
+			// From the SNAPSHOT, never from the live value -- that is what
+			// stops it accumulating.
+			int base = (i < sweepBase.Size()) ? sweepBase[i] : sec.lightlevel;
 			if (lightMode == 1)
 			{
-				sec.SetLightLevel(clamp(sec.lightlevel + int(amount * strength), 0, 255));
+				sec.SetLightLevel(clamp(base + int(amount * strength), 0, 255));
 			}
 			else if (lightMode == 2)
 			{
-				sec.SetLightLevel(clamp(sec.lightlevel - int(amount * strength), 0, 255));
+				sec.SetLightLevel(clamp(base - int(amount * strength), 0, 255));
 			}
 			else if (lightMode == 3)
 			{

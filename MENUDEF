@@ -275,26 +275,42 @@ OptionMenu "GITDOptions"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Glow In The Dark"
 	StaticText ""
-	StaticText ""
-	Submenu "Numeric Violence Engine",	"GITDNeon"
-	StaticText ""
-	Option "Glow",					"gitd_enabled", "OnOff"
+
+	// DARKNESS FIRST, AND ALL OF IT ON THIS PAGE.
+	//
+	// It is the premise the rest of the mod sits on, and it is the one thing a
+	// player recalibrates constantly -- every WAD, every monitor, every room.
+	// Anything you move that often should not cost a navigation, so the whole
+	// DarkDoom set lives directly under its own master switch rather than
+	// behind a submenu.
 	Option "Darkness",				"gitd_dd_enabled", "OnOff"
-	StaticText ""
-	Submenu "Flashlight Options",	"GITDFlashlight"
-	StaticText ""
-	Option "No muzzle flash glow",	"gitd_dd_noflash", "OnOff"
-	StaticText "Vanilla brightens the whole view while", darkgray
-	StaticText "a weapon fires. Unnoticeable when lit,", darkgray
-	StaticText "ruinous in the dark.", darkgray
-	StaticText ""
-	Option "Darkness curve",		"ddz_mode", "GITDDarkMode"
-	Option "How dark",				"ddz_preset", "GITDDarkLevel"
-	Slider "Colour drain",			"ddz_desat", 0, 255, 15, 0
+	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
+	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
+	Slider "  Colour drain",		"ddz_desat", 0, 255, 15, 0
 	StaticText "Colour vision fails in low light --", darkgray
 	StaticText "draining it reads as dark, not just dim.", darkgray
-	StaticText "Classic DarkDoom modes ignore", darkgray
-	StaticText "the darkness level above", darkgray
+	Slider "  Sky brightness",		"ddz_skymode", 0.0, 1.0, 0.1, 1
+	Option "  Sector effects",		"ddz_lighting", "OnOff", "gitd_dd_enabled"
+	StaticText "Doom's own blinking and flickering lights.", darkgray
+	StaticText "Turning them OFF applies at once; ON needs", darkgray
+	StaticText "a map reload, since a destroyed thinker", darkgray
+	StaticText "cannot be brought back.", darkgray
+	Option "  $GLPREFMNU_FOGMODE",	gl_fogmode, "FogMode"
+	Slider "  Fog thickness",		"ddz_fog", 0, 512, 8, 0
+	Option "  No muzzle flash glow","gitd_dd_noflash", "OnOff"
+	StaticText "Vanilla brightens the whole view while a", darkgray
+	StaticText "weapon fires. Unnoticeable when lit,", darkgray
+	StaticText "ruinous in the dark.", darkgray
+	StaticText ""
+
+	Option "Flashlight",			"fl_enabled", "OnOff"
+	Submenu "  Flashlight settings","GITDFlashlight"
+	StaticText ""
+
+	Submenu "Numbers and readouts",	"GITDNeon"
+	StaticText ""
+
+	Option "Glow",					"gitd_enabled", "OnOff"
 	StaticText ""
 	StaticText "Presets", gold
 	StaticText ""
@@ -317,7 +333,6 @@ OptionMenu "GITDOptions"
 	Submenu "Sector Sweep Options","GITDSweep"
 	StaticText ""
 	Submenu "Bloom Options",		"GITDBloom"
-	Submenu "Darkness Options",		"DarkDoomZ_Settings"
 }
 
 // ---------------------------------------------------------------------------
@@ -399,6 +414,7 @@ OptionMenu "GITDFlashlight"
 	Title "Flashlight"
 	StaticText ""
 	Option "Enabled",				"fl_enabled", "OnOff"
+	Control "Toggle key",			"ddz_toggleflashlight"
 	Option "Mounted on",			"fl_mount", "GITDFLMount"
 	StaticText "Hand mounts follow that hand's own tracking", darkgray
 	StaticText ""
@@ -449,6 +465,16 @@ OptionMenu "GITDFlashlight"
 	Slider "Beam quality",			"vol_beam_quality", 8, 64, 4, 0
 	StaticText "Samples along the beam. Lower is cheaper and", darkgray
 	StaticText "grainier, not dimmer.", darkgray
+
+	StaticText ""
+	StaticText "Shadows", gold
+	StaticText "OFF by default in the engine, which is why", darkgray
+	StaticText "the beam lights things through walls.", darkgray
+	Option "Ray-traced shadows",	"vk_raytrace", "OnOff"
+	StaticText "Pixel accurate. Vulkan only, and needs a", darkgray
+	StaticText "restart -- it rebuilds the render device.", darkgray
+	Option "Shadow maps",			"gl_light_shadowmap", "OnOff"
+	Option "Shadow map detail",		"gl_shadowmap_quality", "GITDShadowQual"
 }
 
 // ---------------------------------------------------------------------------
@@ -807,67 +833,6 @@ OptionMenu "GITDFloorAdv"
 // glow is added on top, so floor and ceiling glow stay visible even in a
 // room this has crushed to near black.
 // ---------------------------------------------------------------------------
-
-OptionMenu "DarkDoomZ_Settings"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Darkness & Flashlight"
-	StaticText " "
-	Submenu "Advanced Settings",	"DarkDoomZ_Advanced_Settings"
-	Submenu "Fog Settings",			"DarkDoomZ_Fog_Settings"
-	Submenu "Flashlight Settings",	"DarkDoomZ_Flashlight_Settings"
-}
-
-OptionMenu "DarkDoomZ_Advanced_Settings"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Advanced Settings"
-	StaticText " "
-	StaticText "Adjust initial and final light levels.", darkgray
-	StaticText " "
-	StaticText "Clamps darkest lightlevel to this minimum.", darkgray
-	StaticText " "
-	Slider "Sky Sectors",			"ddz_skymode", 0.0, 1.0, 0.1, 1
-	StaticText "Whether adjustment applies to sky", darkgray
-	StaticText "sectors. Some skyboxes may still", darkgray
-	StaticText "be affected.", darkgray
-	StaticText " "
-	Option "Sector Effects",		"ddz_lighting", "OnOff"
-	StaticText "Sector light effects such as flickering", darkgray
-	StaticText "or pulsing. Requires reloading the map.", darkgray
-}
-
-OptionMenu "DarkDoomZ_Fog_Settings"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Fog Settings"
-	StaticText " "
-	Option "$GLPREFMNU_FOGMODE",	gl_fogmode, "FogMode"
-	Slider "Fog Density",			"ddz_fog", 0, 512, 8, 0
-}
-
-OptionMenu "DarkDoomZ_Flashlight_Settings"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Flashlight Settings"
-	StaticText " "
-	Control "Toggle Key",			"ddz_toggleflashlight"
-
-	StaticText ""
-	StaticText "Shadows", gold
-	StaticText ""
-	StaticText "OFF by default in the engine, which is why", darkgray
-	StaticText "the beam lights things through walls.", darkgray
-	StaticText ""
-	Option "Ray-traced shadows",	"vk_raytrace", "OnOff"
-	StaticText "Pixel accurate. Vulkan only, and needs a", darkgray
-	StaticText "restart -- it rebuilds the render device.", darkgray
-	StaticText ""
-	Option "Shadow maps",			"gl_light_shadowmap", "OnOff"
-	Option "Shadow map detail",		"gl_shadowmap_quality", "GITDShadowQual"
-	StaticText "Cheaper than ray tracing and blockier.", darkgray
-	StaticText "Use one or the other, not both.", darkgray
-}
 
 AddOptionMenu "OptionsMenu"
 {
