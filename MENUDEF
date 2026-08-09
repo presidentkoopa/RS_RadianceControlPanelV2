@@ -157,11 +157,59 @@ OptionValue "Nice_Flashlight_Position"
 // adjusting while you adjust it.
 // ---------------------------------------------------------------------------
 
+OptionValue "GITDNeonStyle"
+{
+	0, "Font (typeface)"
+	1, "LED segments"
+	2, "LCD segments (punched)"
+}
+
+// ---------------------------------------------------------------------------
+// NEON NUMERIC ENGINE
+//
+// In-world text and numbers -- floating, or burned into the floor. The three
+// styles are three engine payloads, but a player only ever meets one setting.
+//
+// The segment styles ship no font at all: their glyphs are built from
+// arithmetic in the shader, so they stay exact at any size and cannot break
+// from a bad asset. The font style reads an SDF atlas and can be any typeface.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDNeon"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Neon Numeric Engine"
+	StaticText ""
+	Option "Numbers and text",		"gitd_neon_enabled", "OnOff"
+	StaticText ""
+	Option "Style",					"gitd_neon_style", "GITDNeonStyle"
+	StaticText "Segment styles need no font file.", darkgray
+	StaticText "Font style uses the SDF atlas.", darkgray
+	StaticText ""
+	StaticText "Look", gold
+	StaticText ""
+	ColorPicker "Default colour",	"gitd_neon_color"
+	StaticText "Only a fallback -- a mod that knows", darkgray
+	StaticText "what a number means passes its own.", darkgray
+	StaticText ""
+	Slider "Size",					"gitd_neon_scale", 0.25, 4.0, 0.25, 2
+	Slider "Time on screen",		"gitd_neon_life", 0.2, 15.0, 0.1, 1
+	StaticText ""
+	StaticText "Glow", gold
+	StaticText ""
+	Slider "Reach",					"gitd_neon_glow_reach", 0.0, 1.0, 0.05, 2
+	Slider "Strength",				"gitd_neon_glow_strength", 0.0, 1.0, 0.05, 2
+	StaticText "Reach above 1 does nothing -- past the", darkgray
+	StaticText "atlas spread there is no glow left to draw.", darkgray
+}
+
 OptionMenu "GITDOptions"
 {
 	Class "DarkDoomZ_OptionMenu"
 	Title "Glow In The Dark"
 	StaticText ""
+	StaticText ""
+	Submenu "Neon Numeric Engine Options",	"GITDNeon"
 	StaticText ""
 	Option "Glow",					"gitd_enabled", "OnOff"
 	Option "Darkness",				"gitd_dd_enabled", "OnOff"

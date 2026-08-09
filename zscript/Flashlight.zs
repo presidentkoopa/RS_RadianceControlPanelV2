@@ -48,7 +48,13 @@ class GITD_Flashlight : Thinker
 
 		int count = clamp(CVar.FindCVar("fl_slots").GetInt(), 1, 8);
 		int which = (n % count) + 1;
-		return Color(CVar.FindCVar("fl_c" .. which).GetInt());
+		// Color(int) does NOT convert on this engine -- it compiles and then
+		// fails at load with "Return type Color mismatch with SInt4", which
+		// leaves this function returning nothing usable and the colour it was
+		// asked for silently unset. Build the Color from its bytes instead;
+		// that is unambiguous and needs no implicit conversion.
+		int packed = CVar.FindCVar("fl_c" .. which).GetInt();
+		return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
 	}
 
 	// One steady colour is the common case, so skip the whole transition

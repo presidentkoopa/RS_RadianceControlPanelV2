@@ -127,10 +127,13 @@ class GITD_Lane : Object
 
 		int count = clamp(GetInt("_slots"), 1, 8);
 		int which = (n % count) + 1;   // cvars are 1-based: _c1 .. _c8
-		// Color(int), not a bare int. A colour cvar stores a packed RGB
-		// integer, but ZScript will not implicitly convert SInt4 to Color
-		// -- the cast is what makes the return type match the declaration.
-		return Color(CVar.FindCVar(prefix .. "_c" .. which).GetInt());
+		// Color(int) does NOT convert on this engine -- it compiles and then
+		// fails at load with "Return type Color mismatch with SInt4", which
+		// leaves this function returning nothing usable and the colour it was
+		// asked for silently unset. Build the Color from its bytes instead;
+		// that is unambiguous and needs no implicit conversion.
+		int packed = CVar.FindCVar(prefix .. "_c" .. which).GetInt();
+		return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
 	}
 
 	// Advances this lane one tic and resolves its base colour and intensity.
@@ -536,7 +539,13 @@ class GITD_Handler : StaticEventHandler
 
 	Color SSBandColor(int i)
 	{
-		return Color(CVar.FindCVar("gitd_ss_c" .. (i + 1)).GetInt());
+		// Color(int) does NOT convert on this engine -- it compiles and then
+		// fails at load with "Return type Color mismatch with SInt4", which
+		// leaves this function returning nothing usable and the colour it was
+		// asked for silently unset. Build the Color from its bytes instead;
+		// that is unambiguous and needs no implicit conversion.
+		int packed = CVar.FindCVar("gitd_ss_c" .. (i + 1)).GetInt();
+		return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
 	}
 
 	void StepSectorSweep()
