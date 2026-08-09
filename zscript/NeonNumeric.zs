@@ -227,10 +227,18 @@ class GITD_NeonKillCounter : EventHandler
 	// capped without touching the ones still animating.
 	Array<int> perm;
 
+	// 0 flat on the ground, 1 player-facing above the corpse. EITHER, never
+	// both -- two badges for one kill is twice the clutter for no extra
+	// information, and the pair fight each other for attention.
+	//
+	// 2 used to mean "both". A config carrying it falls back to the ground
+	// rather than being clamped up to 1, because the ground is the placement
+	// the original had and the one that was asked for.
 	private static int Placement()
 	{
 		let cv = CVar.FindCVar('gitd_neon_kc_place');
-		return cv ? cv.GetInt() : 1;		// 0 floor, 1 above, 2 both
+		int v = cv ? cv.GetInt() : 0;
+		return (v == 1) ? 1 : 0;
 	}
 
 	private static bool Running()
@@ -358,16 +366,16 @@ class GITD_NeonKillCounter : EventHandler
 			double w, h;
 			[w, h] = GITD_Neon.BadgeSize(txt.Length(), big);
 
-			if (place == 0 || place == 2)
+			if (place == 0)
 				Spawn13((e.Thing.pos.x, e.Thing.pos.y, e.Thing.floorz + 4), w, h, 90, kills, big);
-			if (place == 1 || place == 2)
+			else
 				Spawn13(e.Thing.pos + (0, 0, e.Thing.Height + 12), w, h, 0, kills, big);
 			return;
 		}
 
 		// Flat on the ground where it fell. Still yaw-tracks the player, so it
 		// never reads upside down.
-		if (place == 0 || place == 2)
+		if (place == 0)
 		{
 			Vector3 p = (e.Thing.pos.x, e.Thing.pos.y, e.Thing.floorz + 4);
 			double w, h;
@@ -378,7 +386,7 @@ class GITD_NeonKillCounter : EventHandler
 		}
 
 		// In the air over the corpse.
-		if (place == 1 || place == 2)
+		else
 		{
 			Vector3 p = e.Thing.pos + (0, 0, e.Thing.Height + 12);
 			GITD_Neon.Pop(p, txt);

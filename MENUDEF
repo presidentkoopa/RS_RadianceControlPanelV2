@@ -170,9 +170,8 @@ OptionValue "GITDNeonLinger"
 
 OptionValue "GITDNeonPlace"
 {
-	0, "On the floor"
+	0, "Flat on the ground"
 	1, "Above the corpse"
-	2, "Both"
 }
 
 OptionValue "GITDNeonDigits"
