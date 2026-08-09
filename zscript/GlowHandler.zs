@@ -102,6 +102,17 @@ class GITD_Lane : Object
 	Color outColor;
 	double outIntensity;
 
+	// AnimFactor's settings, resolved once per tic in Step(). They used to be
+	// looked up inside AnimFactor itself, which runs per SECTOR -- and every
+	// lookup built the cvar name by string concatenation first, so the mod's
+	// DEFAULT mode (lanes on, sweep off) was doing four to twenty
+	// string-built CVar.FindCVar calls per sector per tic. Tens of thousands
+	// of allocations and hash lookups a tic to fetch five numbers that cannot
+	// change between sectors. This is the same disease PrepareWave already
+	// cured for the sweep, and the same cure.
+	int animMode;
+	double animLength, animDepth, animSharp, animPhase;
+
 	void Init(string p, int idx)
 	{
 		prefix = p;
@@ -210,6 +221,14 @@ class GITD_Lane : Object
 		outColor = GITD_Palette.Saturate(outColor, GetFloat("_saturation"));
 		outIntensity = GetFloat("_intensity");
 
+		// The per-sector loop reads these as plain fields. The clamps live
+		// here so they run once, not once per sector.
+		animMode   = GetInt("_anim");
+		animLength = max(GetFloat("_anim_length"), 1.0);
+		animDepth  = clamp(GetFloat("_anim_depth"), 0.0, 1.0);
+		animSharp  = max(GetFloat("_anim_sharp"), 1.0);
+		animPhase  = GetFloat("_anim_phase");
+
 		animClock = (animClock + GetFloat("_anim_speed") / 35.0) % 1.0;
 	}
 
@@ -218,29 +237,26 @@ class GITD_Lane : Object
 	// the map rather than everything pulsing together. Sharpness narrows
 	// that crest -- at 1 it is a smooth wave, high values give the EKG
 	// spike through an otherwise dark lane.
+	// Reads only fields Step() resolved this tic -- this runs per sector, and
+	// per-sector cvar lookups were the single largest cost in the whole mod.
 	double AnimFactor(Sector sec, Vector2 mapCentre)
 	{
-		int mode = GetInt("_anim");
-		if (mode == 0) return 1.0;
-
-		double wavelength = max(GetFloat("_anim_length"), 1.0);
-		double depth = clamp(GetFloat("_anim_depth"), 0.0, 1.0);
-		double sharp = max(GetFloat("_anim_sharp"), 1.0);
+		if (animMode == 0) return 1.0;
 
 		Vector2 c = sec.centerspot;
 		double dist;
-		if (mode == 1)      dist = (c - mapCentre).Length();
-		else if (mode == 2) dist = c.x;
-		else if (mode == 3) dist = c.y;
-		else                dist = sec.floorplane.ZatPoint(c);   // travels by height
+		if (animMode == 1)      dist = (c - mapCentre).Length();
+		else if (animMode == 2) dist = c.x;
+		else if (animMode == 3) dist = c.y;
+		else                    dist = sec.floorplane.ZatPoint(c);   // travels by height
 
-		double ph = (animClock + GetFloat("_anim_phase") - dist / wavelength) % 1.0;
+		double ph = (animClock + animPhase - dist / animLength) % 1.0;
 		if (ph < 0) ph += 1.0;
 
 		double wave = 0.5 + 0.5 * sin(ph * 360.0);
-		if (sharp > 1.0) wave = wave ** sharp;   // narrows the crest into a streak
+		if (animSharp > 1.0) wave = wave ** animSharp;   // narrows the crest into a streak
 
-		return (1.0 - depth) + depth * wave;
+		return (1.0 - animDepth) + animDepth * wave;
 	}
 }
 
