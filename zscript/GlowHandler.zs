@@ -402,16 +402,11 @@ class GITD_Handler : StaticEventHandler
 	Array<int> overridden;
 	Vector2 mapCentre;
 
-	// Sweep: where the band currently sits, and which way it is going.
-	double sweepPos;
-	int sweepDir;
-	Vector3 sweepOrigin;
-
-	// A pass is "running" whenever the bands should be moving. Under the
-	// continuous trigger that is always; under an event trigger it is only
-	// between the event and the far end of the range, which is what turns
-	// the sweep from wallpaper into punctuation.
-	bool ssRunning;
+	// Every live wave. The cvar-driven sweep is waves[0] and is rebuilt from
+	// the cvars each tic; everything a script fires joins the same list. See
+	// the Waves section below for why the eight-band shader limit does not
+	// cap this.
+	Array<GITD_Wave> waves;
 
 	// What the world last did, remembered so an origin can point at it.
 	Vector3 lastShotPos, lastKillPos;
@@ -424,14 +419,6 @@ class GITD_Handler : StaticEventHandler
 	// instead of snapping off the moment the band clears it.
 	Array<double> sonarGlow;
 
-	// Set by GITD_Sweep.Fire -- a one-shot wave from a script that takes
-	// precedence over the cvar-driven sweep until it finishes.
-	bool ssScripted;
-	Vector3 ssScriptOrigin;
-	int ssScriptShape, ssScriptBands, ssScriptFx;
-	Color ssScriptColor;
-	double ssScriptSpeed, ssScriptRange, ssScriptThick, ssScriptTrail;
-	GITD_SweepAction ssScriptAction;
 
 	// Anything a mod hangs off the wavefront.
 	Array<GITD_SweepEffect> ssEffects;
@@ -470,9 +457,6 @@ class GITD_Handler : StaticEventHandler
 		fg = new("GITD_Lane"); fg.Init("gitd_fg", 3);
 
 		ComputeMapCentre();
-		sweepPos = 0;
-		sweepDir = 1;
-		sweepOrigin = (mapCentre.x, mapCentre.y, 0);
 
 		// Effects are dropped on every map load ON PURPOSE. An effect that
 		// survived the transition would be holding Sectors and Actors from a
@@ -481,11 +465,11 @@ class GITD_Handler : StaticEventHandler
 		ssEffects.Clear();
 		ssActName.Clear();
 		ssActObj.Clear();
-		ssScripted = false;
-		ssScriptAction = null;
+		waves.Clear();
+		ambient = null;
+		nextWaveId = 0;
 		haveShot = false; haveKill = false; lastAttackDown = false;
 		lastSecrets = level.found_secrets;
-		ssRunning = (CVar.FindCVar("gitd_ss_trigger").GetInt() == 0);
 		sonarGlow.Clear();
 		for (int i = 0; i < level.Sectors.Size(); i++) sonarGlow.Push(0.0);
 
@@ -527,13 +511,22 @@ class GITD_Handler : StaticEventHandler
 		SSCheckTriggers();
 		StepSectorSweep();
 
-		// Sector Sweep takes over while it is on: the point of it is a dark
-		// room with nothing in it but the travelling lines, so the lanes are
-		// cleared rather than left glowing underneath.
-		if (CVar.FindCVar("gitd_ss_enabled").GetBool() || ssScripted)
+		// A wave is live if ANY wave is -- a script can fire one with the
+		// ambient sweep switched off entirely, and it still has to run.
+		bool anyWave = false;
+		for (int i = 0; i < waves.Size(); i++)
 		{
+			let w = waves[i];
+			if (w && w.alive && w.running) { anyWave = true; break; }
+		}
+
+		if (anyWave)
+		{
+			// Sweep takes over from the lanes while it runs. The point of it
+			// is a dark room with nothing in it but the travelling lines, so
+			// leaving the lanes lit underneath would defeat it.
 			ClearAll();
-			if (ssRunning) ApplySectorSweepEffects();
+			ApplySectorSweepEffects();
 		}
 		else
 		{
@@ -614,44 +607,146 @@ class GITD_Handler : StaticEventHandler
 	// Each band trails the one before it by that band's gap, and -- if drift
 	// is on -- runs at its own slightly different speed, so a train that
 	// started evenly spaced slowly pulls apart and folds back together.
-	double SSBandPos(int i)
-	{
-		double speed = SSSpeed();
-		double lag = 0;
-		for (int g = 0; g < i; g++)
-			lag += CVar.FindCVar("gitd_ss_gap" .. (g + 1)).GetInt() * speed / 35.0;
+	// ---- Waves ----------------------------------------------------------
+	//
+	// There is one list. The cvar-driven sweep is a wave like any other -- it
+	// is rebuilt from the cvars each tic and marked ambient, which is the only
+	// thing that distinguishes it. Everything a script fires joins the same
+	// list, runs through the same per-sector and per-actor pass, and competes
+	// for the same eight GPU slots.
+	//
+	// This replaces the previous arrangement, where a scripted sweep HIJACKED
+	// the single sweep's state and the ambient one stopped existing for the
+	// duration. That could never support two waves at once, which is exactly
+	// what a setpiece wants: one wave laying the arena down while another
+	// walks behind it doing something else.
 
-		double drift = CVar.FindCVar("gitd_ss_drift").GetFloat();
-		return sweepPos * (1.0 + drift * i) - lag;
+	// A ceiling, not a design limit. Unlimited really means "until a runaway
+	// script has spawned so many that the per-sector pass is the frame time",
+	// and failing loudly at a round number beats dying mysteriously.
+	const MAX_WAVES = 64;
+
+	GITD_Wave ambient;
+	int nextWaveId;
+
+	GITD_Wave NewWave()
+	{
+		if (waves.Size() >= MAX_WAVES)
+		{
+			Console.Printf("\c[Red]GITD sweep: %d live waves, refusing more", MAX_WAVES);
+			return null;
+		}
+		let w = new("GITD_Wave");
+		w.id = ++nextWaveId;
+		w.alive = true;
+		w.running = true;
+		w.dir = 1;
+		w.subBands = 1;
+		w.subGap = 20;
+		w.softness = 2.0;
+		w.intensity = 1.4;
+		w.thickness = 24;
+		w.priority = 10;
+		w.visible = true;
+		waves.Push(w);
+		return w;
 	}
 
-	Color SSBandColor(int i)
+	GITD_Wave WaveById(int id)
 	{
-		if (ssScripted) return ssScriptColor;
+		for (int i = 0; i < waves.Size(); i++)
+			if (waves[i] && waves[i].id == id) return waves[i];
+		return null;
+	}
 
+	// By tag, MOST RECENT first. A setpiece sweeping back out shares its tag
+	// with the wave that swept it in, and if that one is still travelling the
+	// oldest-first answer is the wrong wave.
+	GITD_Wave FindWave(string tag)
+	{
+		for (int i = waves.Size() - 1; i >= 0; i--)
+			if (waves[i] && waves[i].tag == tag) return waves[i];
+		return null;
+	}
+
+	// ---- Per-band lookups -----------------------------------------------
+	//
+	// The ambient wave takes its colours, gaps and effects from the cvars, one
+	// per band. A scripted wave carries its own and uses them for every band.
+	// Keeping that difference here rather than inside GITD_Wave is what lets
+	// the wave object stay dumb.
+
+	// Resolve every per-band value for one wave, once for the tic. The inner
+	// loops below then read arrays instead of parsing cvar names per sector.
+	void PrepareWave(GITD_Wave w)
+	{
+		w.bandPos.Clear(); w.bandFx.Clear();
+		w.bandCol.Clear(); w.bandAct.Clear();
+		for (int i = 0; i < w.subBands; i++)
+		{
+			w.bandPos.Push(WaveBandPos(w, i));
+			w.bandFx.Push(WaveBandFx(w, i));
+			Color c = WaveBandColor(w, i);
+			w.bandCol.Push((c.r << 16) | (c.g << 8) | c.b);
+			w.bandAct.Push(WaveBandAction(w, i));
+		}
+	}
+
+	Color BandColor(GITD_Wave w, int i)
+	{
+		if (i < 0 || i >= w.bandCol.Size()) return Color(255, 0, 220, 255);
+		int p = w.bandCol[i];
+		return Color(255, (p >> 16) & 255, (p >> 8) & 255, p & 255);
+	}
+
+	int BandFx(GITD_Wave w, int i)
+	{
+		return (i >= 0 && i < w.bandFx.Size()) ? w.bandFx[i] : 0;
+	}
+
+	GITD_SweepAction BandAction(GITD_Wave w, int i)
+	{
+		return (i >= 0 && i < w.bandAct.Size()) ? w.bandAct[i] : null;
+	}
+
+	double WaveBandPos(GITD_Wave w, int i)
+	{
+		if (!w.ambient) return w.BandPos(i);
+		double lag = 0;
+		for (int g = 0; g < i; g++)
+			lag += CVar.FindCVar("gitd_ss_gap" .. (g + 1)).GetInt() * w.speed / 35.0;
+		return w.pos * (1.0 + w.drift * i) - lag;
+	}
+
+	Color WaveBandColor(GITD_Wave w, int i)
+	{
+		if (!w.ambient) return w.col;
 		// Color(int) does NOT convert on this engine -- it compiles and then
 		// fails at load with "Return type Color mismatch with SInt4", which
-		// leaves this function returning nothing usable and the colour it was
-		// asked for silently unset. Build the Color from its bytes instead;
-		// that is unambiguous and needs no implicit conversion.
+		// leaves this returning nothing usable and the colour silently unset.
 		int packed = CVar.FindCVar("gitd_ss_c" .. (i + 1)).GetInt();
 		return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
 	}
 
-	// What a given band does when it arrives. Per band, not per sweep: the
-	// whole point of eight of them is that they need not agree. Alternate
-	// darken and brighten down the train and the room breathes as it passes.
-	int SSBandFx(int i)
+	int WaveBandFx(GITD_Wave w, int i)
 	{
-		if (ssScripted) return ssScriptFx;
+		if (!w.ambient) return w.fx;
 		if (!CVar.FindCVar("gitd_ss_perband").GetBool())
 			return CVar.FindCVar("gitd_ss_light_mode").GetInt();
 		return CVar.FindCVar("gitd_ss_fx" .. (i + 1)).GetInt();
 	}
 
+	GITD_SweepAction WaveBandAction(GITD_Wave w, int i)
+	{
+		if (!w.ambient) return w.action;
+		if (!CVar.FindCVar("gitd_ss_perband").GetBool()) return null;
+		return GITD_SweepAction.Resolve(CVar.FindCVar("gitd_ss_script" .. (i + 1)).GetString());
+	}
+
+	// ---- The ambient wave, rebuilt from cvars ---------------------------
+
 	double SSSpeed()
 	{
-		if (ssScripted) return ssScriptSpeed;
 		double speed = CVar.FindCVar("gitd_ss_speed").GetFloat();
 
 		// Faster as you weaken. Nothing on screen says it, which is the
@@ -665,78 +760,28 @@ class GITD_Handler : StaticEventHandler
 			{
 				int maxh = pmo.GetMaxHealth(true);
 				if (maxh > 0)
-				{
-					double frac = clamp(double(pmo.health) / maxh, 0.0, 1.0);
-					speed *= 1.0 + hs * (1.0 - frac);
-				}
+					speed *= 1.0 + hs * (1.0 - clamp(double(pmo.health) / maxh, 0.0, 1.0));
 			}
 		}
 		return speed;
 	}
 
-	double SSRange()
+	Vector3 SSAmbientOrigin()
 	{
-		return ssScripted ? max(ssScriptRange, 1.0)
-		                  : max(CVar.FindCVar("gitd_ss_range").GetInt(), 1);
-	}
-
-	int SSShape()
-	{
-		return ssScripted ? ssScriptShape : CVar.FindCVar("gitd_ss_shape").GetInt();
-	}
-
-	int SSCount()
-	{
-		return ssScripted ? clamp(ssScriptBands, 1, 8)
-		                  : clamp(CVar.FindCVar("gitd_ss_count").GetInt(), 1, 8);
-	}
-
-	double SSThickness()
-	{
-		return ssScripted ? max(ssScriptThick, 1.0)
-		                  : max(CVar.FindCVar("gitd_ss_thickness").GetInt(), 1);
-	}
-
-	// The script bound to a band, if any. Looked up by class name so a band
-	// can be pointed at a script from a cvar, a preset, or a Fire() call
-	// without this file knowing that script exists.
-	GITD_SweepAction SSBandAction(int i)
-	{
-		if (ssScripted) return ssScriptAction;
-		if (!CVar.FindCVar("gitd_ss_perband").GetBool()) return null;
-		string nm = CVar.FindCVar("gitd_ss_script" .. (i + 1)).GetString();
-		return GITD_SweepAction.Resolve(nm);
-	}
-
-	// Where the bands are measured from.
-	void SSUpdateOrigin()
-	{
-		if (ssScripted) { sweepOrigin = ssScriptOrigin; return; }
-
 		int mode = CVar.FindCVar("gitd_ss_origin").GetInt();
 		let pmo = players[consoleplayer].mo;
 
-		if (mode == 2 && pmo)
-		{
-			sweepOrigin = pmo.pos;
-		}
-		else if (mode == 1)
+		if (mode == 2 && pmo) return pmo.pos;
+		if (mode == 1)
 		{
 			// Where you spawned. In E1M1 that is the door behind you, so a
 			// ring expands outward from the way you came in.
-			if (pmo && sweepOrigin == (0, 0, 0)) sweepOrigin = pmo.pos;
+			if (pmo && ambient && ambient.origin == (0, 0, 0)) return pmo.pos;
+			return ambient ? ambient.origin : (mapCentre.x, mapCentre.y, 0);
 		}
-		else if (mode == 3)
-		{
-			if (haveShot) sweepOrigin = lastShotPos;
-			else if (pmo) sweepOrigin = pmo.pos;
-		}
-		else if (mode == 4)
-		{
-			if (haveKill) sweepOrigin = lastKillPos;
-			else sweepOrigin = (mapCentre.x, mapCentre.y, 0);
-		}
-		else if (mode == 5)
+		if (mode == 3) return haveShot ? lastShotPos : (pmo ? pmo.pos : (mapCentre.x, mapCentre.y, 0));
+		if (mode == 4) return haveKill ? lastKillPos : (mapCentre.x, mapCentre.y, 0);
+		if (mode == 5)
 		{
 			// The nearest live monster. Re-found every tic, so the origin
 			// walks from one to the next as they die and as you move.
@@ -753,39 +798,46 @@ class GITD_Handler : StaticEventHandler
 					if (d < bestd) { bestd = d; best = a; }
 				}
 			}
-			if (best) sweepOrigin = best.pos;
-			else if (pmo) sweepOrigin = pmo.pos;
+			if (best) return best.pos;
+			if (pmo) return pmo.pos;
 		}
-		else
-		{
-			sweepOrigin = (mapCentre.x, mapCentre.y, 0);
-		}
+		return (mapCentre.x, mapCentre.y, 0);
 	}
 
-	// A trigger fired: start a pass from the beginning.
-	void SSStartPass()
+	void RefreshAmbient()
 	{
-		ssRunning = true;
-		int dir = CVar.FindCVar("gitd_ss_direction").GetInt();
-		if (dir == 1) { sweepPos = SSRange(); sweepDir = -1; }
-		else          { sweepPos = 0;         sweepDir = 1;  }
-	}
-
-	void StepSectorSweep()
-	{
-		if (!CVar.FindCVar("gitd_ss_enabled").GetBool() && !ssScripted)
+		if (!ambient)
 		{
-			level.ClearSweep();
-			return;
+			ambient = new("GITD_Wave");
+			ambient.id = ++nextWaveId;
+			ambient.ambient = true;
+			ambient.alive = true;
+			ambient.dir = 1;
+			ambient.priority = 0;   // anything scripted outranks the weather
+			waves.Push(ambient);
 		}
 
-		SSUpdateOrigin();
+		bool on = CVar.FindCVar("gitd_ss_enabled").GetBool();
+		ambient.visible = on;
+		if (!on) { ambient.running = false; return; }
 
-		double speed = SSSpeed();
-		double range = SSRange();
-		int drive = ssScripted ? 0 : CVar.FindCVar("gitd_ss_drive").GetInt();
-		int trigger = ssScripted ? 1 : CVar.FindCVar("gitd_ss_trigger").GetInt();
-		int dir = ssScripted ? 0 : CVar.FindCVar("gitd_ss_direction").GetInt();
+		int dirMode = CVar.FindCVar("gitd_ss_direction").GetInt();
+		int trigger = CVar.FindCVar("gitd_ss_trigger").GetInt();
+		int drive   = CVar.FindCVar("gitd_ss_drive").GetInt();
+
+		ambient.origin    = SSAmbientOrigin();
+		ambient.shape     = CVar.FindCVar("gitd_ss_shape").GetInt();
+		ambient.speed     = SSSpeed();
+		ambient.range     = max(CVar.FindCVar("gitd_ss_range").GetInt(), 1);
+		ambient.thickness = max(CVar.FindCVar("gitd_ss_thickness").GetInt(), 1);
+		ambient.softness  = CVar.FindCVar("gitd_ss_softness").GetFloat();
+		ambient.intensity = CVar.FindCVar("gitd_ss_intensity").GetFloat();
+		ambient.drift     = CVar.FindCVar("gitd_ss_drift").GetFloat();
+		ambient.trail     = CVar.FindCVar("gitd_ss_trail").GetInt();
+		ambient.subBands  = clamp(CVar.FindCVar("gitd_ss_count").GetInt(), 1, 8);
+		ambient.pingpong  = (dirMode == 2);
+		ambient.loop      = (trigger == 0);
+		ambient.driven    = false;
 
 		if (drive != 0)
 		{
@@ -794,139 +846,181 @@ class GITD_Handler : StaticEventHandler
 			double frac = 0;
 			if (drive == 1)
 			{
-				int total = max(level.total_monsters, 1);
-				frac = clamp(double(level.killed_monsters) / total, 0.0, 1.0);
+				frac = clamp(double(level.killed_monsters) / max(level.total_monsters, 1), 0.0, 1.0);
 			}
-			else if (drive == 2)
+			else
 			{
 				let pmo = players[consoleplayer].mo;
 				int maxh = pmo ? pmo.GetMaxHealth(true) : 100;
 				double h = (pmo && maxh > 0) ? clamp(double(pmo.health) / maxh, 0.0, 1.0) : 1.0;
 				frac = 1.0 - h;
 			}
-			sweepPos = range * frac;
-			sweepDir = 1;
-			ssRunning = true;
+			ambient.pos = ambient.range * frac;
+			ambient.dir = 1;
+			ambient.running = true;
+			ambient.driven = true;
+			return;
 		}
-		else if (trigger == 0 || ssScripted)
-		{
-			ssRunning = true;
-			sweepPos += sweepDir * speed / 35.0;
 
-			if (dir == 2)
+		if (trigger == 0)
+		{
+			// Free-running. Collapsing means starting at the far end.
+			if (dirMode == 1 && ambient.dir > 0) { ambient.pos = ambient.range; ambient.dir = -1; }
+			else if (dirMode == 0 && ambient.dir < 0) { ambient.pos = 0; ambient.dir = 1; }
+			ambient.running = true;
+			ambient.alive = true;
+		}
+	}
+
+	// A trigger fired: start the ambient wave over.
+	void SSStartPass()
+	{
+		if (!ambient) return;
+		int dir = CVar.FindCVar("gitd_ss_direction").GetInt();
+		if (dir == 1) { ambient.pos = ambient.range; ambient.dir = -1; }
+		else          { ambient.pos = 0;             ambient.dir = 1;  }
+		ambient.running = true;
+		ambient.alive = true;
+	}
+
+	// ---- Step, cull, and allocate the eight -----------------------------
+
+	void StepSectorSweep()
+	{
+		RefreshAmbient();
+
+		for (int i = 0; i < waves.Size(); i++)
+		{
+			let w = waves[i];
+			if (w) w.Step();
+		}
+
+		for (int i = 0; i < waves.Size(); i++)
+		{
+			let w = waves[i];
+			if (w && w.alive && w.running) PrepareWave(w);
+		}
+
+		// Cull, giving each dying wave's script the chance to undo itself.
+		// This is what makes "sweep a setpiece in, sweep it back out" one
+		// call rather than bookkeeping the caller has to get right.
+		for (int i = waves.Size() - 1; i >= 0; i--)
+		{
+			let w = waves[i];
+			if (!w) { waves.Delete(i); continue; }
+			if (w.alive) continue;
+			if (w.action) w.action.OnFinish(self);
+			if (w == ambient) ambient = null;
+			waves.Delete(i);
+		}
+
+		PresentWaves();
+	}
+
+	// Eight slots, handed out by priority.
+	//
+	// The shader has ONE origin and ONE shape for all eight bands, so waves
+	// that disagree about either cannot be drawn together -- that is a real
+	// GPU constraint, not an oversight. Giving each band its own origin would
+	// mean another vec4[8] in StreamData, which is a fixed 64KB uniform
+	// buffer; it would cost about a tenth of the draw batching for every
+	// frame of the game, to make simultaneous multi-origin waves visible. Not
+	// a trade worth making silently.
+	//
+	// So: the highest-priority visible wave sets the origin and shape, and
+	// any other visible wave that agrees with it shares the remaining slots.
+	// Everything else stays logical -- still stepping, still firing scripts,
+	// just not drawn.
+	void PresentWaves()
+	{
+		GITD_Wave lead = null;
+		for (int i = 0; i < waves.Size(); i++)
+		{
+			let w = waves[i];
+			if (!w || !w.alive || !w.running || !w.visible) continue;
+			if (!lead || w.priority > lead.priority) lead = w;
+		}
+
+		if (!lead) { level.ClearSweep(); return; }
+
+		int slot = 0;
+		level.SetSweepTrail(lead.dir >= 0 ? lead.trail : -lead.trail);
+
+		for (int pass = 0; pass < 2 && slot < 8; pass++)
+		{
+			for (int i = 0; i < waves.Size() && slot < 8; i++)
 			{
-				if (sweepPos >= range) { sweepPos = range; sweepDir = -1; }
-				else if (sweepPos <= 0) { sweepPos = 0; sweepDir = 1; }
-			}
-			else if (dir == 1)
-			{
-				// Collapsing. An expanding ring is a reveal; a closing one is
-				// a countdown, and that is the whole difference.
-				if (sweepDir > 0) { sweepPos = range; sweepDir = -1; }
-				if (sweepPos <= 0)
+				let w = waves[i];
+				if (!w || !w.alive || !w.running || !w.visible) continue;
+				bool isLead = (w == lead);
+				if (pass == 0 && !isLead) continue;
+				if (pass == 1 && (isLead || w.shape != lead.shape ||
+					(w.origin - lead.origin).Length() > 1.0)) continue;
+
+				for (int band = 0; band < w.subBands && slot < 8; band++)
 				{
-					if (ssScripted) { SSFinishScripted(); return; }
-					sweepPos = range;
+					double pos = (band < w.bandPos.Size()) ? w.bandPos[band] : 0;
+					// A band that has not started yet is parked far away
+					// rather than drawn sitting at the origin.
+					if (pos < 0 && w.dir > 0) pos = -100000;
+					level.SetSweepBand(slot, pos, w.thickness, w.softness,
+						BandColor(w, band), w.intensity);
+					slot++;
 				}
 			}
-			else if (sweepPos >= range)
-			{
-				if (ssScripted) { SSFinishScripted(); return; }
-				sweepPos = 0;
-			}
-		}
-		else if (ssRunning)
-		{
-			// One shot. Run to the far end, then stop dead and wait for the
-			// next event rather than looping.
-			sweepPos += sweepDir * speed / 35.0;
-			double trainLag = 0;
-			int cnt = SSCount();
-			for (int g = 0; g < cnt - 1; g++)
-				trainLag += CVar.FindCVar("gitd_ss_gap" .. (g + 1)).GetInt() * speed / 35.0;
-
-			if (sweepDir > 0 && sweepPos > range + trainLag) ssRunning = false;
-			else if (sweepDir < 0 && sweepPos < -trainLag) ssRunning = false;
 		}
 
-		if (!ssRunning) { level.ClearSweep(); return; }
-
-		double thickness = SSThickness();
-		double softness = ssScripted ? 2.0 : CVar.FindCVar("gitd_ss_softness").GetFloat();
-		double intensity = ssScripted ? 1.4 : CVar.FindCVar("gitd_ss_intensity").GetFloat();
-		int shape = SSShape();
-		int count = SSCount();
-
-		// The wake trails the side the band came FROM, so the sign follows
-		// travel direction. Outward: the tail is inside the ring.
-		double trail = ssScripted ? ssScriptTrail : CVar.FindCVar("gitd_ss_trail").GetInt();
-		level.SetSweepTrail(sweepDir >= 0 ? trail : -trail);
-
-		level.SetSweepOrigin(shape, sweepOrigin, count);
-		for (int i = 0; i < count; i++)
-		{
-			double pos = SSBandPos(i);
-			// A band that has not started yet is parked far away rather than
-			// drawn at the origin.
-			if (pos < 0 && sweepDir > 0) pos = -100000;
-			level.SetSweepBand(i, pos, thickness, softness, SSBandColor(i), intensity);
-		}
+		// The count is the shader's loop bound, so slots nobody claimed are
+		// simply never read -- no need to park them somewhere harmless.
+		level.SetSweepOrigin(lead.shape, lead.origin, slot);
 	}
 
-	// A scripted wave has run its length. Give its action the chance to undo
-	// itself before the wave is dropped -- this is what makes "sweep a
-	// setpiece in, sweep it back out" a single call rather than bookkeeping
-	// the caller has to get right.
-	void SSFinishScripted()
-	{
-		if (ssScriptAction) ssScriptAction.OnFinish(self);
-		ssScripted = false;
-		ssScriptAction = null;
-		level.ClearSweep();
-	}
-
-	// How far this sector is from the origin, in whatever the current shape
+	// How far a point is from a wave's origin, in whatever its shape
 	// measures. Must agree with main.fp's smode -- if these two disagree the
-	// light lags the band and it looks like a bug in the renderer.
-	double SSDistance(Vector3 c, int shape)
+	// light lags the visible band and it looks like a bug in the renderer.
+	double WaveDistance(GITD_Wave w, Vector3 c)
 	{
-		if (shape == 2)      return abs(c.x - sweepOrigin.x);
-		else if (shape == 3) return abs(c.y - sweepOrigin.y);
-		else if (shape == 5) return c.z - sweepOrigin.z;   // rising, signed
-		return (c.xy - sweepOrigin.xy).Length();
+		if (w.shape == 2)      return abs(c.x - w.origin.x);
+		else if (w.shape == 3) return abs(c.y - w.origin.y);
+		else if (w.shape == 5) return c.z - w.origin.z;   // rising, signed
+		return (c.xy - w.origin.xy).Length();
 	}
 
-	// Nearest band to a distance, and how strongly it lands. ZScript cannot
+	// Nearest band of one wave, and how strongly it lands. ZScript cannot
 	// forward a two-value return as an expression, so callers take both into
-	// locals with [a, b] = -- that is a language limit, not a style choice.
-	int, double SSNearestBand(double dist, int count, double reach)
+	// locals with [a, b] = -- a language limit, not a style choice.
+	int, double WaveNearest(GITD_Wave w, double dist, double reach)
 	{
 		double nearest = 1e9;
 		int which = -1;
-		for (int b = 0; b < count; b++)
+		for (int b = 0; b < w.bandPos.Size(); b++)
 		{
-			double d = abs(dist - SSBandPos(b));
+			double d = abs(dist - w.bandPos[b]);
 			if (d < nearest) { nearest = d; which = b; }
 		}
 		if (which < 0 || nearest > reach) return -1, 0.0;
 		return which, 1.0 - clamp(nearest / reach, 0.0, 1.0);
 	}
 
-	// What the sweep does to the rooms it passes through. This is per-sector
-	// by nature -- light level is a sector property -- so it is necessarily
-	// coarser than the band itself, which is per-pixel.
+	// ---- What arrival does ----------------------------------------------
+	//
+	// Per-sector by nature -- light level is a sector property -- so this is
+	// necessarily coarser than the band itself, which is per-pixel.
+
 	void ApplySectorSweepEffects()
 	{
-		int count = SSCount();
-		int shape = SSShape();
-		double thickness = SSThickness();
-		double reach = thickness * 3.0;
 		int amount = CVar.FindCVar("gitd_ss_light_amount").GetInt();
-
 		int sonarFloor = CVar.FindCVar("gitd_ss_sonar_floor").GetInt();
 		double sonarFade = max(CVar.FindCVar("gitd_ss_sonar_fade").GetInt(), 1);
+
 		bool anySonar = false;
-		for (int b = 0; b < count; b++) if (SSBandFx(b) == 4) anySonar = true;
+		for (int i = 0; i < waves.Size(); i++)
+		{
+			let w = waves[i];
+			if (!w || !w.alive || !w.running) continue;
+			for (int b = 0; b < w.bandFx.Size(); b++)
+				if (w.bandFx[b] == 4) { anySonar = true; break; }
+		}
 
 		for (int i = 0; i < ssEffects.Size(); i++) ssEffects[i].BeginPass();
 
@@ -940,27 +1034,72 @@ class GITD_Handler : StaticEventHandler
 		{
 			if (IsOverridden(i)) continue;
 			Sector sec = level.Sectors[i];
-
 			Vector2 c2 = sec.centerspot;
 			Vector3 c = (c2.x, c2.y, sec.floorplane.ZatPoint(c2));
-			double dist = SSDistance(c, shape);
 
-			int band;
-			double strength;
-			[band, strength] = SSNearestBand(dist, count, reach);
+			bool touched = false;
+			bool sonarHere = false;
 
-			// Sonar decays whether or not a band is near, so it has to run
-			// before the early-out below. It is an ABSOLUTE statement about
-			// what the room's level is, not a nudge, so it takes the override
-			// channel rather than the additive one.
+			for (int wi = 0; wi < waves.Size(); wi++)
+			{
+				let w = waves[wi];
+				if (!w || !w.alive || !w.running) continue;
+
+				double reach = max(w.thickness, 1.0) * 3.0;
+				int band;
+				double strength;
+				[band, strength] = WaveNearest(w, WaveDistance(w, c), reach);
+				if (band < 0) continue;
+
+				touched = true;
+				int fx = BandFx(w, band);
+
+				// Declared against the MAP's level, never the live one --
+				// reading live and adding is what used to saturate every room
+				// the sweep touched to 255 within four tics.
+				if (fx == 1)
+				{
+					GITD_Composite.AddLight(i, int(amount * strength));
+				}
+				else if (fx == 2)
+				{
+					GITD_Composite.AddLight(i, -int(amount * strength));
+				}
+				else if (fx == 3)
+				{
+					// Shades of the band's own colour across the four lanes.
+					Color bc = BandColor(w, band);
+					int cov = int(96 * strength);
+					sec.SetGlowColor(Sector.floor, GITD_Palette.Scale(bc, 0.55 * strength));
+					sec.SetGlowHeight(Sector.floor, cov);
+					sec.SetGlowColor(Sector.ceiling, GITD_Palette.Scale(bc, 0.85 * strength));
+					sec.SetGlowHeight(Sector.ceiling, cov);
+					sec.SetFlatGlowColor(Sector.floor, GITD_Palette.Scale(bc, 0.40 * strength));
+					sec.SetFlatGlowHeight(Sector.floor, cov);
+					sec.SetFlatGlowColor(Sector.ceiling, GITD_Palette.Scale(bc, 0.70 * strength));
+					sec.SetFlatGlowHeight(Sector.ceiling, cov);
+				}
+				else if (fx == 4)
+				{
+					sonarHere = true;
+					sonarGlow[i] = max(sonarGlow[i], strength);
+				}
+
+				let act = BandAction(w, band);
+				if (act) act.OnSector(self, sec, i, band, strength);
+
+				for (int e = 0; e < ssEffects.Size(); e++)
+					ssEffects[e].SectorPass(sec, i, band, strength);
+			}
+
+			// Sonar decays whether or not a band is near, so it runs outside
+			// the wave loop. It is an ABSOLUTE statement about what the room's
+			// level is, not a nudge, so it takes the override channel.
 			if (anySonar)
 			{
-				if (band >= 0 && SSBandFx(band) == 4)
-					sonarGlow[i] = max(sonarGlow[i], strength);
-				else
+				if (!sonarHere)
 					sonarGlow[i] = max(sonarGlow[i] - 1.0 / sonarFade, 0.0);
-
-				if (sonarGlow[i] > 0.0 || band >= 0)
+				if (sonarGlow[i] > 0.0 || sonarHere)
 				{
 					int sbase = GITD_Composite.BaseLight(i);
 					GITD_Composite.OverrideLight(i,
@@ -968,59 +1107,24 @@ class GITD_Handler : StaticEventHandler
 				}
 			}
 
-			if (band < 0)
+			if (!touched)
 			{
 				// Nothing to declare. The compositor hands the sector's light
 				// back to the engine on its own, so there is no "put it back"
-				// to do here any more.
+				// to do here.
 				for (int e = 0; e < ssEffects.Size(); e++) ssEffects[e].SectorRest(sec, i);
-				continue;
 			}
-
-			int fx = SSBandFx(band);
-
-			// Declared against the MAP's level, never against the live one --
-			// reading live and adding is what used to saturate every room the
-			// sweep touched to 255 within four tics.
-			if (fx == 1)
-			{
-				GITD_Composite.AddLight(i, int(amount * strength));
-			}
-			else if (fx == 2)
-			{
-				GITD_Composite.AddLight(i, -int(amount * strength));
-			}
-			else if (fx == 3)
-			{
-				// Shades of the band's own colour across the four lanes.
-				Color bc = SSBandColor(band);
-				int cov = int(96 * strength);
-				sec.SetGlowColor(Sector.floor, GITD_Palette.Scale(bc, 0.55 * strength));
-				sec.SetGlowHeight(Sector.floor, cov);
-				sec.SetGlowColor(Sector.ceiling, GITD_Palette.Scale(bc, 0.85 * strength));
-				sec.SetGlowHeight(Sector.ceiling, cov);
-				sec.SetFlatGlowColor(Sector.floor, GITD_Palette.Scale(bc, 0.40 * strength));
-				sec.SetFlatGlowHeight(Sector.floor, cov);
-				sec.SetFlatGlowColor(Sector.ceiling, GITD_Palette.Scale(bc, 0.70 * strength));
-				sec.SetFlatGlowHeight(Sector.ceiling, cov);
-			}
-
-			let act = SSBandAction(band);
-			if (act) act.OnSector(self, sec, i, band, strength);
-
-			for (int e = 0; e < ssEffects.Size(); e++)
-				ssEffects[e].SectorPass(sec, i, band, strength);
 		}
 
-		ApplySweepToActors(count, shape, reach);
+		ApplySweepToActors();
 	}
 
 	// The band meets the monsters.
 	//
 	// Sectors are a coarse grid; a monster is a point, so this is the sharper
-	// of the two passes and the one that can actually change the fight. Off by
+	// of the two passes and the one that can actually change a fight. Off by
 	// default because it walks the thinker list every tic.
-	void ApplySweepToActors(int count, int shape, double reach)
+	void ApplySweepToActors()
 	{
 		bool want = CVar.FindCVar("gitd_ss_actors").GetBool();
 		if (!want)
@@ -1030,10 +1134,16 @@ class GITD_Handler : StaticEventHandler
 		}
 		if (!want)
 		{
-			for (int b = 0; b < count; b++)
+			for (int wi = 0; wi < waves.Size() && !want; wi++)
 			{
-				let act = SSBandAction(b);
-				if (act && act.WantsActors()) { want = true; break; }
+				let w = waves[wi];
+				if (!w || !w.alive || !w.running) continue;
+				for (int b = 0; b < w.bandFx.Size(); b++)
+				{
+					let act = BandAction(w, b);
+					if (act && act.WantsActors()) { want = true; break; }
+					if (w.bandFx[b] >= 5 && w.bandFx[b] <= 7) { want = true; break; }
+				}
 			}
 		}
 		if (!want) return;
@@ -1044,55 +1154,54 @@ class GITD_Handler : StaticEventHandler
 		while (a = Actor(it.Next()))
 		{
 			if (!a.bISMONSTER || a.health <= 0) continue;
+			bool touched = false;
 
-			double dist = SSDistance(a.pos, shape);
-			int band;
-			double strength;
-			[band, strength] = SSNearestBand(dist, count, reach);
-
-			if (band < 0)
+			for (int wi = 0; wi < waves.Size(); wi++)
 			{
-				// Restore anything a band did to it. A monster left at half
-				// speed because the wave moved on is a bug you would spend an
-				// evening chasing.
-				if (a.Speed != a.default.Speed && GITD_SweepMark.Age(a) > 35)
-					a.Speed = a.default.Speed;
-				continue;
-			}
+				let w = waves[wi];
+				if (!w || !w.alive || !w.running) continue;
 
-			int fx = SSBandFx(band);
-			if (fx == 5)
-			{
-				// Wake it. The wave is a noise as far as the AI is concerned.
-				if (!a.target && pmo)
+				double reach = max(w.thickness, 1.0) * 3.0;
+				int band;
+				double strength;
+				[band, strength] = WaveNearest(w, WaveDistance(w, a.pos), reach);
+				if (band < 0) continue;
+				touched = true;
+
+				int fx = BandFx(w, band);
+				if (fx == 5)
 				{
-					a.target = pmo;
-					if (a.SeeState) a.SetState(a.SeeState);
+					// Wake it. The wave is a noise as far as the AI cares.
+					if (!a.target && pmo)
+					{
+						a.target = pmo;
+						if (a.SeeState) a.SetState(a.SeeState);
+					}
 				}
-			}
-			else if (fx == 6)
-			{
-				GITD_SweepMark.Set(a, band, strength);
-			}
-			else if (fx == 7)
-			{
-				a.Speed = a.default.Speed * 0.5;
-				GITD_SweepMark.Set(a, band, strength);
+				else if (fx == 6)
+				{
+					GITD_SweepMark.Set(a, band, strength);
+				}
+				else if (fx == 7)
+				{
+					a.Speed = a.default.Speed * 0.5;
+					GITD_SweepMark.Set(a, band, strength);
+				}
+
+				let act = BandAction(w, band);
+				if (act) act.OnActor(self, a, band, strength);
+
+				for (int e = 0; e < ssEffects.Size(); e++)
+					ssEffects[e].ActorPass(a, band, strength);
 			}
 
-			let act = SSBandAction(band);
-			if (act) act.OnActor(self, a, band, strength);
-
-			for (int e = 0; e < ssEffects.Size(); e++)
-				ssEffects[e].ActorPass(a, band, strength);
+			// Restore anything a band did to it. A monster left at half speed
+			// because the wave moved on is a bug you would spend an evening
+			// chasing.
+			if (!touched && a.Speed != a.default.Speed && GITD_SweepMark.Age(a) > 35)
+				a.Speed = a.default.Speed;
 		}
 	}
-
-	// ---- Triggers -------------------------------------------------------
-	//
-	// An event trigger is the single biggest change to how the sweep reads.
-	// Free-running, it is weather. Fired by a kill, it is the room reacting
-	// to something you did.
 
 	// Any setpiece holding sectors has to restate its tint this tic. See
 	// GITD_Setpiece.Republish.
@@ -1105,19 +1214,23 @@ class GITD_Handler : StaticEventHandler
 		}
 	}
 
+	// ---- Triggers -------------------------------------------------------
+	//
+	// An event trigger is the single biggest change to how the sweep reads.
+	// Free-running, it is weather. Fired by a kill, it is the room reacting
+	// to something you did.
+
 	void SSCheckTriggers()
 	{
-		if (ssScripted) return;
 		if (!CVar.FindCVar("gitd_ss_enabled").GetBool()) return;
-
 		int trigger = CVar.FindCVar("gitd_ss_trigger").GetInt();
-		if (trigger == 0) { ssRunning = true; return; }
+		if (trigger == 0) return;
 
 		if (trigger == 3)
 		{
-			// The rising edge of the trigger pull, not the shot. GZDoom has no
-			// "weapon fired" event, and an edge means one wave per pull rather
-			// than a solid wall of them out of a chaingun.
+			// The rising edge of the trigger pull, not the shot. GZDoom has
+			// no "weapon fired" event, and an edge means one wave per pull
+			// rather than a solid wall of them out of a chaingun.
 			let pmo = players[consoleplayer].mo;
 			bool down = pmo && pmo.player && (pmo.player.cmd.buttons & BT_ATTACK);
 			if (down && !lastAttackDown)
@@ -1139,12 +1252,11 @@ class GITD_Handler : StaticEventHandler
 		if (!e.Thing || !e.Thing.bISMONSTER) return;
 		lastKillPos = e.Thing.pos;
 		haveKill = true;
-		if (!ssScripted && CVar.FindCVar("gitd_ss_trigger").GetInt() == 1) SSStartPass();
+		if (CVar.FindCVar("gitd_ss_trigger").GetInt() == 1) SSStartPass();
 	}
 
 	override void WorldThingDamaged(WorldEvent e)
 	{
-		if (ssScripted) return;
 		if (CVar.FindCVar("gitd_ss_trigger").GetInt() != 2) return;
 		if (!e.Thing || !e.Thing.player) return;
 		if (e.Damage <= 0) return;

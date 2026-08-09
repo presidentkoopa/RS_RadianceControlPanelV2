@@ -251,13 +251,74 @@ reach.
 
 ---
 
-## 9. Known limits
+## 9. Waves — why you cannot run out
 
-- **8 bands is a GPU limit, not a design one.** `uSweepBands[8]` is a uniform
-  array. It should only cap how many bands can be *drawn* — the logical wave
-  that drives scripts needs no GPU at all and has no reason to be capped.
-  Splitting visual bands from logical waves is the obvious next move and is
-  **not done**.
+`uSweepBands[8]` is a GPU uniform array. It caps how many bands can be
+**drawn**. The logical wave — the thing that asks *which sectors and monsters
+am I passing, and how hard*, and runs a script when it arrives — touches no
+GPU at all, so there was never a reason for it to be capped at the same
+number. Running out of sweeps mid-setpiece because the shader has eight slots
+is the wrong failure.
+
+So there is **one list of waves**, and it is not eight long.
+
+- The cvar-driven sweep is a wave like any other. It is rebuilt from the cvars
+  each tic and flagged `ambient`; that flag is the only thing special about it.
+- Everything a script fires joins the same list, runs through the same
+  per-sector and per-actor pass, and competes for the same eight draw slots.
+- Every live wave is **logically** live whether or not it is drawn. It still
+  runs its effects, its script, its spawns and its clean-up.
+
+`GITD_Sweep.Fire*` **adds** a wave; it never replaces what is running. Fire
+four in a row and four are live. (This is the real change: a scripted sweep
+used to seize the single sweep's state, and the ambient one stopped existing
+until it finished — so two waves at once was impossible, which is exactly what
+a setpiece wants.)
+
+```zscript
+int id = GITD_Sweep.FireFrom(boss, GITD_Sweep.SHAPE_RING, 0xFF3020, 900, 1400);
+GITD_Sweep.Cancel("RS_BloodArena");   // by tag, or "" for every scripted wave
+GITD_Sweep.LiveWaves();
+GITD_Sweep.Position("RS_BloodArena"); // per-wave, not global
+```
+
+Ceiling is `MAX_WAVES = 64`, and it refuses loudly past that. "Unlimited"
+really means "until a runaway script has made the per-sector pass the frame
+time", and failing at a round number beats dying mysteriously.
+
+### How the eight slots are handed out
+
+The shader has **one** origin and **one** shape for all eight bands, so waves
+that disagree about either cannot be drawn together. That is a real GPU
+constraint, not an oversight: giving each band its own origin means another
+`vec4[8]` in `StreamData`, which is a fixed 64KB uniform buffer shared with
+`uFlatGlowLines[64]` and everything else. It would cost roughly a tenth of the
+draw batching in every frame of the game, permanently, to make simultaneous
+multi-origin waves visible. Not a trade worth making silently.
+
+So: the highest-**priority** visible wave sets the origin and shape, and any
+other visible wave agreeing with it shares the remaining slots. Everything
+else stays logical. Ambient is priority 0, so anything scripted outranks the
+weather; a boss shockwave is drawn and the ambient sweep quietly stops being
+rendered for its duration while continuing to run.
+
+### Per-band values are resolved once a tic
+
+`PrepareWave` fills `bandPos`, `bandFx`, `bandCol` and `bandAct` once, and the
+sector and actor loops read those arrays. They used to be worked out inside
+the per-sector loop, which meant the ambient wave did a `CVar.FindCVar` **by
+string** for every band of every sector of every tic — with eight bands and a
+thousand sectors, tens of thousands of string lookups a tic to compute eight
+numbers that cannot change in between.
+
+---
+
+## 10. Known limits
+
+- Multiple waves can only be drawn together if they share an origin and a
+  shape. See above for why, and what it would cost to lift.
 - Sector effects are per-sector and therefore coarser than the band, which is
   per-pixel. A large sector changes all at once.
 - The trigger-pull trigger fires on the button edge, not per projectile.
+- Cost of the effect pass is sectors x live waves. 64 waves over a large map
+  is not free.

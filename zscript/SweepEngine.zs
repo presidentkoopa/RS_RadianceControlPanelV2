@@ -70,6 +70,108 @@ class GITD_SweepEffect : Object play abstract
 
 
 // ---------------------------------------------------------------------------
+// One wave.
+//
+// THE EIGHT WAS NEVER A DESIGN LIMIT. uSweepBands[8] is a GPU uniform array,
+// and it caps how many bands can be DRAWN. The logical wave -- the thing that
+// asks "which sectors and monsters am I passing, and how hard" and runs a
+// script when it arrives -- touches no GPU at all, so there was never a reason
+// for it to be capped at the same number. Running out of sweeps mid-setpiece
+// because the shader has eight slots is the wrong failure.
+//
+// So waves are unlimited (to a sanity ceiling) and slots are allocated. Every
+// live wave runs its effects and its script; the ones that also want to be
+// SEEN compete for the eight, highest priority first. A wave that loses the
+// competition still fires, still spawns, still re-tiers, still reverts -- it
+// just is not drawn, which for most scripted waves is fine and for a boss
+// shockwave is why priority exists.
+// ---------------------------------------------------------------------------
+class GITD_Wave : Object play
+{
+	int id;
+	string tag;              // optional, for Cancel("name")
+
+	// Geometry.
+	Vector3 origin;
+	int shape;
+	double pos;
+	int dir;                 // +1 outward, -1 inward
+	double speed, range, thickness, softness, intensity, trail;
+	int subBands;            // bands travelling in this one wave
+	double subGap;           // tics between them
+	double drift;            // per-band speed spread
+
+	Color col;
+	int fx;
+	GITD_SweepAction action;
+
+	bool ambient;            // the cvar-driven wave; there is exactly one
+	bool loop;               // restart at the far end instead of dying
+	bool pingpong;
+	bool running;
+	bool visible;            // wants one of the eight
+	int priority;            // higher wins a slot, and sets the shared origin
+	bool alive;
+
+	// Position is set from outside each tic (by kills, or by your health)
+	// instead of advancing on its own. Stepping a driven wave would fight
+	// whatever is driving it.
+	bool driven;
+
+	// Per-band values, resolved ONCE a tic.
+	//
+	// These used to be worked out inside the per-sector loop, which meant the
+	// ambient wave did a CVar.FindCVar by string for every band of every
+	// sector of every tic -- with eight bands and a thousand sectors that is
+	// tens of thousands of string lookups a tic to compute eight numbers that
+	// cannot change in between.
+	Array<double> bandPos;
+	Array<int> bandFx;
+	Array<int> bandCol;
+	Array<GITD_SweepAction> bandAct;
+
+	// True once the whole train, not just the leader, has left the range --
+	// otherwise a wave with eight bands would vanish while seven of them were
+	// still mid-room.
+	private bool TrainClear()
+	{
+		double lag = subGap * (subBands - 1) * speed / 35.0;
+		if (dir > 0) return pos > range + lag;
+		return pos < -lag;
+	}
+
+	void Step()
+	{
+		if (!alive || !running || driven) return;
+		pos += dir * speed / 35.0;
+
+		if (pingpong)
+		{
+			if (pos >= range) { pos = range; dir = -1; }
+			else if (pos <= 0) { pos = 0; dir = 1; }
+			return;
+		}
+		if (!TrainClear()) return;
+
+		if (loop) { pos = (dir > 0) ? 0 : range; return; }
+
+		// The ambient wave STOPS rather than dies. Killing it would have it
+		// rebuilt from the cvars on the very next tic and immediately set off
+		// again, which is the opposite of what an event trigger means: run
+		// once, then wait for the next kill.
+		if (ambient) running = false;
+		else alive = false;
+	}
+
+	double BandPos(int i)
+	{
+		double lag = subGap * i * speed / 35.0;
+		return pos * (1.0 + drift * i) - lag;
+	}
+}
+
+
+// ---------------------------------------------------------------------------
 // A mark left on a monster a band has touched.
 //
 // Deliberately dumb: it records which band and how hard, and expires. It exists
@@ -163,73 +265,107 @@ class GITD_Sweep play abstract
 		return GITD_Handler(StaticEventHandler.Find("GITD_Handler"));
 	}
 
-	// --- Scripted one-shot ---------------------------------------------
+	// --- Firing a wave ---------------------------------------------------
 	//
-	// Throw a single wave from a point and let it die on its own. This
-	// OVERRIDES the cvar-driven sweep for as long as it runs, then hands
-	// back -- so an elite's shockwave interrupts the ambient sweep rather
-	// than fighting it for the same eight band slots.
+	// Every one of these ADDS a wave. None of them replaces or interrupts what
+	// is already running, which is the whole difference from how this used to
+	// work: a scripted sweep used to seize the single sweep's state and the
+	// ambient one stopped existing until it finished. Fire four in a row and
+	// four are live.
 	//
-	//     GITD_Sweep.Fire(self.pos, GITD_Sweep.SHAPE_RING, 0xFF3020, 900, 1400);
-	//
-	static void Fire(Vector3 origin, int shape = 1, int col = 0x00DCFF,
+	// Returns the wave's id, or 0 if the ceiling was hit. Every wave is
+	// LOGICALLY live regardless of whether it wins one of the eight draw
+	// slots -- it still runs its effects, its script, and its clean-up.
+
+	static int Fire(Vector3 origin, int shape = 1, int col = 0x00DCFF,
 		double speed = 600.0, double range = 1200.0, double thickness = 24.0,
-		int bands = 1, double trail = 0.0, int fx = 1)
+		int bands = 1, double trail = 0.0, int fx = 1, int priority = 10,
+		bool visible = true, string tag = "")
 	{
 		let h = Handler();
-		if (!h) return;
-		h.ssScripted     = true;
-		h.ssScriptOrigin = origin;
-		h.ssScriptShape  = shape;
-		h.ssScriptColor  = Color(255, (col >> 16) & 255, (col >> 8) & 255, col & 255);
-		h.ssScriptSpeed  = speed;
-		h.ssScriptRange  = range;
-		h.ssScriptThick  = thickness;
-		h.ssScriptBands  = clamp(bands, 1, 8);
-		h.ssScriptTrail  = trail;
-		h.ssScriptFx     = fx;
-		h.sweepPos       = 0;
-		h.sweepDir       = 1;
+		if (!h) return 0;
+		let w = h.NewWave();
+		if (!w) return 0;
+
+		w.origin    = origin;
+		w.shape     = shape;
+		w.col       = Color(255, (col >> 16) & 255, (col >> 8) & 255, col & 255);
+		w.speed     = speed;
+		w.range     = range;
+		w.thickness = thickness;
+		w.subBands  = clamp(bands, 1, 8);
+		w.trail     = trail;
+		w.fx        = fx;
+		w.priority  = priority;
+		w.visible   = visible;
+		w.tag       = tag;
+		return w.id;
 	}
 
-	// Convenience: fire from an actor, which is the common case.
-	static void FireFrom(Actor a, int shape = 1, int col = 0x00DCFF,
+	// Convenience: fire from an actor, which is the common case. An elite
+	// calling a wave is this line.
+	static int FireFrom(Actor a, int shape = 1, int col = 0x00DCFF,
 		double speed = 600.0, double range = 1200.0, double thickness = 24.0,
-		int bands = 1, double trail = 0.0, int fx = 1)
+		int bands = 1, double trail = 0.0, int fx = 1, int priority = 10)
 	{
-		if (!a) return;
-		Fire(a.pos, shape, col, speed, range, thickness, bands, trail, fx);
+		if (!a) return 0;
+		return Fire(a.pos, shape, col, speed, range, thickness, bands, trail, fx, priority);
 	}
-
-	static void Cancel()
-	{
-		let h = Handler();
-		if (h) h.ssScripted = false;
-	}
-
-	static bool IsScripted()
-	{
-		let h = Handler();
-		return h ? h.ssScripted : false;
-	}
-
-	// --- Named band scripts ----------------------------------------------
 
 	// Fire a wave that runs a named script as it travels.
 	//
-	//     GITD_Sweep.FireScript(self.pos, "RS_ArenaLockdown", 0xFF2000, 700, 2048);
+	//     GITD_Sweep.FireScript(boss.pos, "RS_ArenaLockdown", 0xFF2000, 700, 2048);
 	//
-	static void FireScript(Vector3 origin, string actionName, int col = 0x00DCFF,
+	static int FireScript(Vector3 origin, string actionName, int col = 0x00DCFF,
 		double speed = 600.0, double range = 1200.0, int shape = 1,
-		double thickness = 24.0, int bands = 1, double trail = 0.0)
+		double thickness = 24.0, int bands = 1, double trail = 0.0,
+		int priority = 10, string tag = "")
+	{
+		let h = Handler();
+		if (!h) return 0;
+		let act = GITD_SweepAction.Resolve(actionName);
+		if (!act)
+		{
+			Console.Printf("\c[Red]GITD sweep: no script class '%s'", actionName);
+			return 0;
+		}
+		int id = Fire(origin, shape, col, speed, range, thickness, bands, trail,
+			0, priority, true, tag != "" ? tag : actionName);
+		if (id == 0) return 0;
+
+		// By id, never by tag -- a setpiece sweeping out carries the same tag
+		// as the wave that swept it in, and that one may still be travelling.
+		let w = h.WaveById(id);
+		if (w) w.action = act;
+		act.OnStart(h);
+		return id;
+	}
+
+	// Stop one wave by tag, or every scripted wave. The ambient one is left
+	// alone -- it belongs to the player's settings, not to a script.
+	static void Cancel(string tag = "")
 	{
 		let h = Handler();
 		if (!h) return;
-		let act = GITD_SweepAction.Resolve(actionName);
-		if (!act) { Console.Printf("\c[Red]GITD sweep: no script class '%s'", actionName); return; }
-		Fire(origin, shape, col, speed, range, thickness, bands, trail, 0);
-		h.ssScriptAction = act;
-		act.OnStart(h);
+		for (int i = 0; i < h.waves.Size(); i++)
+		{
+			let w = h.waves[i];
+			if (!w || w.ambient) continue;
+			if (tag == "" || w.tag == tag) w.alive = false;
+		}
+	}
+
+	static int LiveWaves()
+	{
+		let h = Handler();
+		if (!h) return 0;
+		int n = 0;
+		for (int i = 0; i < h.waves.Size(); i++)
+		{
+			let w = h.waves[i];
+			if (w && w.alive && w.running) n++;
+		}
+		return n;
 	}
 
 	// --- Effect registry -------------------------------------------------
@@ -255,17 +391,30 @@ class GITD_Sweep play abstract
 
 	// --- Queries ---------------------------------------------------------
 
-	// Where the leading band is right now, in map units from the origin.
-	static double Position()
+	// Where a wave's leading band is, in map units from its own origin.
+	// Without a tag this answers for the ambient sweep.
+	static double Position(string tag = "")
 	{
 		let h = Handler();
-		return h ? h.sweepPos : 0.0;
+		if (!h) return 0.0;
+		let w = (tag == "") ? h.ambient : h.FindWave(tag);
+		return w ? w.pos : 0.0;
 	}
 
-	static Vector3 Origin()
+	static Vector3 Origin(string tag = "")
 	{
 		let h = Handler();
-		return h ? h.sweepOrigin : (0, 0, 0);
+		if (!h) return (0, 0, 0);
+		let w = (tag == "") ? h.ambient : h.FindWave(tag);
+		return w ? w.origin : (0, 0, 0);
+	}
+
+	static bool IsRunning(string tag)
+	{
+		let h = Handler();
+		if (!h) return false;
+		let w = h.FindWave(tag);
+		return w && w.alive && w.running;
 	}
 }
 
@@ -533,6 +682,14 @@ class GITD_Setpiece : GITD_SweepAction
 	{
 		let sp = GITD_Setpiece(GITD_SweepAction.Resolve(name));
 		if (!sp) return;
+
+		// Kill any wave still carrying this setpiece INWARD first. Otherwise
+		// the same object would be applying and reverting on alternate
+		// sectors in the same tic, and the journal -- which is the only record
+		// of what the level used to be -- would end up describing a state the
+		// level was never in.
+		GITD_Sweep.Cancel(name);
+
 		sp.reverting = true;
 		GITD_Sweep.FireScript(origin, name, col, speed, range, shape);
 	}
