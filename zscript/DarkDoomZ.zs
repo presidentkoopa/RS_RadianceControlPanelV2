@@ -68,7 +68,18 @@ class DarkDoomZ_Handler : EventHandler {
 			while (effect = Lighting(it.Next())) { effect.Destroy(); }
 		}
 
-		ApplyLightLevels();
+		// PER-TIC REASSERT REVERTED. It fought Doom's own Lighting thinkers --
+		// blink, flicker, glow, strobe write their sector every tic from their
+		// own state, and this wrote the darkened snapshot every tic on top.
+		// Two writers, one value, 35 times a second: the walls flickered.
+		//
+		// The original bug it was meant to fix is still real -- those sectors
+		// climb back to full brightness and stay there -- but a steady wrong
+		// brightness beats a strobing one, so this goes back until it can be
+		// done without a fight. The correct shape is to darken from the
+		// thinker's CURRENT output for those sectors, after it has run, rather
+		// than from the load-time snapshot; that needs ordering guarantees
+		// this had none of.
 
 		// [GITD] KILL THE MUZZLE FLASH BRIGHTENING.
 		//
