@@ -222,7 +222,10 @@ OptionMenu "GITDNeon"
 	StaticText "Only a fallback -- a mod that knows", darkgray
 	StaticText "what a number means passes its own.", darkgray
 	StaticText ""
-	Slider "Size",					"gitd_neon_scale", 0.25, 4.0, 0.25, 2
+	Slider "Size",					"gitd_neon_scale", 0.10, 3.0, 0.05, 2
+	StaticText "The badge is sized from GITD's own", darkgray
+	StaticText "numbers, which were meant for a FLOOR", darkgray
+	StaticText "decal. Facing you it reads much bigger.", darkgray
 	Slider "Time on screen",		"gitd_neon_life", 0.2, 15.0, 0.1, 1
 	StaticText ""
 	StaticText "Glow", gold

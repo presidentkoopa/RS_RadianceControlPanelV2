@@ -401,7 +401,10 @@ server float gitd_p11_intensity = 1.6;
 server bool  gitd_neon_enabled        = true;
 server int   gitd_neon_style          = 3;      // 0 font, 1 LED seg, 2 LCD seg, 3 wgType 13 (default)
 server color gitd_neon_color          = "00 c8 ff";
-server float gitd_neon_scale          = 1.0;    // 0.25 .. 4
+server float gitd_neon_scale          = 0.55;   // 0.10 .. 3. Below 1 by default: GITD's
+                                                // sizes were for a floor decal, and a
+                                                // camera-facing badge at the same numbers
+                                                // fills the screen.
 server float gitd_neon_life           = 2.5;    // seconds a fire-and-forget number lasts
 // Reach is a fraction of the atlas spread and cannot usefully exceed 1 --
 // past that there is no field left to read and the halo clips square.

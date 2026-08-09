@@ -86,7 +86,7 @@ class GITD_Neon
 	{
 		let cv = CVar.FindCVar('gitd_neon_scale');
 		double s = cv ? cv.GetFloat() : 1.0;
-		return clamp(s, 0.25, 4.0);
+		return clamp(s, 0.10, 3.0);
 	}
 
 	static double Life()
