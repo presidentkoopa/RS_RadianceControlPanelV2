@@ -161,6 +161,15 @@ OptionValue "Nice_Flashlight_Position"
 // adjusting while you adjust it.
 // ---------------------------------------------------------------------------
 
+OptionValue "GITDShadowQual"
+{
+	128,  "128 (VR default)"
+	256,  "256"
+	512,  "512"
+	1024, "1024"
+	2048, "2048 (sharpest)"
+}
+
 OptionValue "GITDNeonDmgMode"
 {
 	0, "One per hit"
@@ -842,6 +851,21 @@ OptionMenu "DarkDoomZ_Flashlight_Settings"
 	Option "Type",					"ddz_fl_type", "Nice_Flashlight_Type"
 	Option "Position",				"ddz_fl_pos", "Nice_Flashlight_Position"
 	Control "Toggle Key",			"ddz_toggleflashlight"
+
+	StaticText ""
+	StaticText "Shadows", gold
+	StaticText ""
+	StaticText "OFF by default in the engine, which is why", darkgray
+	StaticText "the beam lights things through walls.", darkgray
+	StaticText ""
+	Option "Ray-traced shadows",	"vk_raytrace", "OnOff"
+	StaticText "Pixel accurate. Vulkan only, and needs a", darkgray
+	StaticText "restart -- it rebuilds the render device.", darkgray
+	StaticText ""
+	Option "Shadow maps",			"gl_light_shadowmap", "OnOff"
+	Option "Shadow map detail",		"gl_shadowmap_quality", "GITDShadowQual"
+	StaticText "Cheaper than ray tracing and blockier.", darkgray
+	StaticText "Use one or the other, not both.", darkgray
 }
 
 AddOptionMenu "OptionsMenu"
