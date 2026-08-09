@@ -47,6 +47,7 @@ OptionValue "GITDSweepShape"
 	2, "Bar sweeping east/west"
 	3, "Bar sweeping north/south"
 	4, "Shell expanding outward"
+	5, "Rising -- climbs upward"
 }
 
 OptionValue "GITDSweepOrigin"
