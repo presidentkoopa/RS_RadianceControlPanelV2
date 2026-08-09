@@ -157,6 +157,24 @@ OptionValue "Nice_Flashlight_Position"
 // adjusting while you adjust it.
 // ---------------------------------------------------------------------------
 
+OptionValue "GITDNeonPlace"
+{
+	0, "On the floor"
+	1, "Above the corpse"
+	2, "Both"
+}
+
+OptionValue "GITDNeonDigits"
+{
+	2, "2"
+	3, "3"
+	4, "4"
+	5, "5"
+	6, "6"
+	7, "7"
+	8, "8"
+}
+
 OptionValue "GITDNeonStyle"
 {
 	0, "Font (typeface)"
@@ -201,6 +219,16 @@ OptionMenu "GITDNeon"
 	Slider "Strength",				"gitd_neon_glow_strength", 0.0, 1.0, 0.05, 2
 	StaticText "Reach above 1 does nothing -- past the", darkgray
 	StaticText "atlas spread there is no glow left to draw.", darkgray
+	StaticText ""
+	StaticText "Kill Counter", gold
+	StaticText ""
+	Option "Kill counter",			"gitd_neon_killcount", "OnOff"
+	Option "Where",					"gitd_neon_kc_place", "GITDNeonPlace"
+	Option "Digits",				"gitd_neon_kc_digits", "GITDNeonDigits"
+	StaticText "Both placements turn to face you --", darkgray
+	StaticText "a floor mark never reads upside down.", darkgray
+	StaticText "Padded to a fixed width so the readout", darkgray
+	StaticText "does not resize as it counts.", darkgray
 }
 
 OptionMenu "GITDOptions"

@@ -88,6 +88,16 @@ class GITD_Neon
 
 	// A number wants a wider box than a word; both want to be readable from
 	// across a room, so size follows the string rather than being fixed.
+	// Unpacked and re-returned rather than forwarded directly: ZScript will
+	// not pass a two-value return straight through as an expression -- it
+	// counts that as returning one thing and rejects it.
+	static double, double MeasureFor(string text)
+	{
+		double w, h;
+		[w, h] = Extent(text, Scale());
+		return w, h;
+	}
+
 	private static double, double Extent(string text, double scale)
 	{
 		int n = text.Length();
@@ -162,5 +172,92 @@ class GITD_Neon
 		return level.AddBillboardPersistent(pos, 6, length, 0, vertical ? 0 : 90,
 			LevelLocals.BBF_FIXED, LevelLocals.BB_SEAM, Glow(),
 			col == 0 ? MenuColor() : col, flags, 0);
+	}
+}
+
+// ============================================================================
+// GITD_NeonKillCounter -- the readout, and the only thing here that watches
+// the game.
+//
+// GITD_Neon above is a drawing library with no opinions. This is the one piece
+// that decides a number should exist, which is why it is the only class in the
+// file that is an EventHandler.
+//
+// PLACEMENT IS ONE SETTING, TWO ORIENTATIONS, and both are player-facing.
+// BBF_CAMERAYAW overrides a billboard's yaw but PRESERVES its tilt, so the
+// same flag that turns an upright readout toward you also spins a flat one on
+// the ground to keep its text the right way up from where you are standing.
+// A floor mark that reads backwards when you walk round it is the thing that
+// makes floor text feel broken, and this is why it does not.
+// ============================================================================
+
+class GITD_NeonKillCounter : EventHandler
+{
+	int kills;
+	int floorTag, aboveTag;
+
+	private static int Placement()
+	{
+		let cv = CVar.FindCVar('gitd_neon_kc_place');
+		return cv ? cv.GetInt() : 1;		// 0 floor, 1 above, 2 both
+	}
+
+	private static bool Running()
+	{
+		let cv = CVar.FindCVar('gitd_neon_killcount');
+		return cv && cv.GetBool() && GITD_Neon.Enabled();
+	}
+
+	private static int Digits()
+	{
+		let cv = CVar.FindCVar('gitd_neon_kc_digits');
+		return cv ? clamp(cv.GetInt(), 1, 9) : 4;
+	}
+
+	// Zero-padded to a fixed width, because a readout that changes WIDTH as it
+	// counts reads as a different object each time rather than as the same
+	// display ticking over. This is why a segment font is the right choice for
+	// it and a proportional typeface is not.
+	private static string Pad(int n, int width)
+	{
+		string s = String.Format("%d", n);
+		while (s.Length() < uint(width)) s = "0" .. s;
+		return s;
+	}
+
+	override void WorldLoaded(WorldEvent e)
+	{
+		kills = 0;
+	}
+
+	override void WorldThingDied(WorldEvent e)
+	{
+		if (!Running()) return;
+		if (e.Thing == null || !e.Thing.bISMONSTER) return;
+		// Only kills the player earned; infighting is not a score.
+		if (e.Thing.target == null || !(e.Thing.target is "PlayerPawn")) return;
+
+		kills++;
+		string txt = Pad(kills, Digits());
+		int place = Placement();
+
+		// Flat on the ground where it fell. Still yaw-tracks the player, so it
+		// never reads upside down.
+		if (place == 0 || place == 2)
+		{
+			Vector3 p = (e.Thing.pos.x, e.Thing.pos.y, e.Thing.floorz + 4);
+			double w, h;
+			[w, h] = GITD_Neon.MeasureFor(txt);
+			level.AddBillboard(p, w, h, 0, 90,
+				LevelLocals.BBF_CAMERAYAW, GITD_Neon.Payload(), GITD_Neon.Glow(),
+				GITD_Neon.MenuColor(), 0, GITD_Neon.Life(), txt);
+		}
+
+		// In the air over the corpse.
+		if (place == 1 || place == 2)
+		{
+			Vector3 p = e.Thing.pos + (0, 0, e.Thing.Height + 12);
+			GITD_Neon.Pop(p, txt);
+		}
 	}
 }

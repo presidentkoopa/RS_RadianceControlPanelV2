@@ -407,3 +407,9 @@ server float gitd_neon_life           = 2.5;    // seconds a fire-and-forget num
 // past that there is no field left to read and the halo clips square.
 server float gitd_neon_glow_reach     = 0.6;
 server float gitd_neon_glow_strength  = 0.75;
+
+// Kill counter. Off by default -- it is a readout, not everyone wants one.
+server bool gitd_neon_killcount = false;
+server int  gitd_neon_kc_place  = 1;   // 0 floor, 1 above the corpse, 2 both
+server int  gitd_neon_kc_digits = 4;   // zero-padded width, so it does not
+                                       // change size as it counts
