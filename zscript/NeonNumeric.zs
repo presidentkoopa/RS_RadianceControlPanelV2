@@ -227,6 +227,14 @@ class GITD_NeonKillCounter : EventHandler
 	// capped without touching the ones still animating.
 	Array<int> perm;
 
+	// ACCUMULATING DAMAGE, one entry per monster currently being hit.
+	// Parallel arrays rather than objects: this is touched on every damage
+	// event and every tic, and there are only ever a handful live.
+	Array<Actor> dtar;    // who is being hit
+	Array<int> dtotal;    // running total
+	Array<int> dbb;       // its billboard, ATTACHED so it rides the monster
+	Array<int> dlast;     // maptime of the most recent hit
+
 	// 0 flat on the ground, 1 player-facing above the corpse. EITHER, never
 	// both -- two badges for one kill is twice the clutter for no extra
 	// information, and the pair fight each other for attention.
@@ -275,6 +283,7 @@ class GITD_NeonKillCounter : EventHandler
 	{
 		kills = 0;
 		bid.Clear(); bage.Clear(); blife.Clear();
+		dtar.Clear(); dtotal.Clear(); dbb.Clear(); dlast.Clear();
 	}
 
 	// How much clear floor there is around a point, in map units.
@@ -331,6 +340,20 @@ class GITD_NeonKillCounter : EventHandler
 	// GITD_SeamBox's own curve: 12 tics to open, hold, 14 to close, then gone.
 	override void WorldTick()
 	{
+		// Retire accumulators that have gone quiet, or whose monster is gone.
+		int win = DmgWindow();
+		for (int i = dtar.Size() - 1; i >= 0; i--)
+		{
+			bool dead = (dtar[i] == null);
+			if (dead || level.maptime - dlast[i] > win)
+			{
+				// An attached billboard is already gone if its actor is; only
+				// remove it when the monster is still standing there.
+				if (!dead) level.RemoveBillboard(dbb[i]);
+				dtar.Delete(i); dtotal.Delete(i); dbb.Delete(i); dlast.Delete(i);
+			}
+		}
+
 		for (int i = bid.Size() - 1; i >= 0; i--)
 		{
 			int age = bage[i] + 1;
@@ -382,6 +405,18 @@ class GITD_NeonKillCounter : EventHandler
 	// Always overhead and always brief. A damage number on the floor would be
 	// a permanent mark for a transient event, and one that lingers turns a
 	// firefight into a wall of digits.
+	private static int DmgMode()
+	{
+		let cv = CVar.FindCVar('gitd_neon_dmg_mode');
+		return cv ? clamp(cv.GetInt(), 0, 1) : 1;
+	}
+
+	private static int DmgWindow()
+	{
+		let cv = CVar.FindCVar('gitd_neon_dmg_window');
+		return cv ? clamp(cv.GetInt(), 5, 210) : 45;
+	}
+
 	override void WorldThingDamaged(WorldEvent e)
 	{
 		let cv = CVar.FindCVar('gitd_neon_damage');
@@ -389,6 +424,55 @@ class GITD_NeonKillCounter : EventHandler
 		if (e.Thing == null || !e.Thing.bISMONSTER || e.Damage <= 0) return;
 		// Only what the player did. Infighting is not feedback.
 		if (e.DamageSource == null || !(e.DamageSource is "PlayerPawn")) return;
+
+		// ACCUMULATE: one number per monster that CLIMBS while you keep
+		// hitting it, instead of a new number per hit. With anything
+		// rapid-fire, per-hit numbers stack into an unreadable column and the
+		// thing you actually want to know -- how much have I put into this --
+		// is the one thing they never show.
+		//
+		// It is ATTACHED, so it rides the monster and dies with it. No
+		// bookkeeping for a target that stops existing mid-burst.
+		if (DmgMode() == 1)
+		{
+			int idx = -1;
+			for (int i = 0; i < dtar.Size(); i++)
+				if (dtar[i] == e.Thing) { idx = i; break; }
+
+			if (idx < 0)
+			{
+				double w, h;
+				[w, h] = GITD_Neon.BadgeSize(3, false);
+				int id = level.AttachBillboard(e.Thing,
+					(0, 0, e.Thing.Height + 14), w * 0.7, h * 0.7, 0, 0,
+					LevelLocals.BBF_CAMERAYAW, GITD_Neon.Payload(),
+					GITD_Neon.IsWG13() ? e.Damage : GITD_Neon.Glow(),
+					GITD_Neon.MenuColor(), 0,
+					GITD_Neon.IsWG13() ? "" : String.Format("%d", e.Damage));
+				if (id == 0) return;
+				if (GITD_Neon.IsWG13()) level.SetBillboardProgress(id, 1.0);
+				dtar.Push(e.Thing); dtotal.Push(e.Damage);
+				dbb.Push(id); dlast.Push(level.maptime);
+				return;
+			}
+
+			dtotal[idx] = dtotal[idx] + e.Damage;
+			dlast[idx] = level.maptime;
+			string t = String.Format("%d", dtotal[idx]);
+
+			// WG13 carries its number in `data`; everything else in `text`.
+			if (GITD_Neon.IsWG13())
+				level.UpdateBillboard(dbb[idx], dtotal[idx], GITD_Neon.MenuColor());
+			else
+				level.SetBillboardText(dbb[idx], t);
+
+			// Widen as it gains digits, or a five-figure total is squeezed into
+			// a box built for three.
+			double w2, h2;
+			[w2, h2] = GITD_Neon.BadgeSize(t.Length(), false);
+			level.ResizeBillboard(dbb[idx], w2 * 0.7, h2 * 0.7);
+			return;
+		}
 
 		string txt = String.Format("%d", e.Damage);
 		Vector3 p = e.Thing.pos + (

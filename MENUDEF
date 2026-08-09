@@ -161,6 +161,12 @@ OptionValue "Nice_Flashlight_Position"
 // adjusting while you adjust it.
 // ---------------------------------------------------------------------------
 
+OptionValue "GITDNeonDmgMode"
+{
+	0, "One per hit"
+	1, "Total per monster"
+}
+
 OptionValue "GITDNeonLinger"
 {
 	0, "Close again"
@@ -240,7 +246,11 @@ OptionMenu "GITDNeon"
 	StaticText "These decide which numbers exist.", darkgray
 	StaticText ""
 	Option "Damage numbers",		"gitd_neon_damage", "OnOff"
-	StaticText "Overhead and brief, always.", darkgray
+	Option "Count",					"gitd_neon_dmg_mode", "GITDNeonDmgMode"
+	Slider "Resets after",			"gitd_neon_dmg_window", 5, 210, 5, 0
+	StaticText "A total rides the monster and climbs", darkgray
+	StaticText "while you hit it, then expires. Per-hit", darkgray
+	StaticText "numbers stack up under rapid fire.", darkgray
 	StaticText ""
 	Option "Kill counter",			"gitd_neon_killcount", "OnOff"
 	Option "Where",					"gitd_neon_kc_place", "GITDNeonPlace"
