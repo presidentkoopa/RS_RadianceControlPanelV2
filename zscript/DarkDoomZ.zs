@@ -462,8 +462,11 @@ class DarkDoomZ_Flashlight : CustomInventory {
 	}
 
 	virtual void ToggleActive() {
+		// Was the Off sound in both branches -- turning the torch ON clicked
+		// like turning it off. DDZ_Flashlight_On has sat in sndinfo.txt,
+		// defined and never referenced, the whole time.
 		if(Active) { Active = false; owner.A_StartSound("DDZ_Flashlight_Off", CHAN_AUTO, 0, 0.5); }
-		else { Active = true; owner.A_StartSound("DDZ_Flashlight_Off", CHAN_AUTO, 0, 0.5); }
+		else { Active = true; owner.A_StartSound("DDZ_Flashlight_On", CHAN_AUTO, 0, 0.5); }
 	}
 }
 

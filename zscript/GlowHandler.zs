@@ -1484,6 +1484,14 @@ class GITD_ResetHandler : EventHandler
 		// Darkness, flashlight, numbers, pickup cones.
 		static const string rest[] = {
 			"gitd_enabled", "gitd_preset",
+			// The sweep's behaviour set arrived after the sweeps[] list above
+			// and was never added to it -- so "Reset EVERYTHING" put the
+			// geometry back and left the conduct: a sweep still firing on
+			// every kill, still slowing monsters, still driven by health.
+			"gitd_ss_direction", "gitd_ss_trigger", "gitd_ss_drive",
+			"gitd_ss_health_speed", "gitd_ss_drift", "gitd_ss_trail",
+			"gitd_ss_actors", "gitd_ss_sonar_floor", "gitd_ss_sonar_fade",
+			"gitd_ss_perband", "gitd_ss_demo",
 			"gitd_dd_enabled", "gitd_dd_noflash", "gitd_bloom_forced",
 			"ddz_mode", "ddz_preset", "ddz_desat", "ddz_skymode", "ddz_lighting",
 			"ddz_fog", "ddz_minlight", "ddz_pregain", "ddz_postgain",
@@ -1502,6 +1510,7 @@ class GITD_ResetHandler : EventHandler
 			"gitd_pc_coverage", "gitd_pc_falloff", "gitd_pc_spread" };
 		for (int i = 0; i < rest.Size(); i++) Rst(rest[i]);
 		for (int c = 1; c <= 8; c++) Rst("fl_c" .. c);
+		for (int b = 1; b <= 8; b++) { Rst("gitd_ss_fx" .. b); Rst("gitd_ss_script" .. b); }
 
 		// Bloom and exposure belong to the ENGINE, not to this mod, so they
 		// survived every previous "reset to defaults" -- which is exactly how

@@ -651,9 +651,10 @@ OptionMenu "GITDSweepAdv"
 	StaticText "Higher = a tighter, harder line", darkgray
 	Slider "Speed",					"gitd_ss_speed", 20, 2000, 20, 0
 	Slider "Travel distance",		"gitd_ss_range", 128, 8192, 128, 0
-	Option "Sweep back and forth",	"gitd_ss_pingpong", "YesNo"
-	StaticText "Off = restarts from the origin each time,", darkgray
-	StaticText "so it reads as a pulse rather than a sweep", darkgray
+	// "Sweep back and forth" is gone: it bound gitd_ss_pingpong, which
+	// nothing reads any more -- gitd_ss_direction superseded it and has its
+	// own row ("Travels") on the main sweep page. A control wired to a dead
+	// cvar is a lying control, and this mod has already paid for four.
 }
 
 // ---------------------------------------------------------------------------

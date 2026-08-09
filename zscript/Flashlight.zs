@@ -280,7 +280,10 @@ class GITD_Flashlight : Thinker
 			if (mo.CheckSight(pmo))
 			{
 				mo.target = pmo;
-				mo.SetState(mo.SeeState);
+				// Guarded: SetState(null) DESTROYS the actor, so a monster
+				// with no See state would silently vanish when lit. The
+				// sweep's wake effect already checks; this now matches it.
+				if (mo.SeeState) mo.SetState(mo.SeeState);
 			}
 		}
 	}

@@ -284,6 +284,10 @@ class GITD_NeonKillCounter : EventHandler
 		kills = 0;
 		bid.Clear(); bage.Clear(); blife.Clear();
 		dtar.Clear(); dtotal.Clear(); dbb.Clear(); dlast.Clear();
+		// Billboards are level-owned, so every id in here died with the old
+		// map. Kept, they only pad the 64-cap with ghosts and evict real
+		// badges early.
+		perm.Clear();
 	}
 
 	// How much clear floor there is around a point, in map units.
