@@ -68,6 +68,11 @@ class DarkDoomZ_Handler : EventHandler {
 			while (effect = Lighting(it.Next())) { effect.Destroy(); }
 		}
 
+		// Settings poll, replacing the UiTick netevent -- see the note above
+		// NetworkProcess. Cheap: a handful of cvar reads, and the fog pass
+		// only runs when something actually changed.
+		ChangeLighting();
+
 		ApplyDarkness();
 
 		// PER-TIC REASSERT REVERTED. It fought Doom's own Lighting thinkers --
@@ -129,10 +134,14 @@ class DarkDoomZ_Handler : EventHandler {
 		// was removed rather than never written.
 	}
 
-	override void UiTick() {
-		EventHandler.SendNetworkEvent("UpdateLights");
-	}
-
+	// [GITD] The per-tic network event is gone. Upstream DarkDoomZ sent
+	// "UpdateLights" from UiTick EVERY TIC just so NetworkProcess could call
+	// ChangeLighting -- a settings poll dressed as a net message, which in
+	// multiplayer was a message per client per tic and padding in every demo.
+	// The netevent bought nothing here: ChangeLighting only reads server
+	// cvars, which the playsim can do directly, and it already carries its
+	// own change detection. So WorldTick just calls it. The NetworkProcess
+	// hook stays for anything external that still sends the event by name.
 	override void NetworkProcess(ConsoleEvent e) {
 		if(e.Name == "UpdateLights") ChangeLighting();
 	}
