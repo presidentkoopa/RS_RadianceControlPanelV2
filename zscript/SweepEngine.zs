@@ -598,15 +598,16 @@ class GITD_Setpiece : GITD_SweepAction
 	{
 		if (reverting)
 		{
-			// The outbound wave has finished putting things back.
+			// The outbound wave has finished. It only restored the sectors it
+			// PASSED -- fired with a shorter range or a different origin than
+			// the wave that swept in, it leaves journal records it never
+			// reached, and those sectors would stay transformed forever. So
+			// the wave does the pretty part and this does the complete part:
+			// RestoreEverything walks the whole journal (idempotent for the
+			// sectors already put back), despawns, unstamps, restores the
+			// music, and clears the books.
 			reverting = false;
-			started = false;
-			jIdx.Clear(); jFloor.Clear(); jCeil.Clear();
-			jTouched.Clear();
-			tinted.Clear();
-			DespawnAll();
-			UnstampAll();
-			if (music != "" && jMusic != "") S_ChangeMusic(jMusic);
+			RestoreEverything();
 		}
 		else if (revertOnFinish)
 		{
@@ -622,10 +623,14 @@ class GITD_Setpiece : GITD_SweepAction
 	// than set once.
 	void Republish()
 	{
-		if (envColor == 0) return;
+		// Each channel is gated on its own setting, not all of them on the
+		// tint: a light-only or desat-only setpiece is legitimate, and calling
+		// Tint with an unset envColor would multiply the room to black --
+		// Color 0 is not "no tint", it is "tint everything away".
+		if (envColor == 0 && envLight == 0 && envDesat <= 0) return;
 		for (int i = 0; i < tinted.Size(); i++)
 		{
-			GITD_Composite.Tint(tinted[i], envColor);
+			if (envColor != 0) GITD_Composite.Tint(tinted[i], envColor);
 			if (envDesat > 0) GITD_Composite.Desaturate(tinted[i], envDesat);
 			if (envLight != 0) GITD_Composite.AddLight(tinted[i], envLight);
 		}
@@ -652,8 +657,10 @@ class GITD_Setpiece : GITD_SweepAction
 		jCeil.Push(TexMan.GetName(sec.GetTexture(Sector.ceiling)));
 
 		// Declared, not painted. See SectorComposite.zs -- calling SetColor
-		// here is what made this look like it had never run.
-		if (envColor != 0) tinted.Push(idx);
+		// here is what made this look like it had never run. The list feeds
+		// Republish, which gates each channel itself, so any declaring
+		// setpiece -- tint, light or desat -- enrols the sector here.
+		if (envColor != 0 || envLight != 0 || envDesat > 0) tinted.Push(idx);
 		if (envFloorTex != "")
 			sec.SetTexture(Sector.floor, TexMan.CheckForTexture(envFloorTex, TexMan.Type_Flat));
 		if (envCeilTex != "")
@@ -696,7 +703,26 @@ class GITD_Setpiece : GITD_SweepAction
 		// sectors in the same tic, and the journal -- which is the only record
 		// of what the level used to be -- would end up describing a state the
 		// level was never in.
-		GITD_Sweep.Cancel(name);
+		//
+		// DETACHED, not just cancelled. The cull loop fires OnFinish on any
+		// dead wave still holding a script, and this object cannot tell the
+		// inbound wave's death from the outbound one's finish -- so a plain
+		// Cancel here had OnFinish take the "revert complete" branch one tic
+		// in, wiping the journal while the return wave had barely left, and
+		// the reset flags then let the SAME wave re-apply the setpiece and
+		// journal the half-transformed level as the original. Unhooking the
+		// script before killing the wave is what makes the comment above true.
+		let h = GITD_Handler(StaticEventHandler.Find("GITD_Handler"));
+		if (h)
+		{
+			for (int i = 0; i < h.waves.Size(); i++)
+			{
+				let w = h.waves[i];
+				if (!w || w.ambient || w.tag != name) continue;
+				w.sweepAction = null;
+				w.alive = false;
+			}
+		}
 
 		sp.reverting = true;
 		GITD_Sweep.FireScript(origin, name, col, speed, range, shape);
