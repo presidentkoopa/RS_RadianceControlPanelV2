@@ -27,14 +27,28 @@ class GITD_Flashlight : Thinker
 
 	static GITD_Flashlight Get()
 	{
-		ThinkerIterator it = ThinkerIterator.Create("GITD_Flashlight", Thinker.STAT_STATIC);
+		ThinkerIterator it = ThinkerIterator.Create("GITD_Flashlight");
 		return GITD_Flashlight(it.Next());
 	}
 
 	static GITD_Flashlight Spawn()
 	{
+		// NO ChangeStatNum HERE, AND THAT LINE IS WHY THIS NEVER WORKED.
+		//
+		// It parked itself at STAT_STATIC, which is 5. RunThinkers only walks
+		// statnums from STAT_FIRST_THINKING (32) upward, so STAT_STATIC is a
+		// storage slot rather than a thinking one -- Tick() had never executed
+		// a single time. No cone, no beam light, no bounce, and every control
+		// on the Flashlight page adjusting nothing.
+		//
+		// It went unnoticed because DarkDoomZ shipped a SECOND flashlight that
+		// did work, so there was always a torch. Removing that duplicate is
+		// what exposed this.
+		//
+		// new() already places a Thinker in STAT_DEFAULT, which ticks. That
+		// makes it map-local rather than persistent, which is correct anyway:
+		// GITD_FlashlightHandler.WorldLoaded respawns it every map.
 		let f = GITD_Flashlight(new("GITD_Flashlight"));
-		f.ChangeStatNum(Thinker.STAT_STATIC);
 		f.slotIndex = 0;
 		f.phase = 0;
 		f.fromCol = f.SlotColor(0);
@@ -84,19 +98,19 @@ class GITD_Flashlight : Thinker
 			case 1:
 			case 4:
 			{
-				double t = 0.5 - 0.5 * cos(phase * 360.0);
+				double t = 0.5 - 0.5 * cos(phase * 180.0);
 				return GITD_Palette.Lerp(fromCol, toCol, t);
 			}
 			case 2:
 			{
-				double t = max(0.0, 1.0 - phase * 3.0);
+				double t = min(1.0, phase * 3.0);
 				return GITD_Palette.Lerp(fromCol, toCol, t);
 			}
 			case 3:
 			{
-				double t = 0.5 - 0.5 * cos(phase * 360.0);
+				double t = 0.5 - 0.5 * cos(phase * 180.0);
 				Color c = GITD_Palette.Lerp(fromCol, toCol, t);
-				return GITD_Palette.Scale(c, 0.35 + 0.65 * abs(cos(phase * 360.0)));
+				return GITD_Palette.Scale(c, 0.35 + 0.65 * abs(cos(phase * 180.0)));
 			}
 		}
 	}
@@ -107,8 +121,23 @@ class GITD_Flashlight : Thinker
 	// Flip: rolling your wrist far enough that the torch is upside-down means
 	// you are almost certainly pointing it backwards over your shoulder, so
 	// the beam is turned to follow the intent rather than the geometry.
-	bool ResolveMount(PlayerPawn pmo, out Vector3 pos, out Vector3 dir)
+	// MULTIPLE RETURN, NOT out PARAMS.
+	//
+	// `out Vector3` is not supported by this VM at all. The compiler tags it
+	// REGT_FLOAT|REGT_ADDROF|REGT_MULTIREG3 and NOTHING handles that
+	// combination: the JIT falls through to "Unknown REGT value passed to
+	// EmitPARAM" (jit_call.cpp), and the interpreter it falls back to refuses
+	// outright with "REGT_ADDROF not implemented for vectors" (vmexec.h).
+	//
+	// That JIT line at load was never the bug -- it was the WARNING. The
+	// interpreter it announced would have hard-errored the first time this ran.
+	// It never ran, so nobody found out. See the statnum note in Spawn().
+	//
+	// `out double` is fine, which is why GITD_Presets.Params gets away with it:
+	// one register, no MULTIREG tag.
+	Vector3, Vector3 ResolveMount(PlayerPawn pmo)
 	{
+		Vector3 pos, dir;
 		int mount = CVar.FindCVar("fl_mount").GetInt();
 		double ang, pit, rol;
 
@@ -149,7 +178,7 @@ class GITD_Flashlight : Thinker
 
 		double cp = cos(pit);
 		dir = (cos(ang) * cp, sin(ang) * cp, -sin(pit));
-		return true;
+		return pos, dir;
 	}
 
 	override void Tick()
@@ -166,7 +195,7 @@ class GITD_Flashlight : Thinker
 		}
 
 		Vector3 pos, dir;
-		ResolveMount(PlayerPawn(pmo), pos, dir);
+		[pos, dir] = ResolveMount(PlayerPawn(pmo));
 
 		Color col = CurrentColor();
 		double range = CVar.FindCVar("fl_range").GetInt();
