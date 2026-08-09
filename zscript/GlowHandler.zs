@@ -881,6 +881,12 @@ class GITD_Handler : StaticEventHandler
 // resets the player's own choices, which is what "defaults" means here.
 class GITD_ResetHandler : EventHandler
 {
+	static void Rst(string name)
+	{
+		CVar c = CVar.FindCVar(name);
+		if (c) c.ResetToDefault();
+	}
+
 	override void NetworkProcess(ConsoleEvent e)
 	{
 		if (e.name != "gitd_reset") return;
@@ -916,7 +922,41 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) CVar.FindCVar("gitd_ss_c" .. c).ResetToDefault();
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
 
-		Console.Printf("Glow settings reset to defaults.");
+		// Darkness, flashlight, numbers, pickup cones.
+		static const string rest[] = {
+			"gitd_enabled", "gitd_preset",
+			"gitd_dd_enabled", "gitd_dd_noflash", "gitd_bloom_forced",
+			"ddz_mode", "ddz_preset", "ddz_desat", "ddz_skymode", "ddz_lighting",
+			"ddz_fog", "ddz_minlight", "ddz_pregain", "ddz_postgain",
+			"ddz_fl_pos", "ddz_fl_quality", "ddz_fl_type",
+			"fl_enabled", "fl_mount", "fl_range", "fl_intensity", "fl_inner",
+			"fl_outer", "fl_falloff", "fl_density", "fl_dust", "fl_dust_scale",
+			"fl_dust_drift", "fl_slots", "fl_random", "fl_pattern", "fl_speed",
+			"fl_bounce", "fl_allowflip", "fl_agitate", "fl_model",
+			"gitd_neon_enabled", "gitd_neon_style", "gitd_neon_scale",
+			"gitd_neon_color", "gitd_neon_life", "gitd_neon_killcount",
+			"gitd_neon_kc_digits", "gitd_neon_kc_linger", "gitd_neon_kc_place",
+			"gitd_neon_damage", "gitd_neon_dmg_mode", "gitd_neon_dmg_window",
+			"gitd_neon_glow_reach", "gitd_neon_glow_strength",
+			"gitd_pc_shape", "gitd_pc_hue", "gitd_pc_sat", "gitd_pc_val",
+			"gitd_pc_satvar", "gitd_pc_valvar", "gitd_pc_intensity",
+			"gitd_pc_coverage", "gitd_pc_falloff", "gitd_pc_spread" };
+		for (int i = 0; i < rest.Size(); i++) Rst(rest[i]);
+		for (int c = 1; c <= 8; c++) Rst("fl_c" .. c);
+
+		// Bloom and exposure belong to the ENGINE, not to this mod, so they
+		// survived every previous "reset to defaults" -- which is exactly how
+		// you end up with a menu button that does not fix the thing you broke.
+		// The page offers them, so the reset owes them.
+		static const string engine[] = {
+			"gl_bloom", "gl_bloom_threshold", "gl_bloom_knee", "gl_bloom_amount",
+			"gl_bloom_anamorphic", "gl_bloom_anamorphic_ratio",
+			"gl_bloom_chromatic", "gl_bloom_tint_r", "gl_bloom_tint_g",
+			"gl_bloom_tint_b", "gl_exposure_scale", "gl_exposure_min",
+			"gl_exposure_base", "gl_exposure_speed", "gl_fogmode" };
+		for (int i = 0; i < engine.Size(); i++) Rst(engine[i]);
+
+		Console.Printf("\c[Gold]All Glow In The Dark settings reset to defaults, bloom included.");
 	}
 }
 

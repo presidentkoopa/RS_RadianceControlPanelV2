@@ -320,7 +320,7 @@ OptionMenu "GITDOptions"
 	Submenu "Preset Options",		"GITDPresetOptions"
 	StaticText ""
 	StaticText ""
-	SafeCommand "Reset glow to defaults",	"netevent gitd_reset"
+	SafeCommand "Reset EVERYTHING to defaults","netevent gitd_reset"
 	StaticText ""
 	StaticText "Lane control", gold
 	Submenu "Wall Bottom Glow",		"GITDWallBottom"
