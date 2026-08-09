@@ -46,10 +46,30 @@ class GITD_Neon
 	static int Payload()
 	{
 		let cv = CVar.FindCVar('gitd_neon_style');
-		int s = cv ? cv.GetInt() : 1;
+		int s = cv ? cv.GetInt() : 3;
 		if (s <= 0) return LevelLocals.BB_TEXT;
 		if (s == 1) return LevelLocals.BB_SEGMENT;
-		return LevelLocals.BB_SEGLCD;
+		if (s == 2) return LevelLocals.BB_SEGLCD;
+		return LevelLocals.BB_WG13;
+	}
+
+	// WG13 is not interchangeable with the others at the call site: it takes
+	// the NUMBER in `data` where they take packed glow, and it needs its
+	// progress driven every tic. Anything generic has to check.
+	static bool IsWG13()
+	{
+		let cv = CVar.FindCVar('gitd_neon_style');
+		return (cv ? cv.GetInt() : 3) >= 3;
+	}
+
+	// GITD's own sizing, which is what makes it a lozenge instead of a circle:
+	// halfH is fixed and halfW grows with the digit count.
+	static double, double BadgeSize(int digits, bool big = false)
+	{
+		if (digits < 1) digits = 1;
+		double halfH = (big ? 46.0 : 34.0) * Scale();
+		double halfW = halfH * (0.60 + digits * 0.42);
+		return halfW * 2.0, halfH * 2.0;
 	}
 
 	static Color MenuColor()
@@ -194,7 +214,18 @@ class GITD_Neon
 class GITD_NeonKillCounter : EventHandler
 {
 	int kills;
-	int floorTag, aboveTag;
+
+	// Live WG13 badges. They are one-shots that have to be OPENED and CLOSED
+	// -- 12 tics out, hold, 14 tics back, then gone -- so unlike every other
+	// payload here they need driving. Tracked as parallel arrays rather than
+	// objects because there are never many and this is per-tic code.
+	Array<int> bid;
+	Array<int> bage;
+	Array<int> blife;
+
+	// Marks that were told to stay. Tracked separately so the count can be
+	// capped without touching the ones still animating.
+	Array<int> perm;
 
 	private static int Placement()
 	{
@@ -206,6 +237,13 @@ class GITD_NeonKillCounter : EventHandler
 	{
 		let cv = CVar.FindCVar('gitd_neon_killcount');
 		return cv && cv.GetBool() && GITD_Neon.Enabled();
+	}
+
+	// 0 close again (the original), 1 fade out, 2 stay put.
+	private static int Linger()
+	{
+		let cv = CVar.FindCVar('gitd_neon_kc_linger');
+		return cv ? clamp(cv.GetInt(), 0, 2) : 0;
 	}
 
 	private static int Digits()
@@ -228,6 +266,77 @@ class GITD_NeonKillCounter : EventHandler
 	override void WorldLoaded(WorldEvent e)
 	{
 		kills = 0;
+		bid.Clear(); bage.Clear(); blife.Clear();
+	}
+
+	private void Spawn13(Vector3 pos, double w, double h, double tilt, int num, bool big)
+	{
+		int id = level.AddBillboardPersistent(pos, w, h, 0, tilt,
+			LevelLocals.BBF_CAMERAYAW, LevelLocals.BB_WG13, num,
+			GITD_Neon.MenuColor(), 0, 0);
+		if (id == 0) return;
+		level.SetBillboardProgress(id, 0.05);
+		bid.Push(id); bage.Push(0); blife.Push(big ? 80 : 60);
+
+		// Permanent marks accumulate, and billboards are a finite budget --
+		// a long session would quietly fill it and start starving everything
+		// else. Keep the most recent and retire the rest.
+		if (Linger() == 2)
+		{
+			while (perm.Size() >= 64)
+			{
+				level.RemoveBillboard(perm[0]);
+				perm.Delete(0);
+			}
+			perm.Push(id);
+		}
+	}
+
+	// GITD_SeamBox's own curve: 12 tics to open, hold, 14 to close, then gone.
+	override void WorldTick()
+	{
+		for (int i = bid.Size() - 1; i >= 0; i--)
+		{
+			int age = bage[i] + 1;
+			bage[i] = age;
+			int life = blife[i];
+
+			int mode = Linger();
+
+			// STAY: open, then stop being driven. Left at full and handed to
+			// the permanent list, which caps itself.
+			if (mode == 2)
+			{
+				double op = (age < 12) ? age / 12.0 : 1.0;
+				level.SetBillboardProgress(bid[i], clamp(op, 0.05, 1.0));
+				if (age >= 12) { bid.Delete(i); bage.Delete(i); blife.Delete(i); }
+				continue;
+			}
+
+			if (age > life)
+			{
+				level.RemoveBillboard(bid[i]);
+				bid.Delete(i); bage.Delete(i); blife.Delete(i);
+				continue;
+			}
+
+			double prog;
+			if (age < 12)             prog = age / 12.0;
+			else if (age > life - 14) prog = (life - age) / 14.0;
+			else                      prog = 1.0;
+
+			// FADE: hold the plate open and take the alpha down instead of
+			// closing it. Shutting AND fading at once reads as a glitch --
+			// pick one exit, not both.
+			if (mode == 1)
+			{
+				prog = (age < 12) ? age / 12.0 : 1.0;
+				double a = (age > life - 20) ? (life - age) / 20.0 : 1.0;
+				level.SetBillboardAlpha(bid[i], clamp(a, 0.0, 1.0));
+			}
+
+			level.SetBillboardProgress(bid[i], clamp(prog, 0.05, 1.0));
+		}
 	}
 
 	override void WorldThingDied(WorldEvent e)
@@ -240,6 +349,21 @@ class GITD_NeonKillCounter : EventHandler
 		kills++;
 		string txt = Pad(kills, Digits());
 		int place = Placement();
+
+		// The original: a lozenge badge that opens, shows the number, closes.
+		// Digits only, and the number rides in `data`.
+		if (GITD_Neon.IsWG13())
+		{
+			bool big = (kills % 10) == 0;			// milestone kills get the larger badge
+			double w, h;
+			[w, h] = GITD_Neon.BadgeSize(txt.Length(), big);
+
+			if (place == 0 || place == 2)
+				Spawn13((e.Thing.pos.x, e.Thing.pos.y, e.Thing.floorz + 4), w, h, 90, kills, big);
+			if (place == 1 || place == 2)
+				Spawn13(e.Thing.pos + (0, 0, e.Thing.Height + 12), w, h, 0, kills, big);
+			return;
+		}
 
 		// Flat on the ground where it fell. Still yaw-tracks the player, so it
 		// never reads upside down.

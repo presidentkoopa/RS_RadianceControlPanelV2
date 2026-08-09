@@ -399,7 +399,7 @@ server float gitd_p11_intensity = 1.6;
 // Colour here is only a FALLBACK. Any mod that knows what a number means
 // passes its own and never reads this.
 server bool  gitd_neon_enabled        = true;
-server int   gitd_neon_style          = 1;      // 0 font, 1 LED segments, 2 LCD segments
+server int   gitd_neon_style          = 3;      // 0 font, 1 LED seg, 2 LCD seg, 3 wgType 13 (default)
 server color gitd_neon_color          = "00 c8 ff";
 server float gitd_neon_scale          = 1.0;    // 0.25 .. 4
 server float gitd_neon_life           = 2.5;    // seconds a fire-and-forget number lasts
@@ -411,5 +411,6 @@ server float gitd_neon_glow_strength  = 0.75;
 // Kill counter. Off by default -- it is a readout, not everyone wants one.
 server bool gitd_neon_killcount = false;
 server int  gitd_neon_kc_place  = 1;   // 0 floor, 1 above the corpse, 2 both
+server int  gitd_neon_kc_linger = 0;   // 0 close again, 1 fade out, 2 stay put
 server int  gitd_neon_kc_digits = 4;   // zero-padded width, so it does not
                                        // change size as it counts

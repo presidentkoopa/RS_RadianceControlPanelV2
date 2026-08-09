@@ -161,6 +161,13 @@ OptionValue "Nice_Flashlight_Position"
 // adjusting while you adjust it.
 // ---------------------------------------------------------------------------
 
+OptionValue "GITDNeonLinger"
+{
+	0, "Close again"
+	1, "Fade out"
+	2, "Stay (max 64)"
+}
+
 OptionValue "GITDNeonPlace"
 {
 	0, "On the floor"
@@ -184,6 +191,7 @@ OptionValue "GITDNeonStyle"
 	0, "Font (typeface)"
 	1, "LED segments"
 	2, "LCD segments (punched)"
+	3, "wgType 13 (original)"
 }
 
 // ---------------------------------------------------------------------------
@@ -229,6 +237,7 @@ OptionMenu "GITDNeon"
 	Option "Kill counter",			"gitd_neon_killcount", "OnOff"
 	Option "Where",					"gitd_neon_kc_place", "GITDNeonPlace"
 	Option "Digits",				"gitd_neon_kc_digits", "GITDNeonDigits"
+	Option "When done",				"gitd_neon_kc_linger", "GITDNeonLinger"
 	StaticText "Both placements turn to face you --", darkgray
 	StaticText "a floor mark never reads upside down.", darkgray
 	StaticText "Padded to a fixed width so the readout", darkgray
