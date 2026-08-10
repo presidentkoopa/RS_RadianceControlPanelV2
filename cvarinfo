@@ -666,3 +666,16 @@ server int gitd_ss_thick8 = 0;
 server bool  gitd_ss_drop = false;       // triggers drop in place
 server float gitd_ss_drop_every = 0.0;   // also drop every N seconds; 0 = off
 server int   gitd_ss_drop_max = 8;       // oldest retires past this many
+
+// ---- Per-sweep shape -------------------------------------------------------
+// 0 means "use the shared Shape option". The engine already gives every band
+// its own origin and its own shape; this is the menu catching up. A ring and a
+// rising plane in the same train is the point.
+server int gitd_ss_shape1 = 0;
+server int gitd_ss_shape2 = 0;
+server int gitd_ss_shape3 = 0;
+server int gitd_ss_shape4 = 0;
+server int gitd_ss_shape5 = 0;
+server int gitd_ss_shape6 = 0;
+server int gitd_ss_shape7 = 0;
+server int gitd_ss_shape8 = 0;

@@ -218,15 +218,24 @@ class GITD_PresetProfile abstract
 	// =====================================================================
 	// 3. RED ALERT -- containment breach
 	//
-	// The opposite of Low Power in every axis, deliberately. Low Power is a
-	// building that has given up and gone quiet; this is a building SHOUTING.
-	// Where that one is still and waits minutes between events, this never
-	// stops moving and never lets you settle.
+	// This absorbed Furnace, and the merge is the point rather than a
+	// compromise. Two hot, saturated, urgent presets sitting side by side
+	// would have been one preset and a variant of it -- but they were urgent
+	// about DIFFERENT THINGS, and putting them in one room turns two half
+	// ideas into a whole one:
 	//
-	// And it is the preset the spin exists for. A klaxon is not a light that
-	// travels across a room -- it is a light that TURNS. So the sweep does not
-	// go anywhere: its origin orbits you, and the beam rakes the walls as it
-	// comes round. The whole facility has noticed you and is circling.
+	//     the alarm            -- the facility's response
+	//     the heat rising      -- what it is responding TO
+	//
+	// You are standing between a building that has noticed something and the
+	// something it noticed. Neither half means much alone. Together they are
+	// a place.
+	//
+	// It is also the first preset where one train disagrees with itself about
+	// SHAPE: bands 1 and 2 are planes climbing out of the floor while 3, 4 and
+	// 5 are rings orbiting your feet. That was impossible until per-band
+	// origins and shapes landed, and it is the clearest thing to point at as
+	// proof they work.
 	// =====================================================================
 	static void RedAlert()
 	{
@@ -234,22 +243,19 @@ class GITD_PresetProfile abstract
 		//
 		// An alarm means the emergency circuit is ON, so this is not dark the
 		// way Low Power is dark -- it is dim and RED and entirely legible.
-		// Hue 358 is blood rather than fire; saturation near maximum, because
-		// an alarm colour that has gone pastel is not an alarm.
-		//
-		// Narrow spread: all four lanes say the same thing. A warning that
-		// disagrees with itself is decoration.
-		F("gitd_pc_hue", 358.0);
-		F("gitd_pc_spread", 30.0);
-		F("gitd_pc_sat", 0.88);
+		// The hue sits at 5 rather than pure red and spreads to 48, which
+		// reaches orange: wide enough that the heat below and the alarm above
+		// belong to one family, narrow enough that all four lanes still say
+		// the same thing. A warning that disagrees with itself is decoration.
+		F("gitd_pc_hue", 5.0);
+		F("gitd_pc_spread", 48.0);
+		F("gitd_pc_sat", 0.90);
 		F("gitd_pc_satvar", 0.08);
-		F("gitd_pc_val", 0.40);
-		F("gitd_pc_valvar", 0.26);
+		F("gitd_pc_val", 0.38);
+		F("gitd_pc_valvar", 0.28);
 
 		// BREATHE, not snap. Low Power sits still because it is dying; this
-		// pulses because something is still running and wants you to know.
-		// Second-and-a-half holds with a wide brightness swing is the slow
-		// throb under a klaxon -- the room inhaling between beacon passes.
+		// throbs because something is still running and wants you to know.
 		LanesI("_enabled", 1);
 		LanesI("_pattern", 3);
 		LanesI("_coverage", 144);
@@ -257,67 +263,94 @@ class GITD_PresetProfile abstract
 		Lanes("_saturation", 1.00);
 		LanesI("_anim", 0);
 		LanesI("_slots", 8);
-		Hold(1.5);
+		Hold(1.4);
 
-		// Subtract, not Compress: emergency lighting is uniformly dim rather
-		// than proportionally scaled, and a flat fade is what that looks
-		// like. Colour drain stays LOW -- draining an alarm is the one place
-		// it would be actively wrong.
+		// Subtract rather than Compress: emergency lighting is uniformly dim
+		// rather than proportionally scaled, and a flat fade is what that
+		// looks like. Colour drain stays LOW -- draining an alarm is the one
+		// place it would be actively wrong.
 		B("gitd_dd_enabled", true);
-		I("ddz_mode", 1);      // Subtract
-		I("ddz_preset", 3);    // Dismal
+		I("ddz_mode", 1);
+		I("ddz_preset", 3);
 		I("ddz_desat", 20);
 
-		// ---- the beacon --------------------------------------------------
+		// ---- one train, two jobs ----------------------------------------
 		//
-		// Origin follows YOU, and then spins around you at 320 units: about
-		// four and a half seconds a revolution, which is roughly what a real
-		// rotating warning lamp does. Three bands sit 120 degrees apart on
-		// that orbit, so there is always one coming and one going.
-		//
-		// The rings themselves barely travel -- 640 over 320 is a two-second
-		// cycle -- so each one is a short outward stab rather than a journey.
-		// The MOTION you read is the orbit, not the expansion.
+		// range over speed 1 is the shared clock: 1024 over 200 is about five
+		// seconds, and everything in the train answers to it. The BEACON does
+		// not, though -- the spin is its own clock at 80 degrees a second, so
+		// the lamp comes round every four and a half seconds against a
+		// five-second pulse. Close enough to feel related, different enough
+		// that they never lock into a pattern you can predict.
 		B("gitd_ss_enabled", true);
-		I("gitd_ss_count", 3);
-		I("gitd_ss_shape", 1);
-		I("gitd_ss_origin", 2);       // follows you
+		I("gitd_ss_count", 5);
+		I("gitd_ss_shape", 1);        // the shared default; bands override
+		I("gitd_ss_origin", 2);       // you are the centre of this
 		I("gitd_ss_direction", 0);
 		I("gitd_ss_trigger", 0);
 		I("gitd_ss_drive", 0);
-		I("gitd_ss_range", 640);
-		F("gitd_ss_softness", 2.0);
-		F("gitd_ss_intensity", 1.7);
-		I("gitd_ss_trail", 140);
+		I("gitd_ss_range", 1024);
+		F("gitd_ss_softness", 2.2);
+		F("gitd_ss_intensity", 1.6);
+		I("gitd_ss_trail", 160);
 		F("gitd_ss_drift", 0.0);
 		F("gitd_ss_health_speed", 0.0);
-		I("gitd_ss_thickness", 100);
+		I("gitd_ss_thickness", 120);
 
-		F("gitd_ss_spin", 80.0);        // degrees a second
+		F("gitd_ss_spin", 80.0);
 		F("gitd_ss_spin_radius", 320.0);
-		I("gitd_ss_spin_colors", 0);    // the bands carry their own
+		I("gitd_ss_spin_colors", 0);
 
-		// Per-pixel again; the coarse per-sector path stays off.
-		B("gitd_ss_light", false);
+		B("gitd_ss_light", false);    // per pixel; the coarse path stays off
 		B("gitd_ss_perband", true);
 		for (int i = 1; i <= 8; i++) I("gitd_ss_fx" .. i, 0);
 
-		// Two lamps and what they show you. The first two ADD -- they are
-		// light sources and Add is the only mode whose colour you see -- and
-		// the third REVEALS, wider and softer, so the beam is followed by a
-		// moment of actually seeing the room rather than just seeing red.
-		I("gitd_ss_draw1", 1);  I("gitd_ss_thick1", 70);   F("gitd_ss_speed1", 320.0);
-		I("gitd_ss_draw2", 1);  I("gitd_ss_thick2", 90);   F("gitd_ss_speed2", 300.0);
-		I("gitd_ss_draw3", 2);  I("gitd_ss_thick3", 200);  F("gitd_ss_speed3", 280.0);
-		for (int i = 4; i <= 8; i++) { I("gitd_ss_draw" .. i, 1); I("gitd_ss_thick" .. i, 0); }
+		// THE HEAT, first in the train so it carries no lag.
+		//
+		// Shape 5 is a rising PLANE, not a column -- it measures height and
+		// ignores where you are standing, which is exactly right for heat
+		// coming up through a floor and also why the spin below cannot
+		// disturb it. Band 1 is the wide front, band 2 the hotter core
+		// climbing just behind it. Both ADD, because they are the light.
+		I("gitd_ss_shape1", 5);  I("gitd_ss_draw1", 1);
+		I("gitd_ss_thick1", 260); F("gitd_ss_speed1", 200.0);
+		I("gitd_ss_shape2", 5);  I("gitd_ss_draw2", 1);
+		I("gitd_ss_thick2", 160); F("gitd_ss_speed2", 180.0);
 
-		// Tight. Half a second between the two lamps, three quarters to the
-		// reveal behind them -- fast enough to read as one turning fixture.
-		I("gitd_ss_gap1", 20);
-		I("gitd_ss_gap2", 25);
+		// THE ALARM, orbiting you. Two lamps and what they show.
+		//
+		// Rings, so they wrap the room; a hair thinner and faster than the
+		// heat so they read as machinery rather than weather. Band 5 REVEALS
+		// behind the pair, which is the moment you actually see where you are
+		// rather than just seeing red -- and it is the only band whose colour
+		// does nothing, since reveal multiplies what is already there.
+		I("gitd_ss_shape3", 1);  I("gitd_ss_draw3", 1);
+		I("gitd_ss_thick3", 70);  F("gitd_ss_speed3", 200.0);
+		I("gitd_ss_shape4", 1);  I("gitd_ss_draw4", 1);
+		I("gitd_ss_thick4", 90);  F("gitd_ss_speed4", 190.0);
+		I("gitd_ss_shape5", 1);  I("gitd_ss_draw5", 2);
+		I("gitd_ss_thick5", 200); F("gitd_ss_speed5", 175.0);
 
-		SweepColor(1, 0xFF1810);   // the alarm itself
-		SweepColor(2, 0xFF5A18);   // its hot edge
-		SweepColor(3, 0x904038);   // reveal ignores rgb; kept for the swatch
+		for (int i = 6; i <= 8; i++)
+		{
+			I("gitd_ss_shape" .. i, 0);
+			I("gitd_ss_draw" .. i, 1);
+			I("gitd_ss_thick" .. i, 0);
+		}
+
+		// Gaps are tics, and a band's lag is that many tics AT SWEEP ONE'S
+		// SPEED -- so a slow band with a big lag can start so far back it
+		// never arrives before the cycle resets. Kept tight for that reason
+		// as much as for the rhythm.
+		I("gitd_ss_gap1", 12);   // heat core behind the front
+		I("gitd_ss_gap2", 20);   // then the first lamp
+		I("gitd_ss_gap3", 18);   // its hot edge
+		I("gitd_ss_gap4", 22);   // and the reveal
+
+		SweepColor(1, 0xFF7A20);   // the heat: furnace orange
+		SweepColor(2, 0xFFC040);   // its core: near-white yellow
+		SweepColor(3, 0xFF1810);   // the alarm itself
+		SweepColor(4, 0xFF5A18);   // its hot edge
+		SweepColor(5, 0x904038);   // reveal ignores rgb; kept for the swatch
 	}
 }

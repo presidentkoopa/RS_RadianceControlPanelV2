@@ -832,6 +832,18 @@ class GITD_Handler : StaticEventHandler
 		return (t > 0) ? double(t) : w.thickness;
 	}
 
+	// 0 means "use the wave's shared shape". The engine has carried a per-band
+	// shape since independence landed; this is what finally sets it to
+	// anything, and it is what lets a ring and a rising plane share one train.
+	int WaveBandShape(GITD_Wave w, int i)
+	{
+		if (!w.cvarDriven) return w.shape;
+		let cv = CVar.FindCVar("gitd_ss_shape" .. (i + 1));
+		if (!cv) return w.shape;
+		int s = cv.GetInt();
+		return (s > 0) ? s : w.shape;
+	}
+
 	int WaveBandDraw(GITD_Wave w, int i)
 	{
 		if (!w.cvarDriven) return 1;
@@ -1240,7 +1252,7 @@ class GITD_Handler : StaticEventHandler
 					level.SetSweepBand(slot, pos, WaveBandThickness(w, band), w.softness,
 						BandColor(w, band), w.intensity);
 					// This band's OWN origin and shape.
-					level.SetSweepBandAt(slot, w.BandOrigin(band), w.shape);
+					level.SetSweepBandAt(slot, w.BandOrigin(band), WaveBandShape(w, band));
 					level.SetSweepBandDraw(slot, WaveBandDraw(w, band));
 					slot++;
 				}
@@ -1255,25 +1267,36 @@ class GITD_Handler : StaticEventHandler
 	// How far a point is from a wave's origin, in whatever its shape
 	// measures. Must agree with main.fp's smode -- if these two disagree the
 	// light lags the visible band and it looks like a bug in the renderer.
-	double WaveDistance(GITD_Wave w, Vector3 c)
+	// Per BAND, because bands no longer agree about shape OR origin. If this
+	// and main.fp's smode disagree, the light lags the visible band and reads
+	// as a renderer bug -- so this uses exactly the shape and origin pushed to
+	// the shader.
+	double WaveDistanceFor(GITD_Wave w, Vector3 c, int band)
 	{
-		if (w.shape == 2)      return abs(c.x - w.origin.x);
-		else if (w.shape == 3) return abs(c.y - w.origin.y);
-		else if (w.shape == 4) return (c - w.origin).Length();   // shell: 3D
-		else if (w.shape == 5) return c.z - w.origin.z;   // rising, signed
-		return (c.xy - w.origin.xy).Length();
+		int shape = WaveBandShape(w, band);
+		Vector3 o = w.BandOrigin(band);
+		if (shape == 2)      return abs(c.x - o.x);
+		else if (shape == 3) return abs(c.y - o.y);
+		else if (shape == 4) return (c - o).Length();   // shell: 3D
+		else if (shape == 5) return c.z - o.z;          // rising, signed
+		return (c.xy - o.xy).Length();
 	}
 
 	// Nearest band of one wave, and how strongly it lands. ZScript cannot
 	// forward a two-value return as an expression, so callers take both into
 	// locals with [a, b] = -- a language limit, not a style choice.
-	int, double WaveNearest(GITD_Wave w, double dist, double reach)
+	// Takes the POINT, not a precomputed distance: the bands no longer agree
+	// about how distance is measured -- one may be a ring around the map
+	// centre while the next is a plane climbing from your feet -- and one
+	// number cannot describe both. Same restructuring main.fp took when its
+	// distance moved inside the band loop, for the same reason.
+	int, double WaveNearestAt(GITD_Wave w, Vector3 c, double reach)
 	{
 		double nearest = 1e9;
 		int which = -1;
 		for (int b = 0; b < w.bandPos.Size(); b++)
 		{
-			double d = abs(dist - w.bandPos[b]);
+			double d = abs(WaveDistanceFor(w, c, b) - w.bandPos[b]);
 			if (d < nearest) { nearest = d; which = b; }
 		}
 		if (which < 0 || nearest > reach) return -1, 0.0;
@@ -1329,7 +1352,7 @@ class GITD_Handler : StaticEventHandler
 				double reach = max(w.thickness, 1.0) * 3.0;
 				int band;
 				double strength;
-				[band, strength] = WaveNearest(w, WaveDistance(w, c), reach);
+				[band, strength] = WaveNearestAt(w, c, reach);
 				if (band < 0) continue;
 
 				touched = true;
@@ -1446,7 +1469,7 @@ class GITD_Handler : StaticEventHandler
 				double reach = max(w.thickness, 1.0) * 3.0;
 				int band;
 				double strength;
-				[band, strength] = WaveNearest(w, WaveDistance(w, a.pos), reach);
+				[band, strength] = WaveNearestAt(w, a.pos, reach);
 				if (band < 0) continue;
 				touched = true;
 
@@ -1746,6 +1769,7 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_amount" .. c);
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_draw" .. c);
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_thick" .. c);
+		for (int c = 1; c <= 8; c++) Rst("gitd_ss_shape" .. c);
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_drop"); Rst("gitd_ss_drop_every"); Rst("gitd_ss_drop_max");
 		Rst("gitd_ss_light");
