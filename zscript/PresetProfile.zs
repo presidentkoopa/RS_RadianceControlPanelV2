@@ -137,6 +137,13 @@ class GITD_PresetProfile abstract
 		Lanes("_saturation", 0.75);
 		LanesI("_anim", 0);
 		LanesI("_slots", 8);
+
+		// TRANSITION SPEED MATTERS EVEN FOR SNAP. The phase clock is what
+		// advances the slot, so a slow transition delays the NEXT colour even
+		// when the crossfade itself is never drawn. Left at the default this
+		// preset held each colour for sixteen seconds rather than nine, and
+		// the Duration slider was describing less than half of what you saw.
+		Lanes("_speed", 0.050);      // ~0.6s, so 9s means 9s
 		Hold(9.0);
 
 		// ---- the floor it stands on -------------------------------------
@@ -277,6 +284,12 @@ class GITD_PresetProfile abstract
 		Lanes("_saturation", 1.00);
 		LanesI("_anim", 0);
 		LanesI("_slots", 8);
+
+		// Breathe draws the transition, so its LENGTH is the pulse. At the
+		// default this throbbed on a seven-second cycle -- becalmed, for a
+		// preset whose entire job is urgency. Just over a second gives the
+		// hard alarm rhythm the beacon is turning against.
+		Lanes("_speed", 0.030);      // ~1.2s in, 1.4s held
 		Hold(1.4);
 
 		// Subtract rather than Compress: emergency lighting is uniformly dim
@@ -434,6 +447,11 @@ class GITD_PresetProfile abstract
 		// already seen. This is the single thing separating chaos from a fast
 		// loop, and it is only possible because durations are per COLOUR
 		// rather than per lane.
+		// Fast, or the transitions swamp the holds and the careful desync
+		// below never surfaces: at the default every colour took seven
+		// seconds to arrive, which is longer than most of these hold for.
+		Lanes("_speed", 0.040);      // ~0.9s
+
 		HoldFor("gitd_wb", 0.5, 1.0, 0.5, 1.5, 0.5, 1.0, 0.5, 2.0);   // 7.5s
 		HoldFor("gitd_wt", 0.7, 0.7, 2.1, 0.7, 1.4, 0.7, 0.7, 2.8);   // 9.8s
 		HoldFor("gitd_cg", 1.1, 0.6, 1.1, 0.6, 2.2, 0.6, 1.1, 0.6);   // 7.9s
