@@ -547,6 +547,25 @@ color.rgb += gc * botatten * uGlowBottomIntensity;
 glow. The corner then reads as one continuous ramp: floor colour → blend →
 wall colour, with no flat region anywhere in it.
 
+**BOTH junctions, not one.** A room has two of these and they are the same
+problem twice:
+
+| junction | the two glows that meet | pairs |
+|---|---|---|
+| floor / wall | flat floor glow + wall BOTTOM glow | `fg` ↔ `wb` |
+| ceiling / wall | flat ceiling glow + wall TOP glow | `cg` ↔ `wt` |
+
+The ceiling one matters more than it sounds. Wall-top glow fades DOWN from the
+ceiling and the ceiling's edge glow fades IN from the same line, so the ramp
+runs ceiling colour → blend → wall colour exactly as the floor's does --
+mirrored. A room with both running is bounded top and bottom by continuous
+colour and has no hard edge anywhere, which is the whole point of owning four
+lanes rather than two.
+
+Both junctions need the same treatment and the same uniform: four glow
+channels, four second-colours. Doing one and not the other would look worse
+than doing neither, because the eye reads the mismatch immediately.
+
 Cost: one extra colour uniform per glow channel (wall top, wall bottom, flat
 floor, flat ceiling), a `mix()` in each glow block, and the script side
 feeding both ends. Small, but engine work rather than a script toggle -- which
