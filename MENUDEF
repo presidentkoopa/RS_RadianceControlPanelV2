@@ -938,6 +938,7 @@ OptionValue "GITDSweepDraw"
 	1, "Add light"
 	2, "Reveal (pull the dark aside)"
 	3, "Shadow (travelling darkness)"
+	4, "Recolour the glow it crosses"
 }
 
 OptionValue "GITDSpinColors"

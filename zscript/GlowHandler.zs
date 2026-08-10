@@ -825,7 +825,7 @@ class GITD_Handler : StaticEventHandler
 	{
 		if (!w.ambient) return 1;
 		let cv = CVar.FindCVar("gitd_ss_draw" .. (i + 1));
-		return cv ? clamp(cv.GetInt(), 1, 3) : 1;
+		return cv ? clamp(cv.GetInt(), 1, 4) : 1;
 	}
 
 	int WaveBandAmount(GITD_Wave w, int i)
