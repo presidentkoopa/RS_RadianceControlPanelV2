@@ -1889,9 +1889,14 @@ class GITD_PresetCustomiser : StaticEventHandler
 {
 	int lastPreset;
 
+	// True for the first tic of a map, so a map LOAD can be told apart from
+	// the player CHOOSING a preset. They must not be treated the same.
+	bool freshMap;
+
 	override void WorldLoaded(WorldEvent e)
 	{
-		lastPreset = -1;   // force a load on the first tick
+		lastPreset = -1;   // force the working set to load on the first tick
+		freshMap = true;
 	}
 
 	override void WorldTick()
@@ -1899,16 +1904,30 @@ class GITD_PresetCustomiser : StaticEventHandler
 		int preset = CVar.FindCVar("gitd_preset").GetInt();
 		if (preset != lastPreset)
 		{
+			// A REAL CHOICE, OR JUST A NEW MAP?
+			//
+			// lastPreset is reset to -1 on every load so the working set gets
+			// rebuilt, which means "preset != lastPreset" is true on the first
+			// tic of every single map. Applying the profile there re-asserted
+			// the whole environment -- sweeps, darkness, lane settings -- on
+			// every level change, so switching sweeps off lasted exactly until
+			// the next door out. It also looked like the game was starting
+			// sweeps by itself, because it was.
+			//
+			// A profile is a thing you CHOOSE. It writes once, the settings
+			// persist in the config like any others, and after that they are
+			// yours to override. Only the working set, which is the preset's
+			// generated colours and belongs to the preset, reloads per map.
+			bool chosen = !freshMap;
 			lastPreset = preset;
+			freshMap = false;
 			if (preset > 0)
 			{
 				LoadWorkingSet(preset);
-				// And the rest of the environment -- rhythm, sweeps,
-				// darkness. A preset with no profile writes nothing here and
-				// stays colours-only, exactly as it was.
-				GITD_PresetProfile.Apply(preset);
+				if (chosen) GITD_PresetProfile.Apply(preset);
 			}
 		}
+		else if (freshMap) freshMap = false;
 	}
 
 	static void SetF(string name, double v) { CVar.FindCVar(name).SetFloat(v); }
