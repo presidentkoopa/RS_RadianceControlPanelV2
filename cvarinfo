@@ -685,3 +685,18 @@ server int gitd_ss_shape8 = 0;
 // happening to a room rather than as the room's only content. OFF is the
 // original behaviour: a dark room with nothing in it but the travelling lines.
 server bool gitd_ss_underlay = true;
+
+// ---- Muzzle flash ----------------------------------------------------------
+// A real point light at the muzzle for a tic, replacing vanilla's whole-view
+// brightening (which gitd_dd_noflash kills). The cooldown is the chaingun fix:
+// a fast weapon holds its flash layer up most of the time, so without a
+// minimum gap the light never goes out and stops being a flash at all.
+server bool  gitd_mf_enabled = true;
+server bool  gitd_mf_player = true;
+server bool  gitd_mf_monsters = true;
+server int   gitd_mf_radius = 128;      // player, map units
+server int   gitd_mf_mon_radius = 96;   // monsters
+server int   gitd_mf_life = 1;          // tics the light lives
+server int   gitd_mf_cooldown = 3;      // minimum tics between player flashes
+server color gitd_mf_color = "ff dc 96";
+server color gitd_mf_mon_color = "ff b4 64";

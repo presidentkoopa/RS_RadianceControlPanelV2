@@ -1795,6 +1795,11 @@ class GITD_ResetHandler : EventHandler
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_drop"); Rst("gitd_ss_drop_every"); Rst("gitd_ss_drop_max");
 		Rst("gitd_ss_underlay");
+		static const string mf[] = { "gitd_mf_enabled", "gitd_mf_player",
+			"gitd_mf_monsters", "gitd_mf_radius", "gitd_mf_mon_radius",
+			"gitd_mf_life", "gitd_mf_cooldown", "gitd_mf_color",
+			"gitd_mf_mon_color" };
+		for (int i = 0; i < mf.Size(); i++) Rst(mf[i]);
 		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
 

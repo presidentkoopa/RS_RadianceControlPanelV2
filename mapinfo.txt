@@ -12,5 +12,5 @@ GameInfo
 	//     say must have had its tick before the write happens.
 	//   GITD_PresetCustomiser is before GITD_Handler because it loads the
 	//     selected preset into the working set the lanes read that same tick.
-	AddEventHandlers = "DarkDoomZ_Handler", "GITD_PresetCustomiser", "GITD_Handler", "GITD_FlashlightHandler", "GITD_NeonKillCounter", "GITD_ResetHandler", "GITD_SetpieceConsole", "GITD_SetpieceSelfTest", "GITD_AmbushControl", "GITD_ColorLaw", "GITD_NeonDrawSync", "GITD_Composite"
+	AddEventHandlers = "DarkDoomZ_Handler", "GITD_PresetCustomiser", "GITD_Handler", "GITD_FlashlightHandler", "GITD_NeonKillCounter", "GITD_ResetHandler", "GITD_SetpieceConsole", "GITD_SetpieceSelfTest", "GITD_AmbushControl", "GITD_ColorLaw", "GITD_NeonDrawSync", "GITD_MuzzleFlashHandler", "GITD_Composite"
 }

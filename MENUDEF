@@ -323,6 +323,7 @@ OptionMenu "GITDOptions"
 	Submenu "Volumetric Flashlight Options...","GITDFlashlight"
 	Submenu "Bloom Options...",		"GITDBloom"
 	Submenu "Fog Options...",		"GITDFog"
+	Submenu "Muzzle Flash Options...","GITDMuzzle"
 	StaticText ""
 	StaticText ""
 
@@ -1182,4 +1183,37 @@ OptionMenu "GITDFog"
 	StaticText "Vanilla brightens the whole view while a", darkgray
 	StaticText "weapon fires. Unnoticeable when lit,", darkgray
 	StaticText "ruinous in the dark.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// MUZZLE FLASH
+//
+// Vanilla has no muzzle light -- it lifts the brightness of the whole VIEW,
+// which casts nothing and is ruinous in the dark. DarkDoom kills that; this
+// puts back what it was gesturing at, as an actual light in the world.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDMuzzle"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Muzzle Flash"
+	StaticText ""
+	Option "Muzzle flash",			"gitd_mf_enabled", "OnOff"
+	StaticText ""
+	Option "  Your weapons",		"gitd_mf_player", "OnOff"
+	Slider "  Reach",				"gitd_mf_radius", 16, 512, 8, 0
+	ColorPicker "  Colour",			"gitd_mf_color"
+	StaticText ""
+	Option "  Monsters",			"gitd_mf_monsters", "OnOff"
+	Slider "  Reach",				"gitd_mf_mon_radius", 16, 512, 8, 0
+	ColorPicker "  Colour",			"gitd_mf_mon_color"
+	StaticText "Fires once when an attack STARTS, so a", darkgray
+	StaticText "long animation flashes once, not per frame.", darkgray
+	StaticText ""
+	Slider "How long (tics)",		"gitd_mf_life", 1, 8, 1, 0
+	Slider "Minimum gap (tics)",	"gitd_mf_cooldown", 1, 12, 1, 0
+	StaticText "The chaingun fix. A fast weapon holds its", darkgray
+	StaticText "flash up most of the time, so without a gap", darkgray
+	StaticText "the light never goes out and stops being a", darkgray
+	StaticText "flash. Raise it until rapid fire strobes.", darkgray
 }
