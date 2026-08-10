@@ -122,15 +122,18 @@ OptionValue "GITDPreset"
 	11, "Black and White"
 }
 
-// DarkDoomZ lists. Renamed for plain language, except the three classic
-// DarkDoom modes which keep their own names.
+// DarkDoom's own mode names, restored. They were briefly all labelled "Use
+// the How dark dial" because all four genuinely behaved identically once the
+// per-mode maths went missing; the maths is back, so the names are back.
+//
+// The four dial modes read How dark. The three fixed modes ignore it.
 OptionValue "GITDDarkMode"
 {
 	0,  "Off"
-	1,  "Use the How dark dial"
-	2,  "Use the How dark dial"
-	3,  "Use the How dark dial"
-	4,  "Use the How dark dial"
+	1,  "Subtract"
+	2,  "Compress"
+	3,  "Cap brightest"
+	4,  "Deepen shadows"
 	10, "DarkDoom Lite"
 	11, "DarkDoom Classic"
 	12, "DarkDoom Black"

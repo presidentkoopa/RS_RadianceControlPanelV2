@@ -416,9 +416,10 @@ class GITD_Presets : Object
 	// lane 0..3 (wb/wt/cg/fg), slot 0..7.
 	static Color SlotColor(int preset, int lane, int slot)
 	{
-		// Blackout is the one preset that is deliberately not alive: it is
-		// the absence of light, with only a hint of void purple so it does
-		// not read as a rendering failure.
+		// Blackout is complete blackness. It carried a hint of void purple
+		// so it would not read as a rendering failure -- but the owner's
+		// intent is the absence of light, full stop, to sit alongside
+		// DarkDoom Black. A hint of anything is a different preset.
 		// Black and white: exactly that. No shades, no generated range --
 		// alternating pure black and pure white. It is deliberately not one
 		// of the generated presets, because averaging it into greys is the
@@ -430,11 +431,7 @@ class GITD_Presets : Object
 
 		if (preset == 1)
 		{
-			int v = (slot % 4);
-			if (v == 0) return Color(255, 0, 0, 0);
-			if (v == 1) return Color(255, 6, 0, 10);
-			if (v == 2) return Color(255, 0, 0, 4);
-			return Color(255, 10, 0, 14);
+			return Color(255, 0, 0, 0);
 		}
 
 		// The working set, which the Preset Options menu edits. It is loaded

@@ -221,18 +221,13 @@ class DarkDoomZ_Handler : EventHandler {
 	// the map's own levels at WorldLoaded and is the only thing that writes
 	// them now, so there is nothing left to repair.
 	void ApplyDarkness() {
-		double m = DarknessMul();
 		int desat = clamp(ddz_desat, 0, 255);
 
+		// Per sector, because three of the four curves read the sector's own
+		// starting brightness. Sky handling lives inside DarknessMulFor, where
+		// it scales the adjustment the way the original did.
 		for (int i = 0; i < Level.Sectors.Size(); i++) {
-			double mm = m;
-			bool sky = (Level.Sectors[i].GetTexture(0) == skyflatnum ||
-						Level.Sectors[i].GetTexture(1) == skyflatnum);
-			// SkyMode scaled the ADJUSTMENT before; here it scales how much
-			// darkening the sky receives, which is the same intent.
-			if (sky) mm = 1.0 - (1.0 - m) * SkyMode;
-
-			int v = clamp(int(mm * 255.0), 0, 255);
+			int v = clamp(int(DarknessMulFor(i) * 255.0), 0, 255);
 			GITD_Composite.Tint(i, Color(255, v, v, v));
 			GITD_Composite.Desaturate(i, desat);
 		}
@@ -242,25 +237,74 @@ class DarkDoomZ_Handler : EventHandler {
 	// there was no multiply available. There is one now, so every mode
 	// collapses into "how much light survives", which is the only thing any
 	// of them was ever expressing.
-	double DarknessMul() {
+	// THE FOUR CURVES ARE REAL AGAIN.
+	//
+	// They were collapsed into one when the old ApplyLightLevels was deleted:
+	// that function held the actual per-mode maths, and without it every mode
+	// from 1 to 4 folded to the same linear ramp. Four names for one behaviour
+	// is a lying menu, so at the time they were honestly relabelled "Use the
+	// How dark dial" -- but the right fix was always to bring the curves back,
+	// not to rename around their absence.
+	//
+	// They are restored VERBATIM from the original (commit d0cee20,
+	// ApplyLightLevels), with one necessary change of frame: the original
+	// wrote sector light levels directly, and nothing may do that any more.
+	// So each curve is evaluated against the sector's OWN map light level and
+	// returned as the ratio between what the curve wants and what the map had.
+	// The compositor multiplies that in as a tint, which reproduces the curve
+	// without a second writer -- and, unlike the original, without fighting
+	// Doom's own blinking sectors.
+	//
+	// This is why it is per sector rather than one number for the level: three
+	// of the four curves depend on how bright the sector already was. Only
+	// Compress does not.
+	double DarknessMulFor(int idx) {
 		if (!CVar.FindCVar("gitd_dd_enabled").GetBool()) return 1.0;
 
-		// A cvar reference is not assignable, so modes 1-4 are folded on READ
-		// rather than written back. The menu shows the right thing either way
-		// now that all four are labelled identically.
 		int mode = ddz_mode;
-		if (mode >= 1 && mode <= 4) mode = 2;
+		if (mode == 0) return 1.0;
 
+		double base = double(GITD_Composite.BaseLight(idx));
+		if (base <= 0.0) return 1.0;   // already black; nothing to scale
+
+		// PreGain lifts the input before the curve, exactly as it did.
+		double L = base + double(PreGain);
+
+		bool sky = (Level.Sectors[idx].GetTexture(0) == skyflatnum ||
+					Level.Sectors[idx].GetTexture(1) == skyflatnum);
+
+		// The original scaled the ADJUSTMENT for sky sectors, not the result.
+		double A = 32.0 * clamp(ddz_preset, 0, 8);
+		if (sky) A *= SkyMode;
+
+		double outL;
 		switch (mode) {
-			case 0:  return 1.0;
-			case 10: return 0.62;   // DarkDoom Lite
-			case 11: return 0.45;   // DarkDoom Classic
-			case 12: return 0.16;   // DarkDoom Black
+			case 1:  // Subtract -- raw light level, a simple fade
+				outL = L - A;
+				break;
+			case 2:  // Compress -- linear, the one curve that ignores base
+				outL = L * (1.0 - A / 256.0);
+				break;
+			case 3:  // Cap brightest -- clamp the ceiling, leave dark rooms
+				outL = min(L, 256.0 - A);
+				break;
+			case 4:  // Deepen shadows -- exponential gamma
+				if (A <= 0.0) { outL = L; break; }
+				outL = (256.0 - (A ** (A / 256.0)))
+					 * ((L / 256.0) ** (1.0 + (A / (33.0 - (A / 8.0)))));
+				break;
+			case 10: outL = L - 96.0;  break;   // DarkDoom Lite
+			case 11: outL = L - 128.0; break;   // DarkDoom Classic
+			case 12: outL = L - 256.0; break;   // DarkDoom Black
+			default: return 1.0;
 		}
-		// Modes 1-4 all read the preset; the curves differed only in shape and
-		// every one of them bottomed out at the same place.
-		double t = clamp(ddz_preset, 0, 8) / 8.0;
-		return clamp(1.0 - t * 0.92, 0.06, 1.0);
+
+		// MinLight is a floor, PostGain a lift after the curve -- both as they
+		// were, and both live again now that a curve exists to apply them to.
+		outL = max(outL, double(MinLight));
+		outL += double(PostGain);
+
+		return clamp(outL / base, 0.0, 1.0);
 	}
 
 	// Fog only moves when a setting moves, so it stays off the per-tic path.
