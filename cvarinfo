@@ -627,3 +627,18 @@ server int gitd_ss_amount8 = 48;
 server float gitd_ss_spin = 0.0;         // degrees per second; 0 = no spin
 server float gitd_ss_spin_radius = 0.0;  // how far the origin orbits
 server int   gitd_ss_spin_colors = 0;    // 0 off, else cycle this many colours
+
+// ---- What each sweep DOES to the pixels it covers ---------------------------
+// 1 add    -- emits light, additively. A glowing line.
+// 2 lift   -- multiplies what is there UP. A reveal: darkness pulled aside,
+//             per pixel, so a big room reveals in a moving strip rather than
+//             switching on whole.
+// 3 crush  -- multiplies down. A travelling darkness.
+server int gitd_ss_draw1 = 1;
+server int gitd_ss_draw2 = 1;
+server int gitd_ss_draw3 = 1;
+server int gitd_ss_draw4 = 1;
+server int gitd_ss_draw5 = 1;
+server int gitd_ss_draw6 = 1;
+server int gitd_ss_draw7 = 1;
+server int gitd_ss_draw8 = 1;

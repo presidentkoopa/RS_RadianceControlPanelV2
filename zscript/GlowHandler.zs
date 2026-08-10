@@ -819,6 +819,15 @@ class GITD_Handler : StaticEventHandler
 
 	// How hard band i pushes the light level. Per band, falling back to the
 	// old single value for a scripted wave, which has no per-band table.
+	// 1 add, 2 lift (reveal), 3 crush. A scripted wave adds, unless it says
+	// otherwise, because that is what every existing caller expects.
+	int WaveBandDraw(GITD_Wave w, int i)
+	{
+		if (!w.ambient) return 1;
+		let cv = CVar.FindCVar("gitd_ss_draw" .. (i + 1));
+		return cv ? clamp(cv.GetInt(), 1, 3) : 1;
+	}
+
 	int WaveBandAmount(GITD_Wave w, int i)
 	{
 		if (!w.ambient)
@@ -1132,6 +1141,7 @@ class GITD_Handler : StaticEventHandler
 						BandColor(w, band), w.intensity);
 					// This band's OWN origin and shape.
 					level.SetSweepBandAt(slot, w.BandOrigin(band), w.shape);
+					level.SetSweepBandDraw(slot, WaveBandDraw(w, band));
 					slot++;
 				}
 			}
@@ -1624,6 +1634,7 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) CVar.FindCVar("gitd_ss_c" .. c).ResetToDefault();
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_speed" .. c);
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_amount" .. c);
+		for (int c = 1; c <= 8; c++) Rst("gitd_ss_draw" .. c);
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
