@@ -307,6 +307,13 @@ OptionMenu "GITDOptions"
 	StaticText ""
 
 	Option "Glow In The Dark",		"gitd_enabled", "OnOff"
+	Option "Seamless Corners",		"gitd_seamless", "OnOff", "gitd_enabled"
+	StaticText "Where a wall meets a floor, both glows", darkgray
+	StaticText "already reach the join at full strength --", darkgray
+	StaticText "they just disagree about the colour there.", darkgray
+	StaticText "This makes them agree, and matches their", darkgray
+	StaticText "width and falloff so the band wraps the", darkgray
+	StaticText "corner instead of stopping at it.", darkgray
 	StaticText ""
 
 	StaticText "Presets  (override every glow setting)", gold

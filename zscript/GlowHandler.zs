@@ -934,6 +934,12 @@ class GITD_Handler : StaticEventHandler
 
 	// ---- The ambient wave, rebuilt from cvars ---------------------------
 
+	static bool CvB(string n, bool d)
+	{
+		let c = CVar.FindCVar(n);
+		return c ? c.GetBool() : d;
+	}
+
 	static double CvarF(string n, double d)
 	{
 		let c = CVar.FindCVar(n);
@@ -1622,6 +1628,34 @@ class GITD_Handler : StaticEventHandler
 		Color cgCol = BleedToward(cg.outColor, wt.outColor, wt.outColor, cg.GetBool("_bleed"));
 		Color fgCol = BleedToward(fg.outColor, wb.outColor, wb.outColor, fg.GetBool("_bleed"));
 
+		// SEAMLESS CORNERS.
+		//
+		// The gradient at a corner was never missing. The wall glow fades
+		// UPWARD starting at the floor line, and the floor's edge glow fades
+		// INWARD starting at the same line -- two gradients meeting nose to
+		// nose, both at FULL strength exactly where they touch. The hard cut
+		// is not an absence of blending. It is the two sides disagreeing
+		// about what colour and brightness to be at the line they share.
+		//
+		// Bleed already nudges them 35% toward each other, which makes them
+		// closer and never equal, so the seam survives. This makes them equal
+		// AT the junction: one colour, halfway between the two lanes, handed
+		// to both surfaces. Nothing is lost by doing so, because both of
+		// these glows only exist NEAR the junction anyway -- further away
+		// they fade out and the surface's own texture takes over. Agreeing at
+		// the seam is the entire job they have.
+		//
+		// Reach and falloff are forced to match too. Two bands of different
+		// width, or with different curves, read as a seam even when the
+		// colour is identical.
+		if (CvB("gitd_seamless", false))
+		{
+			Color floorJoin = GITD_Palette.Lerp(wbCol, fgCol, 0.5);
+			Color ceilJoin  = GITD_Palette.Lerp(wtCol, cgCol, 0.5);
+			wbCol = floorJoin; fgCol = floorJoin;
+			wtCol = ceilJoin;  cgCol = ceilJoin;
+		}
+
 		bool wbOn = wb.GetBool("_enabled");
 		bool wtOn = wt.GetBool("_enabled");
 		bool cgOn = cg.GetBool("_enabled");
@@ -1636,6 +1670,8 @@ class GITD_Handler : StaticEventHandler
 		// like a Tron look could not be saved at all -- thin bright seams are
 		// a coverage and falloff decision, and a colour-only preset would
 		// leave them to whatever the lanes happened to be set to.
+		bool seamless = CvB("gitd_seamless", false);
+
 		double presetInten = -1;
 		if (preset > 0 && CVar.FindCVar("gitd_pc_shape").GetBool())
 		{
@@ -1657,11 +1693,30 @@ class GITD_Handler : StaticEventHandler
 			double cgI = (presetInten >= 0) ? presetInten : cg.outIntensity;
 			double fgI = (presetInten >= 0) ? presetInten : fg.outIntensity;
 
+			int sfgCov = fgCov, scgCov = cgCov, sfgFall = fgFall, scgFall = cgFall;
+			Color sfgCol = fgCol, scgCol = cgCol;
+			if (seamless)
+			{
+				// Match the band's WIDTH and CURVE to the wall it meets.
+				sfgCov = wbCov;  sfgFall = wbFall;
+				scgCov = wtCov;  scgFall = wtFall;
+
+				// And its BRIGHTNESS, which cannot be done the obvious way.
+				// The two Intensity values are not the same quantity: on a
+				// wall it multiplies the colour, on a flat it multiplies the
+				// REACH (hw_flats.cpp scales FlatGlowHeight by it). So the
+				// flat side has no brightness dial at all, and the only way
+				// to make it as bright as the wall it meets is to scale the
+				// COLOUR by the wall's intensity before handing it over.
+				sfgCol = GITD_Palette.Scale(fgCol, wbI * wb.AnimFactor(sec, mapCentre));
+				scgCol = GITD_Palette.Scale(cgCol, wtI * wt.AnimFactor(sec, mapCentre));
+			}
+
 			ApplyOne(sec,
 				wbOn, wbCol, wbCov, wbFall, wbI * wb.AnimFactor(sec, mapCentre),
 				wtOn, wtCol, wtCov, wtFall, wtI * wt.AnimFactor(sec, mapCentre),
-				cgOn, cgCol, cgCov, cgFall, cgI * cg.AnimFactor(sec, mapCentre),
-				fgOn, fgCol, fgCov, fgFall, fgI * fg.AnimFactor(sec, mapCentre));
+				cgOn, scgCol, scgCov, scgFall, cgI * cg.AnimFactor(sec, mapCentre),
+				fgOn, sfgCol, sfgCov, sfgFall, fgI * fg.AnimFactor(sec, mapCentre));
 		}
 	}
 
@@ -1794,7 +1849,7 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_shape" .. c);
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_drop"); Rst("gitd_ss_drop_every"); Rst("gitd_ss_drop_max");
-		Rst("gitd_ss_underlay");
+		Rst("gitd_ss_underlay"); Rst("gitd_seamless");
 		static const string mf[] = { "gitd_mf_enabled", "gitd_mf_life",
 			"gitd_mf_player", "gitd_mf_radius", "gitd_mf_bright",
 			"gitd_mf_random", "gitd_mf_cooldown", "gitd_mf_monsters",

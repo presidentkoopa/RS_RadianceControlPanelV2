@@ -715,3 +715,10 @@ server color gitd_mf_mon_color = "ff b4 64";
 // Fire on the fullbright attack frame -- the one the artist painted the flash
 // onto. Off, or for a monster that marks none, the attack's first frame.
 server bool  gitd_mf_bright_frame = true;
+
+// ---- Seamless corners ------------------------------------------------------
+// Where a wall meets a floor, two glows already meet nose to nose -- the wall's
+// fades upward from the line, the floor's fades inward from it, both at full
+// strength exactly where they touch. The hard cut is the two disagreeing about
+// what colour and brightness to be AT that line. This makes them agree.
+server bool gitd_seamless = false;
