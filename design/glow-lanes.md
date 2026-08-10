@@ -1,5 +1,53 @@
 # Glow Lanes — pretty it up, expand it, wire it in
 
+---
+
+## PICK UP HERE (2026-08-10)
+
+**Just landed, unplayed:** two-colour glows + flat intensity honesty
+(E1/P6 + E2). Engine `doomxr` `ee8077b8`, mod `main` `75c1639`. Verified by
+compile and by struct-layout diff only — **nothing has been rendered yet.**
+
+First thing to check when the game next runs:
+
+- Does the corner ramp read as a gradient, or as mush? The junction colour is
+  a straight 50/50 `Lerp` of the two lanes. If it reads muddy, that ratio is
+  the first dial to turn, not the shader.
+- Existing flat-glow setups **will look tighter** — Intensity no longer widens
+  them. That is intended. Coverage is the reach dial now.
+- Both junctions ramp or neither does. If only one looks right, something is
+  wrong in `ApplyOne`, not in the maths.
+
+**Next up, cheapest first.** All four already have full entries below; this is
+the running order and why, given what just changed.
+
+1. **E5 glow dither** — got *more* valuable today. Two-colour glows mean every
+   surface is now a ramp, and low-intensity ramps band visibly in dark rooms
+   at 8-bit output. Tiny ALU in `main.fp`, no uniforms, no new state to
+   forget to clear. The polish nobody names and everybody feels.
+2. **E3/P5 centre pool** — the standout. Feed the flat-glow shader ONE
+   degenerate segment (the sector's centroid as a zero-length line) and the
+   existing nearest-segment maths inverts for free: floors glow outward from
+   their middle instead of inward from their rim. Pools of light in rooms,
+   chandeliers on ceilings. **Zero shader change** — a point is a segment with
+   a == b. Genuinely new image rather than a refinement of one we have, which
+   is why it outranks its own cost.
+3. **E3 stair treads** — same CPU loop, different filter: two-sided lines with
+   a height change only, so every stair riser lights its own edge.
+4. **X4 accent walls** — `Side.SetGlowColor` is still installed and unused
+   (brick #1, the only one of the three still standing). Locked doors glowing
+   their key's colour consumes a thirty-year-old colour language for free, at
+   zero per-tic cost. Now slightly cleaner to build than it was: a side
+   carrying its own glow already clears the sector's far colour, so an accent
+   cannot ramp toward a colour picked for a glow that is not being drawn.
+   **E4** (per-side falloff/intensity) is the follow-up, and still should not
+   be built until X4 proves anyone wants it.
+
+**Still unbuilt, still the big one:** X1/§5 the Reactive page. Unchanged by
+today's work.
+
+---
+
 Subject: the mod's oldest core, the **4×8** — four lanes (`gitd_wb_*` wall
 bottom, `gitd_wt_*` wall top, `gitd_cg_*` ceiling, `gitd_fg_*` floor), eight
 colour slots each, plus pattern/speed, the spatial animation system, coverage,
@@ -20,12 +68,13 @@ already in the wall.
    `hw_walls.cpp` (`ApplyWallOwnGlow`) honours it. GITD never touches it.
    That is a whole axis of expression — per-WALL, not per-sector — sitting
    installed and unlit.
-2. **The flat-glow Intensity slider is quietly lying.** `hw_flats.cpp` folds
-   intensity into *reach* (`reach = FlatGlowHeight * FlatGlowIntensity`) and
-   the flat branch of `main.fp` never multiplies the colour by intensity at
-   all. So on the cg/fg lanes, Intensity makes the glow *wider*, while on
-   wb/wt the same-named slider makes it *brighter*. Half the 4×8's intensity
-   controls do a different job than the other half.
+2. ~~**The flat-glow Intensity slider is quietly lying.**~~ **FIXED
+   2026-08-10.** It folded intensity into *reach* while the identically named
+   wall slider multiplied *colour*, so half the 4×8's intensity controls did a
+   different job from the other half. Intensity multiplies colour on all four
+   lanes now and reach belongs to Coverage. Shipped alongside two-colour
+   glows, because seamless corners could not match brightness across a
+   junction until it was true.
 3. **`SetSectorOverride` has zero callers.** The per-sector claim mechanism
    is built, documented in the README, and no feature has ever used it.
 
@@ -107,7 +156,7 @@ mode int plumbed like `FlatGlowFalloff` already is.
 **Effort:** engine S–M (see E3). **Wow/effort: 4** — stairs and pools are
 both screenshot generators.
 
-### P6. Intensity honesty for the flats (the quiet fix that outranks features)
+### P6. Intensity honesty for the flats — **DONE 2026-08-10**
 Fix brick #2 above: make cg/fg Intensity multiply the glow **colour** (as
 floats, pre-clamp, exactly like `uGlowTopIntensity` does for walls) and leave
 reach to Coverage alone. Every existing config gets slightly more correct:
@@ -449,7 +498,7 @@ fragility (the flat-glow-leaked-onto-walls bug is the cautionary tale — new
 per-surface uniforms mean new places to forget `ClearFlatGlow`-style resets),
 and shader ALU.
 
-### E1. Flat glow intensity multiplies colour, not reach — **do this one**
+### E1. Flat glow intensity multiplies colour, not reach — **DONE 2026-08-10**
 `hw_flats.cpp` stops folding intensity into reach; instead premultiply the
 r/g/b floats by intensity (uniform is float — values above 1 are legal and
 feed bloom exactly as wall glow does), reach = height alone.
@@ -457,7 +506,17 @@ feed bloom exactly as wall glow does), reach = height alone.
 uniforms, no new state to clear. Behaviour change is real but is the honest
 one; note it in the menu text. **Effort: S.**
 
-### E2. Two-stop wall gradient (colour A at the plane, through colour B)
+### E2. Two-stop wall gradient — **DONE 2026-08-10, and it cost nothing**
+Shipped as part of seamless corners; see the section at the bottom. The price
+below was mis-estimated in one important way: it assumed +2 vec4 of new
+StreamData. In fact three uniforms cover all four channels (the two flat lanes
+time-share one, since a draw only covers one of them) and they fit in slack
+already sitting in the struct, so `MAX_STREAM_DATA` never moved off 34. The
+"same trade multi-origin waves were refused" framing was wrong — there was no
+trade. Worth remembering next time a StreamData cost is quoted from memory:
+check the padding first.
+
+The original entry, for the record:
 A second colour per wall glow: `uGlowTopColor2/uGlowBottomColor2`, lerped by
 the same `glowdist` fraction before attenuation. Buys true vertical gradients
 per lane — sunset walls, fire-to-smoke — a genuinely new look the two-lane
@@ -503,7 +562,7 @@ doc where it belongs).
 | 1 | **X1/§5 Reactive page** | M | The room wired to the fight, one page, owner-steered. |
 | 2 | **T1 Underlay** — waves perturb lanes, don't kill them | S | One deleted `ClearAll` behind a cvar; the two flagship systems finally coexist. |
 | 3 | **X4 Accent walls** — locked doors glow their key's colour | M | Thirty-year-old colour language, finally consumed; zero per-tic cost. |
-| 4 | **P6/E1 Flat intensity honesty** | S | Half the 4×8's sliders start telling the truth. |
+| ~~4~~ | ~~**P6/E1 Flat intensity honesty**~~ **DONE 2026-08-10** | S | Half the 4×8's sliders start telling the truth. Shipped with E2. |
 | 5 | **M1 Moments** | M | Preset + darkness + sweep as one switchable, bindable, capturable look. |
 | 6 | **P2 Breathe/Heartbeat anims** | S | Ambience with a pulse; two branches in `AnimFactor`. |
 | 7 | **X3 Hazard floors / exit beacon / secret shimmer** | S–M | `SetSectorOverride` gets its first customers; the floor says *don't step here*. |
@@ -513,8 +572,13 @@ doc where it belongs).
 
 Near-misses kept on the record: P3 comet crests, P4 bleed dial, X2
 `GITD_LaneAction` (build it the moment a second mod wants in), X5 tempo
-(build as part of #1), T2/T3 (they ship *as rows* of #1), E2 gradient
-(revisit if P1+P2 leave anyone wanting), T6 setpiece-Moments (after M1).
+(build as part of #1), T2/T3 (they ship *as rows* of #1), T6 setpiece-Moments
+(after M1).
+
+E2 gradient was on this list as "revisit if P1+P2 leave anyone wanting" and
+got built first instead, because it turned out to be the thing the seamless
+corners work actually needed — and because its quoted cost was wrong by the
+whole amount. See E2 above.
 
 ---
 
