@@ -618,3 +618,12 @@ server int gitd_ss_amount5 = 48;
 server int gitd_ss_amount6 = 48;
 server int gitd_ss_amount7 = 48;
 server int gitd_ss_amount8 = 48;
+
+// ---- The spin --------------------------------------------------------------
+// A sweep's origin can ORBIT instead of sitting still. Parked on the player
+// (Starts from = Follows you) with the speed low, the ring stops travelling
+// and its centre circles your feet instead -- the bright edge rakes around the
+// room, and with spin colours on, the palette is thumbed through as it turns.
+server float gitd_ss_spin = 0.0;         // degrees per second; 0 = no spin
+server float gitd_ss_spin_radius = 0.0;  // how far the origin orbits
+server int   gitd_ss_spin_colors = 0;    // 0 off, else cycle this many colours

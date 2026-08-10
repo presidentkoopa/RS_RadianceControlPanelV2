@@ -604,7 +604,11 @@ OptionMenu "GITDSweepVisual"
 	StaticText ""
 	StaticText "Shape of each band", gold
 	Slider "Brightness",			"gitd_ss_intensity", 0.0, 3.0, 0.1, 1
-	Slider "Thickness",				"gitd_ss_thickness", 1, 128, 1, 0
+	Slider "Thickness",				"gitd_ss_thickness", 1, 2048, 4, 0
+	StaticText "A band is twice this wide, so thickness", darkgray
+	StaticText "over speed is how many seconds it takes", darkgray
+	StaticText "to pass you. 1024 at slow speed is a", darkgray
+	StaticText "corridor of light, not a line.", darkgray
 	Slider "Edge hardness",			"gitd_ss_softness", 0.5, 8.0, 0.25, 2
 	Slider "Travel distance",		"gitd_ss_range", 128, 8192, 128, 0
 	Slider "Wake behind it",		"gitd_ss_trail", 0, 512, 8, 0
@@ -613,6 +617,16 @@ OptionMenu "GITDSweepVisual"
 	StaticText "disagree without setting eight speeds.", darkgray
 	StaticText ""
 	Option "Travels",				"gitd_ss_direction", "GITDSweepDir"
+	StaticText ""
+	StaticText "The spin", gold
+	Slider "Orbit speed (deg/s)",	"gitd_ss_spin", -180, 180, 5, 0
+	Slider "Orbit radius",			"gitd_ss_spin_radius", 0, 1024, 16, 0
+	Option "Colours follow the spin","gitd_ss_spin_colors", "GITDSpinColors"
+	StaticText "Park a sweep on yourself -- Starts from", darkgray
+	StaticText "= Follows you, speed low -- then spin it.", darkgray
+	StaticText "The ring stops travelling and rakes around", darkgray
+	StaticText "you instead, thumbing through the palette", darkgray
+	StaticText "as it turns.", darkgray
 }
 
 OptionMenu "GITDSweepPlay"
@@ -909,6 +923,18 @@ OptionValue "GITDSweepTrigger"
 	2, "Each time you are hurt"
 	3, "Each time you pull the trigger"
 	4, "Each time you find a secret"
+}
+
+OptionValue "GITDSpinColors"
+{
+	0, "No -- keep their own"
+	2, "2 colours"
+	3, "3 colours"
+	4, "4 colours"
+	5, "5 colours"
+	6, "6 colours"
+	7, "7 colours"
+	8, "8 colours"
 }
 
 OptionValue "GITDSweepDir"

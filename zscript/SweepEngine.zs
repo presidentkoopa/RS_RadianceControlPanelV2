@@ -122,6 +122,46 @@ class GITD_Wave : Object play
 	// whatever is driving it.
 	bool driven;
 
+	// ---- THE SPIN -------------------------------------------------------
+	//
+	// A band's origin does not have to sit still. Give the wave a spin and its
+	// origin ORBITS -- around the anchor for a normal wave, or around YOU when
+	// the wave is parked on the player.
+	//
+	// Parked on you with a spin, this is the rolodex: the ring is not
+	// travelling anywhere, its centre is circling your feet, so the bright
+	// edge rakes around the room and every wall meets a different part of the
+	// band as it goes. Colour follows the same clock, so the environment reads
+	// as being thumbed through rather than cross-faded.
+	//
+	// spinRadius 0 with a spin still does something useful for the COLOUR --
+	// see SpinPhase -- so the two are deliberately independent.
+	double spin;          // degrees per second the origin orbits
+	double spinRadius;    // how far out it orbits, map units
+	double spinAngle;     // current angle, unbounded
+	int spinColors;       // >1: cycle this many of the eight colours by phase
+
+	// 0..1 around the spin. Everything that wants to follow the rolodex reads
+	// this rather than keeping its own clock.
+	double SpinPhase()
+	{
+		double a = spinAngle % 360.0;
+		if (a < 0) a += 360.0;
+		return a / 360.0;
+	}
+
+	// Where band i actually is. The spin offsets the whole wave; the band
+	// index fans the origins apart so a train does not stack on one point.
+	Vector3 BandOrigin(int i)
+	{
+		if (spin == 0 && spinRadius == 0) return origin;
+		double a = spinAngle + i * (360.0 / max(subBands, 1));
+		return (origin.x + cos(a) * spinRadius,
+		        origin.y + sin(a) * spinRadius,
+		        origin.z);
+	}
+
+
 	// Per-band values, resolved ONCE a tic.
 	//
 	// These used to be worked out inside the per-sector loop, which meant the
@@ -147,7 +187,13 @@ class GITD_Wave : Object play
 
 	void Step()
 	{
-		if (!alive || !running || driven) return;
+		if (!alive || !running) return;
+
+		// The spin runs even for a driven or parked wave -- a wave stopped on
+		// the player is exactly the case the spin exists for.
+		if (spin != 0) spinAngle += spin / 35.0;
+
+		if (driven) return;
 		pos += dir * speed / 35.0;
 
 		if (pingpong)

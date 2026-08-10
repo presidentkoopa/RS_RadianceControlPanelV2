@@ -832,6 +832,17 @@ class GITD_Handler : StaticEventHandler
 
 	Color WaveBandColor(GITD_Wave w, int i)
 	{
+		// THE ROLODEX. With spinColors set, the band's colour is chosen by
+		// where the spin currently is rather than by the band index -- so as
+		// the origin rakes around you the palette is thumbed through with it,
+		// one colour per segment of the turn.
+		if (w.spinColors > 1)
+		{
+			int n = clamp(w.spinColors, 2, 8);
+			int pick = int(w.SpinPhase() * n + i) % n;
+			int packed = CVar.FindCVar("gitd_ss_c" .. (pick + 1)).GetInt();
+			return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
+		}
 		if (!w.ambient) return w.col;
 		// Color(int) does NOT convert on this engine -- it compiles and then
 		// fails at load with "Return type Color mismatch with SInt4", which
@@ -856,6 +867,18 @@ class GITD_Handler : StaticEventHandler
 	}
 
 	// ---- The ambient wave, rebuilt from cvars ---------------------------
+
+	static double CvarF(string n, double d)
+	{
+		let c = CVar.FindCVar(n);
+		return c ? c.GetFloat() : d;
+	}
+
+	static int CvarI(string n, int d)
+	{
+		let c = CVar.FindCVar(n);
+		return c ? c.GetInt() : d;
+	}
 
 	double SSSpeed()
 	{
@@ -962,6 +985,9 @@ class GITD_Handler : StaticEventHandler
 			gapSum += CVar.FindCVar("gitd_ss_gap" .. g).GetInt();
 		ambient.subGap = (ambient.subBands > 1) ? gapSum / (ambient.subBands - 1) : 0;
 
+		ambient.spin        = CvarF("gitd_ss_spin", 0.0);
+		ambient.spinRadius  = CvarF("gitd_ss_spin_radius", 0.0);
+		ambient.spinColors  = CvarI("gitd_ss_spin_colors", 0);
 		ambient.pingpong  = (dirMode == 2);
 		ambient.loop      = (trigger == 0);
 		ambient.driven    = false;
@@ -1073,6 +1099,12 @@ class GITD_Handler : StaticEventHandler
 		int slot = 0;
 		level.SetSweepTrail(lead.dir >= 0 ? lead.trail : -lead.trail);
 
+		// SEED FIRST. SetSweepOrigin writes the lead's origin into ALL EIGHT
+		// per-band slots, so it has to run BEFORE the overrides below or it
+		// erases every one of them. The count is corrected at the end once we
+		// know how many slots were actually claimed.
+		level.SetSweepOrigin(lead.shape, lead.origin, 8);
+
 		for (int pass = 0; pass < 2 && slot < 8; pass++)
 		{
 			for (int i = 0; i < waves.Size() && slot < 8; i++)
@@ -1081,8 +1113,14 @@ class GITD_Handler : StaticEventHandler
 				if (!w || !w.alive || !w.running || !w.visible) continue;
 				bool isLead = (w == lead);
 				if (pass == 0 && !isLead) continue;
-				if (pass == 1 && (isLead || w.shape != lead.shape ||
-					(w.origin - lead.origin).Length() > 1.0)) continue;
+				// EVERY WAVE IS DRAWABLE NOW. The old rule here was that a
+				// wave could only share the frame if it agreed with the lead
+				// about origin AND shape, because the shader computed one
+				// distance from one origin for all eight bands. It carries a
+				// per-band origin now, so a ring from the map centre and a
+				// column climbing out of a corner coexist. Priority still
+				// decides who gets the slots when there are more than eight.
+				if (pass == 1 && isLead) continue;
 
 				for (int band = 0; band < w.subBands && slot < 8; band++)
 				{
@@ -1092,14 +1130,16 @@ class GITD_Handler : StaticEventHandler
 					if (pos < 0 && w.dir > 0) pos = -100000;
 					level.SetSweepBand(slot, pos, w.thickness, w.softness,
 						BandColor(w, band), w.intensity);
+					// This band's OWN origin and shape.
+					level.SetSweepBandAt(slot, w.BandOrigin(band), w.shape);
 					slot++;
 				}
 			}
 		}
 
-		// The count is the shader's loop bound, so slots nobody claimed are
-		// simply never read -- no need to park them somewhere harmless.
-		level.SetSweepOrigin(lead.shape, lead.origin, slot);
+		// Only the count -- SetSweepOrigin would re-seed the eight band
+		// origins and erase every override made above.
+		level.SetSweepCount(slot);
 	}
 
 	// How far a point is from a wave's origin, in whatever its shape
@@ -1584,6 +1624,7 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) CVar.FindCVar("gitd_ss_c" .. c).ResetToDefault();
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_speed" .. c);
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_amount" .. c);
+		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
 
