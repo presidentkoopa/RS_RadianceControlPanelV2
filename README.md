@@ -5,15 +5,16 @@ lanes, a travelling sweep, a volumetric flashlight, base-light darkening, and
 bloom controls that make any of it read as emissive.
 
 **Requires the forked engine.** Floor and ceiling glow, falloff and intensity
-on the wall lanes, Sector Sweep, the volumetric beam, and the bloom threshold
-and knee are all engine features that do not exist in stock GZDoom. On stock
-this mod will not load.
+on the wall lanes, two colours per glow, Sector Sweep, the volumetric beam,
+and the bloom threshold and knee are all engine features that do not exist in
+stock GZDoom. On stock this mod will not load.
 
 ## What is here
 
 | | |
 | --- | --- |
 | **Four glow lanes** | floor, ceiling, wall bottom, wall top — identical controls on each |
+| **Seamless corners** | a glow holds two colours, so a corner is a gradient instead of an edge |
 | **Sector Sweep** | up to eight lines of light travelling through the map |
 | **Flashlight** | volumetric beam with dust, four mount positions |
 | **Presets** | eleven, each generating 32 related colours, and customisable |
@@ -38,7 +39,38 @@ onto the nearby wall.
 Every lane has the same controls, deliberately: on/off, eight colour slots,
 how many of those slots are in rotation, a transition pattern, transition
 speed, coverage, falloff curve, intensity, and a pulse. If a control exists
-for one lane it exists for all four.
+for one lane it exists for all four — and they mean the same thing on all
+four. **Coverage** is how far the glow reaches; **Intensity** is how bright it
+is. (Intensity used to widen the floor and ceiling lanes instead of
+brightening them, so the same-named slider did two different jobs depending
+on which lane it sat on. If a configuration from before this changed looks
+tighter than it used to, raise its Coverage.)
+
+## Corners
+
+Where a wall meets a floor, two glows arrive at the same line — the wall lit
+upward from it, the floor lit inward from it — and both are at full strength
+exactly where they touch. The hard edge there was never a missing blend. It
+was the two sides disagreeing about what colour to be at a line they share.
+
+**Seamless Corners** makes them agree at the line and disagree everywhere
+else. Each glow carries two colours now and ramps between them as it fades:
+both surfaces take the same blended colour where they meet, and each fades
+back to its own lane's colour going away from it. The corner reads as one
+continuous gradient — floor colour, blend, wall colour — with no flat region
+in it and no seam.
+
+Both junctions do this together, floor-to-wall and ceiling-to-wall, because
+a room with only one of them ramping looks worse than a room with neither:
+the eye finds the mismatch immediately.
+
+The earlier version of this setting simply made both sides the *same* colour
+near the join. That removed the seam and the two-colour transition along with
+it, which was the interesting part. This keeps both lane colours.
+
+Reach, falloff and brightness are matched across the junction too — a ramp
+that changes width or brightness halfway across a corner reads as a seam even
+when the colour is continuous.
 
 ## Colours
 
@@ -91,7 +123,7 @@ lanes to shades of the passing sweep's own colour, so a green sweep leaves 32
 cooperating greens behind it. That part is necessarily per-sector, since
 light level is a sector property, so it is coarser than the line itself.
 
-## Map-wide wave## Map-wide wave
+## Map-wide wave
 
 Instead of every room pulsing in step, brightness can travel across the map
 like a stadium wave — each sector's phase offset by where it sits, so a
