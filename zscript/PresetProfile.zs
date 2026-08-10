@@ -51,6 +51,18 @@ class GITD_PresetProfile abstract
 			for (int s = 1; s <= 8; s++) F(p[i] .. "_hold" .. s, seconds);
 	}
 
+	// Eight holds for ONE lane. Hold() gives all four lanes the same rhythm,
+	// which is right for a preset that wants a pulse and useless for one that
+	// wants the four to drift apart and never re-sync.
+	static void HoldFor(string pre, double a, double b, double c, double d,
+	                    double e, double f, double g, double h)
+	{
+		F(pre .. "_hold1", a); F(pre .. "_hold2", b);
+		F(pre .. "_hold3", c); F(pre .. "_hold4", d);
+		F(pre .. "_hold5", e); F(pre .. "_hold6", f);
+		F(pre .. "_hold7", g); F(pre .. "_hold8", h);
+	}
+
 	static void SweepColor(int band, int packed)
 	{
 		I("gitd_ss_c" .. band, packed);
@@ -64,6 +76,7 @@ class GITD_PresetProfile abstract
 		{
 			case 2: LowPower(); return;
 			case 3: RedAlert(); return;
+			case 7: NeonChaos(); return;
 			default: return;   // no profile yet: colours only, as before
 		}
 	}
@@ -352,5 +365,185 @@ class GITD_PresetProfile abstract
 		SweepColor(3, 0xFF1810);   // the alarm itself
 		SweepColor(4, 0xFF5A18);   // its hot edge
 		SweepColor(5, 0x904038);   // reveal ignores rgb; kept for the swatch
+	}
+
+	// =====================================================================
+	// 7. NEON CHAOS -- the signal breaks
+	//
+	// WHERE NEON BELONGS IN DOOM. Not the techbase and not hell: both of
+	// those have a palette and keep to it. Neon belongs to the moment the
+	// machine stops agreeing with itself -- the teleporter mid-transit, the
+	// screen when the cable is kicked, a lighting rig with every channel
+	// arguing. Doom is a game about being inside broken machinery, and this
+	// is the preset where the machinery breaks LOUDLY rather than quietly.
+	//
+	// Low Power is a system that has given up. Red Alert is a system doing
+	// its job under pressure. This is a system having a seizure -- and what
+	// separates that from a screensaver is that a seizure has no tempo you
+	// can settle into. So nothing here shares a clock with anything else, and
+	// that is the entire design.
+	//
+	// ONE RULE holds it together: everything stays fully saturated and
+	// bright. Chaos in muddy colours is noise. Chaos where every element is
+	// unmistakably ITSELF reads as too much happening at once, which is the
+	// intent.
+	// =====================================================================
+	static void NeonChaos()
+	{
+		// ---- 32 colours, maximum disagreement ---------------------------
+		//
+		// Spread 360 is the whole wheel, and because each lane takes its own
+		// QUARTER of the spread, the four land in completely different colour
+		// families -- floor cyan while the ceiling is orange. Every other
+		// preset keeps this narrow so the lanes agree; this is the one that
+		// wants them not to.
+		//
+		// Saturation pinned near 1 with almost no variance is the rule above,
+		// enforced: the generator is never allowed to wander toward grey.
+		F("gitd_pc_hue", 0.0);
+		F("gitd_pc_spread", 360.0);
+		F("gitd_pc_sat", 0.98);
+		F("gitd_pc_satvar", 0.02);
+		F("gitd_pc_val", 0.85);
+		F("gitd_pc_valvar", 0.15);
+
+		LanesI("_enabled", 1);
+		LanesI("_coverage", 200);
+		Lanes("_intensity", 1.30);
+		Lanes("_saturation", 1.00);
+		LanesI("_slots", 8);
+
+		// A DIFFERENT TRANSITION AND ANIMATION PER LANE. Every other preset
+		// sets these four the same, because agreement is what makes a mood.
+		// Disagreement is the mood here.
+		I("gitd_wb_pattern", 2);  I("gitd_wb_anim", 1);   // flash, ripple out
+		I("gitd_wt_pattern", 1);  I("gitd_wt_anim", 0);   // fade, still
+		I("gitd_cg_pattern", 4);  I("gitd_cg_anim", 2);   // ping-pong, east
+		I("gitd_fg_pattern", 3);  I("gitd_fg_anim", 3);   // breathe, north
+
+		Lanes("_anim_speed", 1.4);
+		Lanes("_anim_depth", 0.7);
+		Lanes("_anim_length", 384.0);
+		F("gitd_wb_anim_phase", 0.0);   F("gitd_wt_anim_phase", 0.25);
+		F("gitd_cg_anim_phase", 0.5);   F("gitd_fg_anim_phase", 0.75);
+
+		// HOLD TIMES THAT NEVER RE-SYNC. Each lane's eight durations sum to a
+		// different total and none divides another, so the four rotations
+		// drift apart and the room never repeats a combination you have
+		// already seen. This is the single thing separating chaos from a fast
+		// loop, and it is only possible because durations are per COLOUR
+		// rather than per lane.
+		HoldFor("gitd_wb", 0.5, 1.0, 0.5, 1.5, 0.5, 1.0, 0.5, 2.0);   // 7.5s
+		HoldFor("gitd_wt", 0.7, 0.7, 2.1, 0.7, 1.4, 0.7, 0.7, 2.8);   // 9.8s
+		HoldFor("gitd_cg", 1.1, 0.6, 1.1, 0.6, 2.2, 0.6, 1.1, 0.6);   // 7.9s
+		HoldFor("gitd_fg", 0.9, 1.8, 0.9, 0.9, 2.7, 0.9, 1.8, 0.9);   // 10.8s
+
+		// ---- dark enough for neon to mean something ---------------------
+		// Neon needs somewhere to be bright AGAINST -- but not Low Power
+		// dark, because you have to see all of it at once or the chaos is
+		// wasted. Colour drain is ZERO: draining neon is the one setting that
+		// would destroy the entire preset.
+		B("gitd_dd_enabled", true);
+		I("ddz_mode", 2);      // Compress
+		I("ddz_preset", 2);    // Murky
+		I("ddz_desat", 0);
+
+		// ---- all eight sweeps, none of them agreeing --------------------
+		//
+		// Every band a different shape, speed and job. Because the speeds all
+		// differ they OVERTAKE constantly, and because drift is high the
+		// crossings land somewhere new every cycle -- the one thing this
+		// system does that cannot be authored, only set in motion.
+		B("gitd_ss_enabled", true);
+		I("gitd_ss_count", 8);
+		I("gitd_ss_shape", 1);
+		I("gitd_ss_origin", 2);       // you are the centre of the storm
+		I("gitd_ss_direction", 2);    // out and back: it never resolves
+		I("gitd_ss_trigger", 0);
+		I("gitd_ss_drive", 0);
+		I("gitd_ss_range", 2048);
+		F("gitd_ss_softness", 1.6);
+		F("gitd_ss_intensity", 1.5);
+		I("gitd_ss_trail", 260);
+		F("gitd_ss_drift", 0.40);     // high: the train tears itself apart
+		F("gitd_ss_health_speed", 0.0);
+		I("gitd_ss_thickness", 140);
+
+		// A slow orbit under everything, so even the geometry keeps moving.
+		// THE ROLODEX IS ON: band colour is picked by where the spin
+		// currently is and cross-faded between neighbours, so all eight are
+		// thumbed through continuously rather than each band owning one.
+		F("gitd_ss_spin", 40.0);
+		F("gitd_ss_spin_radius", 200.0);
+		I("gitd_ss_spin_colors", 8);
+
+		B("gitd_ss_light", false);
+		B("gitd_ss_perband", true);
+		for (int i = 1; i <= 8; i++) I("gitd_ss_fx" .. i, 0);
+
+		// Shapes cycle through everything the engine has. Draw modes mix all
+		// four: most ADD, one REVEALS, one CRUSHES, and two RECOLOUR -- so
+		// the palette itself gets dragged around by the bands crossing it.
+		static const int shp[] = { 1, 2, 5, 3, 1, 5, 2, 1 };
+		static const int drw[] = { 1, 4, 1, 4, 2, 1, 1, 3 };
+		static const int thk[] = { 90, 220, 160, 240, 200, 130, 180, 110 };
+		static const double spd[] = { 300.0, 250.0, 190.0, 340.0, 220.0, 400.0, 170.0, 280.0 };
+		for (int i = 0; i < 8; i++)
+		{
+			I("gitd_ss_shape" .. (i + 1), shp[i]);
+			I("gitd_ss_draw"  .. (i + 1), drw[i]);
+			I("gitd_ss_thick" .. (i + 1), thk[i]);
+			F("gitd_ss_speed" .. (i + 1), spd[i]);
+		}
+
+		// Uneven gaps, for the same reason as the hold times.
+		I("gitd_ss_gap1", 14);  I("gitd_ss_gap2", 26);
+		I("gitd_ss_gap3", 9);   I("gitd_ss_gap4", 33);
+		I("gitd_ss_gap5", 17);  I("gitd_ss_gap6", 21);
+		I("gitd_ss_gap7", 11);
+
+		// The eight neon primaries. With the rolodex on these are a WHEEL
+		// rather than eight assignments, so the ORDER matters more than the
+		// pairing -- adjacent entries are what cross-fade into each other.
+		SweepColor(1, 0xFF00A0);   // magenta
+		SweepColor(2, 0xFF3000);   // orange-red
+		SweepColor(3, 0xFFD000);   // amber
+		SweepColor(4, 0x40FF00);   // acid green
+		SweepColor(5, 0x00FFC0);   // aqua
+		SweepColor(6, 0x00A0FF);   // cyan-blue
+		SweepColor(7, 0x6000FF);   // violet
+		SweepColor(8, 0xFF00E0);   // hot pink, back round to magenta
+
+		// ---- and the air itself -----------------------------------------
+		//
+		// The flashlight's beam is VOLUMETRIC -- it lights the air rather
+		// than only what it lands on -- and every part of it is a cvar, so a
+		// preset can own it. Here the beam runs the same eight colours on a
+		// fast cycle, the haze is thick enough that the shaft reads as solid,
+		// and the air carries slow drifting motes. Sweep a coloured beam
+		// through that dust and the motes take the colour: the chaos stops
+		// being something on the walls and becomes something you are standing
+		// IN. It is the only preset where the volumetrics are part of the
+		// idea rather than a separate feature.
+		//
+		// fl_enabled is deliberately NOT touched. A preset may decide what
+		// your torch looks like; whether you are carrying one is yours.
+		I("fl_slots", 8);
+		I("fl_random", 0);
+		I("fl_pattern", 1);        // fade between them
+		F("fl_speed", 0.030);      // fast: the beam never settles either
+		F("fl_intensity", 1.40);
+		F("fl_density", 1.80);     // thick haze, so the shaft reads as solid
+		F("fl_dust", 0.60);
+		F("fl_dust_scale", 0.020); // fine motes
+		F("fl_dust_drift", 20.0);
+		F("fl_falloff", 1.20);
+		I("fl_bounce", 1);
+
+		// The torch runs the same wheel as the sweeps, so the beam and the
+		// bands are never a different argument.
+		static const int neon[] = { 0xFF00A0, 0xFF3000, 0xFFD000, 0x40FF00,
+		                            0x00FFC0, 0x00A0FF, 0x6000FF, 0xFF00E0 };
+		for (int i = 0; i < 8; i++) I("fl_c" .. (i + 1), neon[i]);
 	}
 }
