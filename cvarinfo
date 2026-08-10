@@ -656,3 +656,13 @@ server int gitd_ss_thick5 = 0;
 server int gitd_ss_thick6 = 0;
 server int gitd_ss_thick7 = 0;
 server int gitd_ss_thick8 = 0;
+
+// ---- Dropped sweeps --------------------------------------------------------
+// A sweep that happens WHERE IT WAS TRIGGERED and stays there, instead of the
+// configured sweep following the player around. Walk a corridor and you leave
+// a line of them behind you, each still running where you left it. A drop
+// looks exactly like the sweep in the menu -- same colours, speeds, draw
+// modes, spin -- it just does not move.
+server bool  gitd_ss_drop = false;       // triggers drop in place
+server float gitd_ss_drop_every = 0.0;   // also drop every N seconds; 0 = off
+server int   gitd_ss_drop_max = 8;       // oldest retires past this many

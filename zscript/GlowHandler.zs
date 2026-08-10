@@ -799,7 +799,7 @@ class GITD_Handler : StaticEventHandler
 	// way to get the same effect without setting eight numbers.
 	double WaveBandSpeedScale(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return 1.0;
+		if (!w.cvarDriven) return 1.0;
 		let lead = CVar.FindCVar("gitd_ss_speed1");
 		let mine = CVar.FindCVar("gitd_ss_speed" .. (i + 1));
 		if (!lead || !mine) return 1.0;
@@ -810,7 +810,7 @@ class GITD_Handler : StaticEventHandler
 
 	double WaveBandPos(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return w.CalcBandPos(i);
+		if (!w.cvarDriven) return w.CalcBandPos(i);
 		double lag = 0;
 		for (int g = 0; g < i; g++)
 			lag += CVar.FindCVar("gitd_ss_gap" .. (g + 1)).GetInt() * w.speed / 35.0;
@@ -825,7 +825,7 @@ class GITD_Handler : StaticEventHandler
 	// preset that does not care sets nothing and behaves as it always did.
 	double WaveBandThickness(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return w.thickness;
+		if (!w.cvarDriven) return w.thickness;
 		let cv = CVar.FindCVar("gitd_ss_thick" .. (i + 1));
 		if (!cv) return w.thickness;
 		int t = cv.GetInt();
@@ -834,14 +834,14 @@ class GITD_Handler : StaticEventHandler
 
 	int WaveBandDraw(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return 1;
+		if (!w.cvarDriven) return 1;
 		let cv = CVar.FindCVar("gitd_ss_draw" .. (i + 1));
 		return cv ? clamp(cv.GetInt(), 1, 4) : 1;
 	}
 
 	int WaveBandAmount(GITD_Wave w, int i)
 	{
-		if (!w.ambient)
+		if (!w.cvarDriven)
 		{
 			let cv = CVar.FindCVar("gitd_ss_light_amount");
 			return cv ? cv.GetInt() : 48;
@@ -858,12 +858,24 @@ class GITD_Handler : StaticEventHandler
 		// one colour per segment of the turn.
 		if (w.spinColors > 1)
 		{
+			// CROSS-FADED, not stepped. Picking the nearest colour by phase
+			// snaps at every segment boundary, and a rolodex that clicks is a
+			// slideshow -- the colour has to arrive before you notice it left.
+			// So the phase indexes a CONTINUOUS position in colour space and
+			// the two neighbours are blended by the fraction between them.
 			int n = clamp(w.spinColors, 2, 8);
-			int pick = int(w.SpinPhase() * n + i) % n;
-			int packed = CVar.FindCVar("gitd_ss_c" .. (pick + 1)).GetInt();
-			return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
+			double t = w.SpinPhase() * n + i;
+			int ia = int(floor(t)) % n;
+			int ib = (ia + 1) % n;
+			double f = t - floor(t);
+
+			int pa = CVar.FindCVar("gitd_ss_c" .. (ia + 1)).GetInt();
+			int pb = CVar.FindCVar("gitd_ss_c" .. (ib + 1)).GetInt();
+			Color ca = Color(255, (pa >> 16) & 255, (pa >> 8) & 255, pa & 255);
+			Color cb = Color(255, (pb >> 16) & 255, (pb >> 8) & 255, pb & 255);
+			return GITD_Palette.Lerp(ca, cb, f);
 		}
-		if (!w.ambient) return w.col;
+		if (!w.cvarDriven) return w.col;
 		// Color(int) does NOT convert on this engine -- it compiles and then
 		// fails at load with "Return type Color mismatch with SInt4", which
 		// leaves this returning nothing usable and the colour silently unset.
@@ -873,7 +885,7 @@ class GITD_Handler : StaticEventHandler
 
 	int WaveBandFx(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return w.fx;
+		if (!w.cvarDriven) return w.fx;
 		if (!CVar.FindCVar("gitd_ss_perband").GetBool())
 			return CVar.FindCVar("gitd_ss_light_mode").GetInt();
 		return CVar.FindCVar("gitd_ss_fx" .. (i + 1)).GetInt();
@@ -881,7 +893,7 @@ class GITD_Handler : StaticEventHandler
 
 	GITD_SweepAction WaveBandAction(GITD_Wave w, int i)
 	{
-		if (!w.ambient) return w.sweepAction;
+		if (!w.cvarDriven) return w.sweepAction;
 		if (!CVar.FindCVar("gitd_ss_perband").GetBool()) return null;
 		return GITD_SweepAction.Resolve(CVar.FindCVar("gitd_ss_script" .. (i + 1)).GetString());
 	}
@@ -969,6 +981,7 @@ class GITD_Handler : StaticEventHandler
 			ambient = new("GITD_Wave");
 			ambient.id = ++nextWaveId;
 			ambient.ambient = true;
+			ambient.cvarDriven = true;
 			ambient.alive = true;
 			ambient.dir = 1;
 			ambient.priority = 0;   // anything scripted outranks the weather
@@ -1045,9 +1058,85 @@ class GITD_Handler : StaticEventHandler
 		}
 	}
 
+	// ---- Dropped sweeps -------------------------------------------------
+	//
+	// A sweep that HAPPENS WHERE IT WAS TRIGGERED and stays there. The ambient
+	// wave's "follows you" origin drags the whole effect around with the
+	// player, which is right for a beacon that is hunting you and wrong for
+	// anything that should mark a place. Walk a corridor dropping these and
+	// you leave a line of events behind you, each one still turning where you
+	// left it.
+	//
+	// A drop is cvarDriven, so it looks exactly like the sweep configured in
+	// the menu -- same colours, speeds, thicknesses, draw modes, spin. The
+	// only thing it does differently is not move.
+
+	int lastDropTic;
+
+	void DropWave(Vector3 at)
+	{
+		if (!ambient) return;
+		int cap = clamp(CVar.FindCVar("gitd_ss_drop_max") ?
+			CVar.FindCVar("gitd_ss_drop_max").GetInt() : 8, 1, 32);
+
+		// Count what is already down, and if we are at the cap retire the
+		// oldest rather than refusing -- a trail that stops appearing looks
+		// broken, a trail that fades from the back looks intended.
+		int live = 0;
+		GITD_Wave oldest = null;
+		for (int i = 0; i < waves.Size(); i++)
+		{
+			let w = waves[i];
+			if (!w || w.ambient || !w.alive || w.tag != "gitd_drop") continue;
+			live++;
+			if (!oldest || w.id < oldest.id) oldest = w;
+		}
+		if (live >= cap && oldest) oldest.alive = false;
+
+		let w = NewWave();
+		if (!w) return;
+
+		w.cvarDriven = true;      // reads the same per-band tables
+		w.tag        = "gitd_drop";
+		w.origin     = at;        // and THIS is the whole point
+		w.shape      = ambient.shape;
+		w.speed      = ambient.speed;
+		w.range      = ambient.range;
+		w.thickness  = ambient.thickness;
+		w.softness   = ambient.softness;
+		w.intensity  = ambient.intensity;
+		w.subBands   = ambient.subBands;
+		w.drift      = ambient.drift;
+		w.trail      = ambient.trail;
+		w.spin       = ambient.spin;
+		w.spinRadius = ambient.spinRadius;
+		w.spinColors = ambient.spinColors;
+		w.priority   = 5;         // above the weather, below a scripted wave
+		w.loop       = false;     // one pass, then it is gone
+		w.pos        = 0;
+		w.dir        = 1;
+		lastDropTic  = level.maptime;
+	}
+
+	// Drop at the player's feet, which is where every trigger means.
+	void DropAtPlayer()
+	{
+		let pmo = players[consoleplayer].mo;
+		if (pmo) DropWave(pmo.pos);
+	}
+
+	bool DropsEnabled()
+	{
+		let cv = CVar.FindCVar("gitd_ss_drop");
+		return cv && cv.GetBool();
+	}
+
 	// A trigger fired: start the ambient wave over.
 	void SSStartPass()
 	{
+		// With drops on, a trigger leaves a sweep WHERE IT FIRED instead of
+		// restarting the one that follows you.
+		if (DropsEnabled()) { DropAtPlayer(); return; }
 		if (!ambient) return;
 		int dir = CVar.FindCVar("gitd_ss_direction").GetInt();
 		if (dir == 1) { ambient.pos = ambient.range; ambient.dir = -1; }
@@ -1416,6 +1505,16 @@ class GITD_Handler : StaticEventHandler
 	void SSCheckTriggers()
 	{
 		if (!CVar.FindCVar("gitd_ss_enabled").GetBool()) return;
+
+		// Drop on a timer as well as on events, so "leave one behind me every
+		// few seconds as I walk" needs no trigger at all.
+		if (DropsEnabled())
+		{
+			let ev = CVar.FindCVar("gitd_ss_drop_every");
+			double every = ev ? ev.GetFloat() : 0.0;
+			if (every > 0 && level.maptime - lastDropTic >= int(every * 35))
+				DropAtPlayer();
+		}
 		int trigger = CVar.FindCVar("gitd_ss_trigger").GetInt();
 		if (trigger == 0) return;
 
@@ -1648,6 +1747,7 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_draw" .. c);
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_thick" .. c);
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
+		Rst("gitd_ss_drop"); Rst("gitd_ss_drop_every"); Rst("gitd_ss_drop_max");
 		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
 

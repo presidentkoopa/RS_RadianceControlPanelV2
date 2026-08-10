@@ -109,7 +109,19 @@ class GITD_Wave : Object play
 	// at load. Same trap as `play` and `states`, already paid for once.
 	GITD_SweepAction sweepAction;
 
-	bool ambient;            // the cvar-driven wave; there is exactly one
+	// TWO DIFFERENT JOBS, and they used to be one flag.
+	//
+	// `ambient` means "this is THE wave rebuilt from the cvars every tic and
+	// following the origin setting". There is exactly one, and it is the sweep
+	// the player is configuring.
+	//
+	// `cvarDriven` means "read the per-band tables -- colours, speeds,
+	// thicknesses, draw modes -- from the cvars rather than from my own single
+	// values". The ambient wave does that, but so does a DROPPED one: a drop
+	// should look exactly like the sweep you configured, it just stays where
+	// it was put instead of following you.
+	bool ambient;
+	bool cvarDriven;
 	bool loop;               // restart at the far end instead of dying
 	bool pingpong;
 	bool running;
@@ -335,12 +347,16 @@ class GITD_Sweep play abstract
 	static int Fire(Vector3 origin, int shape = 1, int col = 0x00DCFF,
 		double speed = 600.0, double range = 1200.0, double thickness = 24.0,
 		int bands = 1, double trail = 0.0, int fx = 1, int priority = 10,
-		bool visible = true, string tag = "")
+		bool visible = true, string tag = "",
+		double spin = 0.0, double spinRadius = 0.0)
 	{
 		let h = Handler();
 		if (!h) return 0;
 		let w = h.NewWave();
 		if (!w) return 0;
+
+		w.spin       = spin;
+		w.spinRadius = spinRadius;
 
 		w.origin    = origin;
 		w.shape     = shape;
