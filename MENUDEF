@@ -688,6 +688,10 @@ OptionMenu "GITDSweepPlay"
 	Slider "  Keep at most",		"gitd_ss_drop_max", 1, 32, 1, 0
 	StaticText ""
 
+	Option "Glows keep running underneath","gitd_ss_underlay", "OnOff"
+	StaticText "On, the bands ride over your palette.", darkgray
+	StaticText "Off, a sweep is the only thing in the room.", darkgray
+	StaticText ""
 	StaticText "Sector light level", gold
 	Option "As a sweep passes",		"gitd_ss_light_mode", "GITDSweepLight"
 	Slider "  Amount",				"gitd_ss_light_amount", 0, 128, 4, 0

@@ -596,16 +596,38 @@ class GITD_Handler : StaticEventHandler
 
 		if (anyWave)
 		{
-			// Sweep takes over from the lanes while it runs. The point of it
-			// is a dark room with nothing in it but the travelling lines, so
-			// leaving the lanes lit underneath would defeat it.
-			ClearAll();
+			// UNDERLAY. A live sweep used to CLEAR the lanes unconditionally,
+			// on the reasoning that the point of a sweep is a dark room with
+			// nothing in it but the travelling lines.
+			//
+			// That is one good look, and it was wrong as a rule. It made the
+			// two flagship systems mutually exclusive -- you could have the
+			// 4x8 or you could have sweeps, never both -- and it silently
+			// broke every preset built around "a baseline the sweeps travel
+			// over", because the baseline was being deleted every tic and the
+			// palette work never appeared at all.
+			//
+			// Underlay on: the lanes run normally and the bands ride over
+			// them, which is what makes a sweep read as something happening
+			// TO a room rather than as the room's only content. Off restores
+			// the original bare-lines look in one toggle.
+			if (Underlay()) Apply();
+			else ClearAll();
 			ApplySectorSweepEffects();
 		}
 		else
 		{
 			Apply();
 		}
+	}
+
+	// Do the glow lanes keep running underneath a live sweep? Defaults ON:
+	// two systems that cannot coexist is the stranger arrangement, and it is
+	// what every preset assumes.
+	bool Underlay()
+	{
+		let cv = CVar.FindCVar("gitd_ss_underlay");
+		return cv ? cv.GetBool() : true;
 	}
 
 	// ---- Per-sector override -------------------------------------------
@@ -1772,6 +1794,7 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_shape" .. c);
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_drop"); Rst("gitd_ss_drop_every"); Rst("gitd_ss_drop_max");
+		Rst("gitd_ss_underlay");
 		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
 

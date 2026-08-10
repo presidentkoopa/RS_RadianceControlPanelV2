@@ -679,3 +679,9 @@ server int gitd_ss_shape5 = 0;
 server int gitd_ss_shape6 = 0;
 server int gitd_ss_shape7 = 0;
 server int gitd_ss_shape8 = 0;
+
+// Do the glow lanes keep running underneath a live sweep? ON means the bands
+// ride OVER your palette, which is what makes a sweep read as something
+// happening to a room rather than as the room's only content. OFF is the
+// original behaviour: a dark room with nothing in it but the travelling lines.
+server bool gitd_ss_underlay = true;

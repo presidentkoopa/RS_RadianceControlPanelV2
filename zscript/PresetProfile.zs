@@ -76,6 +76,7 @@ class GITD_PresetProfile abstract
 		{
 			case 2: LowPower(); return;
 			case 3: RedAlert(); return;
+			case 6: NeonUnison(); return;
 			case 7: NeonChaos(); return;
 			default: return;   // no profile yet: colours only, as before
 		}
@@ -545,5 +546,142 @@ class GITD_PresetProfile abstract
 		static const int neon[] = { 0xFF00A0, 0xFF3000, 0xFFD000, 0x40FF00,
 		                            0x00FFC0, 0x00A0FF, 0x6000FF, 0xFF00E0 };
 		for (int i = 0; i < 8; i++) I("fl_c" .. (i + 1), neon[i]);
+	}
+
+	// =====================================================================
+	// 6. NEON UNISON -- everything agrees
+	//
+	// Chaos's twin, and the pair only work because they are built from the
+	// same parts pointed in opposite directions. Chaos gives every lane its
+	// own hue quarter, its own transition, its own animation and eight hold
+	// times that never re-sync. Unison gives all four the SAME hue, the SAME
+	// transition, the SAME animation and one shared hold -- so the whole room
+	// changes colour as one object.
+	//
+	// That is the effect worth having and it is the one thing four
+	// independent lanes are usually incapable of: a wall, its skirting, the
+	// ceiling and the floor all arriving at the same violet at the same
+	// instant, then all leaving it together. It does not read as four lit
+	// surfaces. It reads as the room being ONE surface that is lit.
+	//
+	// And it is only possible now that the sweeps ride OVER the lanes instead
+	// of replacing them: the bands are the thing that breaks the unison for a
+	// moment, and there has to be a unison there to break.
+	// =====================================================================
+	static void NeonUnison()
+	{
+		// ---- one colour, four surfaces ----------------------------------
+		//
+		// Spread 40 is the tightest of any preset here. Each lane still takes
+		// its own quarter, but a quarter of 40 degrees is ten -- close enough
+		// that the four are shades of one hue rather than four hues. The
+		// eight slots then walk that hue around the wheel over the rotation,
+		// so the room is always one colour and never the same one for long.
+		//
+		// Value variance is small on purpose: if the lanes agree on hue but
+		// disagree on brightness, the illusion of a single lit object breaks
+		// immediately. Unison is as much about matching BRIGHTNESS as colour.
+		F("gitd_pc_hue", 300.0);      // start on violet; the slots travel
+		F("gitd_pc_spread", 40.0);
+		F("gitd_pc_sat", 0.95);
+		F("gitd_pc_satvar", 0.03);
+		F("gitd_pc_val", 0.80);
+		F("gitd_pc_valvar", 0.06);
+
+		LanesI("_enabled", 1);
+		LanesI("_slots", 8);
+		LanesI("_coverage", 208);     // generous: surfaces should meet
+		Lanes("_intensity", 1.20);
+		Lanes("_saturation", 1.00);
+
+		// FADE, everywhere, at the same speed. Snap would let you see the
+		// four switch and notice they are four. A fade of the same length
+		// starting at the same instant is what fuses them.
+		LanesI("_pattern", 1);
+		Lanes("_speed", 0.0060);
+
+		// One hold for all thirty-two slots -- the whole point. Four seconds
+		// is long enough to register the colour as a STATE rather than as a
+		// transition you happened to catch.
+		Hold(4.0);
+
+		// Animation on, identical, and CRUCIALLY in phase. Every other preset
+		// that animates offsets the lanes so they chase each other; here they
+		// must not. Zero phase on all four means the ripple crosses the whole
+		// room as one wave rather than four.
+		LanesI("_anim", 1);           // ripple from centre
+		Lanes("_anim_speed", 0.5);
+		Lanes("_anim_depth", 0.35);
+		Lanes("_anim_length", 768.0);
+		Lanes("_anim_phase", 0.0);
+
+		// Bleed on, which matters more here than anywhere: it pulls each
+		// lane's colour toward the lanes it physically meets, so corners stop
+		// being seams. In a preset about the room being one object, a visible
+		// join is the failure case.
+		LanesI("_bleed", 1);
+
+		// ---- the floor --------------------------------------------------
+		// Dark enough that saturated colour is the brightest thing present,
+		// no darker. And no colour drain at all -- the same reasoning as
+		// Chaos, for a preset that is entirely about hue.
+		B("gitd_dd_enabled", true);
+		I("ddz_mode", 2);      // Compress
+		I("ddz_preset", 3);    // Dismal
+		I("ddz_desat", 0);
+
+		// ---- and one wave, to prove the unison is deliberate ------------
+		//
+		// A single slow shell, wide and soft, on a thirty-second cycle. It
+		// RECOLOURS rather than adds: as it passes it drags the glow toward
+		// its own colour and lets go, so for a few seconds part of the room
+		// disagrees with the rest -- and then rejoins.
+		//
+		// That is the whole argument for the preset. Perfect agreement is
+		// only legible when something occasionally breaks it; a room that
+		// has never been out of unison just looks monochrome.
+		B("gitd_ss_enabled", true);
+		I("gitd_ss_count", 1);
+		I("gitd_ss_shape", 4);        // shell: it arrives in three dimensions
+		I("gitd_ss_origin", 0);       // map centre, indifferent to you
+		I("gitd_ss_direction", 0);
+		I("gitd_ss_trigger", 0);
+		I("gitd_ss_drive", 0);
+		I("gitd_ss_range", 6144);
+		F("gitd_ss_softness", 4.0);   // very soft: no edge to catch on
+		F("gitd_ss_intensity", 1.0);
+		I("gitd_ss_trail", 0);
+		F("gitd_ss_drift", 0.0);
+		F("gitd_ss_health_speed", 0.0);
+		I("gitd_ss_thickness", 900);  // wide, so the disagreement is gradual
+		F("gitd_ss_spin", 0.0);
+		F("gitd_ss_spin_radius", 0.0);
+		I("gitd_ss_spin_colors", 0);
+
+		B("gitd_ss_light", false);
+		B("gitd_ss_perband", true);
+		for (int i = 1; i <= 8; i++) I("gitd_ss_fx" .. i, 0);
+
+		I("gitd_ss_shape1", 0);       // inherit the shell
+		I("gitd_ss_draw1", 4);        // RECOLOUR -- the point of the wave
+		I("gitd_ss_thick1", 0);
+		F("gitd_ss_speed1", 200.0);   // 6144 / 200 = about half a minute
+		for (int i = 2; i <= 8; i++)
+		{
+			I("gitd_ss_shape" .. i, 0);
+			I("gitd_ss_draw" .. i, 1);
+			I("gitd_ss_thick" .. i, 0);
+		}
+
+		// The complement of wherever the palette currently is, so the band is
+		// always the one thing in the room that disagrees.
+		SweepColor(1, 0x30FFB0);
+		SweepColor(2, 0x30FFB0);
+		SweepColor(3, 0x30FFB0);
+		SweepColor(4, 0x30FFB0);
+		SweepColor(5, 0x30FFB0);
+		SweepColor(6, 0x30FFB0);
+		SweepColor(7, 0x30FFB0);
+		SweepColor(8, 0x30FFB0);
 	}
 }
