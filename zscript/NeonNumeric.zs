@@ -255,12 +255,15 @@ class GITD_NeonKillCounter : EventHandler
 		return cv && cv.GetBool() && GITD_Neon.Enabled();
 	}
 
-	// 0 close again (the original), 1 fade out, 2 stay put.
+	// 0 blink out, 1 fade out, 2 stay put.
 	private static int Linger()
 	{
 		let cv = CVar.FindCVar('gitd_neon_kc_linger');
 		return cv ? clamp(cv.GetInt(), 0, 2) : 0;
 	}
+
+	// How long the blink-out runs for, in tics. One second of quickening.
+	const BLINK_TICS = 35;
 
 	private static int Digits()
 	{
@@ -387,6 +390,28 @@ class GITD_NeonKillCounter : EventHandler
 			if (age < 12)             prog = age / 12.0;
 			else if (age > life - 14) prog = (life - age) / 14.0;
 			else                      prog = 1.0;
+
+			// BLINK: hold the plate open and strobe the alpha, ACCELERATING
+			// as it runs out -- slow winks at first, a stutter by the end,
+			// then nothing. An even blink reads as a fault in the display; a
+			// quickening one reads as something running down, which is what
+			// a badge about to expire actually is.
+			//
+			// The period is driven off how much life is LEFT rather than off
+			// age, so the acceleration lands on zero no matter what the badge's
+			// total lifetime is.
+			if (mode == 0)
+			{
+				prog = (age < 12) ? age / 12.0 : 1.0;
+				int left = life - age;
+				if (left < BLINK_TICS)
+				{
+					double f = 1.0 - double(left) / double(BLINK_TICS);  // 0..1
+					int period = max(2, int(10.0 - f * 8.0));            // 10 -> 2
+					bool lit = ((age / period) % 2) == 0;
+					level.SetBillboardAlpha(bid[i], lit ? 1.0 : 0.0);
+				}
+			}
 
 			// FADE: hold the plate open and take the alpha down instead of
 			// closing it. Shutting AND fading at once reads as a glitch --

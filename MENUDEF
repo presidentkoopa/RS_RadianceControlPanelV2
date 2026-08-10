@@ -647,7 +647,7 @@ OptionMenu "GITDSweepPlay"
 	StaticText "until something asks for it.", darkgray
 	StaticText ""
 	Submenu "Ambush Setpieces...",	"GITDAmbush"
-	Submenu "Colour Law...",		"GITDColorLaw"
+	Submenu "Colours Change the Fight...","GITDColorLaw"
 }
 
 OptionMenu "GITDSweepAdv"
@@ -688,62 +688,50 @@ OptionMenu "GITDWallBottom"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Wall Bottom Glow"
 	StaticText ""
-	StaticText "The wall, lit upward from the floor", darkgray
-	StaticText ""
 	Option "Enabled",				"gitd_wb_enabled", "OnOff"
 	StaticText ""
-	Option "Colours in rotation",	"gitd_wb_slots", "GITDSlots"
-	Option "Randomise instead",		"gitd_wb_random", "YesNo"
-	StaticText "Ignores the colours below and picks", darkgray
-	StaticText "fresh ones each cycle", darkgray
-	ColorPicker "Colour 1",		"gitd_wb_c1"
-	Slider "  holds for (s)",		"gitd_wb_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_wb_c2"
-	Slider "  holds for (s)",		"gitd_wb_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_wb_c3"
-	Slider "  holds for (s)",		"gitd_wb_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_wb_c4"
-	Slider "  holds for (s)",		"gitd_wb_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_wb_c5"
-	Slider "  holds for (s)",		"gitd_wb_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_wb_c6"
-	Slider "  holds for (s)",		"gitd_wb_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_wb_c7"
-	Slider "  holds for (s)",		"gitd_wb_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_wb_c8"
-	Slider "  holds for (s)",		"gitd_wb_hold8", 0.0, 30.0, 0.5, 1
+	Slider "Coverage",				"gitd_wb_coverage", 0, 512, 8, 0
+	Slider "Saturation",			"gitd_wb_saturation", 0.0, 2.0, 0.05, 2
+	Option "Falloff",				"gitd_wb_falloff", "GITDFalloff"
+	Slider "Intensity",				"gitd_wb_intensity", 0.0, 3.0, 0.05, 2
 	StaticText ""
+	StaticText ""
+	Option "Colours in rotation",	"gitd_wb_slots", "GITDSlots"
+	StaticText "Duration 0 = keep cycling, never hold.", darkgray
+	StaticText ""
+	ColorPicker "Colour 1",		"gitd_wb_c1"
+	Slider "  Duration",			"gitd_wb_hold1", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 2",		"gitd_wb_c2"
+	Slider "  Duration",			"gitd_wb_hold2", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 3",		"gitd_wb_c3"
+	Slider "  Duration",			"gitd_wb_hold3", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 4",		"gitd_wb_c4"
+	Slider "  Duration",			"gitd_wb_hold4", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 5",		"gitd_wb_c5"
+	Slider "  Duration",			"gitd_wb_hold5", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 6",		"gitd_wb_c6"
+	Slider "  Duration",			"gitd_wb_hold6", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 7",		"gitd_wb_c7"
+	Slider "  Duration",			"gitd_wb_hold7", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 8",		"gitd_wb_c8"
+	Slider "  Duration",			"gitd_wb_hold8", 0.0, 30.0, 0.5, 1
+	StaticText ""
+	Option "Transition",			"gitd_wb_pattern", "GITDPattern"
+	Slider "  Transition speed",	"gitd_wb_speed", 0.001, 0.05, 0.001, 3
 	StaticText ""
 	Option "Can bleed into other lanes","gitd_wb_bleed", "YesNo"
-	Option "Transition",			"gitd_wb_pattern", "GITDPattern"
-	Slider "Transition speed",		"gitd_wb_speed", 0.001, 0.05, 0.001, 3
+	StaticText "Pulls this lane's colour partway toward", darkgray
+	StaticText "the lanes it physically meets, so a corner", darkgray
+	StaticText "reads as one light rather than two.", darkgray
 	StaticText ""
 	StaticText "Animation", gold
+	StaticText ""
 	Option "Travels",				"gitd_wb_anim", "GITDAnim"
-	Slider "  Speed",				"gitd_wb_anim_speed", 0.05, 4.0, 0.05, 2
-	Slider "  Distance between pulses","gitd_wb_anim_length", 64, 4096, 64, 0
-	Slider "  Depth",				"gitd_wb_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "  Sharpness",			"gitd_wb_anim_sharp", 1.0, 16.0, 0.5, 1
-	StaticText "Depth 1 + high sharpness = a bright", darkgray
-	StaticText "streak travelling through a dark lane", darkgray
-	StaticText ""
-	StaticText "Shape", gold
-	Slider "Coverage",				"gitd_wb_coverage", 1, 2048, 16, 0
-	StaticText "Past halfway, wall lanes overlap and mix", darkgray
-	Slider "Saturation",			"gitd_wb_saturation", 0.0, 2.0, 0.05, 2
-	StaticText "0 = greyscale, 2 = pushed toward white", darkgray
-	Option "Falloff",				"gitd_wb_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_wb_intensity", 0.0, 2.0, 0.05, 2
-	StaticText ""
-	Submenu "Advanced",				"GITDWallBottomAdv"
-}
-
-OptionMenu "GITDWallBottomAdv"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Wall Bottom -- Advanced"
-	StaticText ""
-	Slider "Animation phase offset",	"gitd_wb_anim_phase", 0.0, 1.0, 0.05, 2
+	Slider "Speed",					"gitd_wb_anim_speed", 0.0, 4.0, 0.1, 1
+	Slider "Distance between pulses","gitd_wb_anim_length", 32.0, 2048.0, 32.0, 0
+	Slider "Depth",					"gitd_wb_anim_depth", 0.0, 1.0, 0.05, 2
+	Slider "Sharpness",				"gitd_wb_anim_sharp", 0.25, 4.0, 0.25, 2
+	Slider "Offset from other lanes","gitd_wb_anim_phase", 0.0, 1.0, 0.05, 2
 	StaticText "Shifts this lane's animation in time so", darkgray
 	StaticText "lanes chase each other instead of pulsing", darkgray
 	StaticText "together. 0.5 puts it exactly opposite.", darkgray
@@ -754,62 +742,50 @@ OptionMenu "GITDWallTop"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Wall Top Glow"
 	StaticText ""
-	StaticText "The wall, lit downward from the ceiling", darkgray
-	StaticText ""
 	Option "Enabled",				"gitd_wt_enabled", "OnOff"
 	StaticText ""
-	Option "Colours in rotation",	"gitd_wt_slots", "GITDSlots"
-	Option "Randomise instead",		"gitd_wt_random", "YesNo"
-	StaticText "Ignores the colours below and picks", darkgray
-	StaticText "fresh ones each cycle", darkgray
-	ColorPicker "Colour 1",		"gitd_wt_c1"
-	Slider "  holds for (s)",		"gitd_wt_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_wt_c2"
-	Slider "  holds for (s)",		"gitd_wt_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_wt_c3"
-	Slider "  holds for (s)",		"gitd_wt_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_wt_c4"
-	Slider "  holds for (s)",		"gitd_wt_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_wt_c5"
-	Slider "  holds for (s)",		"gitd_wt_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_wt_c6"
-	Slider "  holds for (s)",		"gitd_wt_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_wt_c7"
-	Slider "  holds for (s)",		"gitd_wt_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_wt_c8"
-	Slider "  holds for (s)",		"gitd_wt_hold8", 0.0, 30.0, 0.5, 1
+	Slider "Coverage",				"gitd_wt_coverage", 0, 512, 8, 0
+	Slider "Saturation",			"gitd_wt_saturation", 0.0, 2.0, 0.05, 2
+	Option "Falloff",				"gitd_wt_falloff", "GITDFalloff"
+	Slider "Intensity",				"gitd_wt_intensity", 0.0, 3.0, 0.05, 2
 	StaticText ""
+	StaticText ""
+	Option "Colours in rotation",	"gitd_wt_slots", "GITDSlots"
+	StaticText "Duration 0 = keep cycling, never hold.", darkgray
+	StaticText ""
+	ColorPicker "Colour 1",		"gitd_wt_c1"
+	Slider "  Duration",			"gitd_wt_hold1", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 2",		"gitd_wt_c2"
+	Slider "  Duration",			"gitd_wt_hold2", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 3",		"gitd_wt_c3"
+	Slider "  Duration",			"gitd_wt_hold3", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 4",		"gitd_wt_c4"
+	Slider "  Duration",			"gitd_wt_hold4", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 5",		"gitd_wt_c5"
+	Slider "  Duration",			"gitd_wt_hold5", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 6",		"gitd_wt_c6"
+	Slider "  Duration",			"gitd_wt_hold6", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 7",		"gitd_wt_c7"
+	Slider "  Duration",			"gitd_wt_hold7", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 8",		"gitd_wt_c8"
+	Slider "  Duration",			"gitd_wt_hold8", 0.0, 30.0, 0.5, 1
+	StaticText ""
+	Option "Transition",			"gitd_wt_pattern", "GITDPattern"
+	Slider "  Transition speed",	"gitd_wt_speed", 0.001, 0.05, 0.001, 3
 	StaticText ""
 	Option "Can bleed into other lanes","gitd_wt_bleed", "YesNo"
-	Option "Transition",			"gitd_wt_pattern", "GITDPattern"
-	Slider "Transition speed",		"gitd_wt_speed", 0.001, 0.05, 0.001, 3
+	StaticText "Pulls this lane's colour partway toward", darkgray
+	StaticText "the lanes it physically meets, so a corner", darkgray
+	StaticText "reads as one light rather than two.", darkgray
 	StaticText ""
 	StaticText "Animation", gold
+	StaticText ""
 	Option "Travels",				"gitd_wt_anim", "GITDAnim"
-	Slider "  Speed",				"gitd_wt_anim_speed", 0.05, 4.0, 0.05, 2
-	Slider "  Distance between pulses","gitd_wt_anim_length", 64, 4096, 64, 0
-	Slider "  Depth",				"gitd_wt_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "  Sharpness",			"gitd_wt_anim_sharp", 1.0, 16.0, 0.5, 1
-	StaticText "Depth 1 + high sharpness = a bright", darkgray
-	StaticText "streak travelling through a dark lane", darkgray
-	StaticText ""
-	StaticText "Shape", gold
-	Slider "Coverage",				"gitd_wt_coverage", 1, 2048, 16, 0
-	StaticText "Past halfway, wall lanes overlap and mix", darkgray
-	Slider "Saturation",			"gitd_wt_saturation", 0.0, 2.0, 0.05, 2
-	StaticText "0 = greyscale, 2 = pushed toward white", darkgray
-	Option "Falloff",				"gitd_wt_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_wt_intensity", 0.0, 2.0, 0.05, 2
-	StaticText ""
-	Submenu "Advanced",				"GITDWallTopAdv"
-}
-
-OptionMenu "GITDWallTopAdv"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Wall Top -- Advanced"
-	StaticText ""
-	Slider "Animation phase offset",	"gitd_wt_anim_phase", 0.0, 1.0, 0.05, 2
+	Slider "Speed",					"gitd_wt_anim_speed", 0.0, 4.0, 0.1, 1
+	Slider "Distance between pulses","gitd_wt_anim_length", 32.0, 2048.0, 32.0, 0
+	Slider "Depth",					"gitd_wt_anim_depth", 0.0, 1.0, 0.05, 2
+	Slider "Sharpness",				"gitd_wt_anim_sharp", 0.25, 4.0, 0.25, 2
+	Slider "Offset from other lanes","gitd_wt_anim_phase", 0.0, 1.0, 0.05, 2
 	StaticText "Shifts this lane's animation in time so", darkgray
 	StaticText "lanes chase each other instead of pulsing", darkgray
 	StaticText "together. 0.5 puts it exactly opposite.", darkgray
@@ -820,62 +796,50 @@ OptionMenu "GITDCeilingGlow"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Ceiling Glow"
 	StaticText ""
-	StaticText "The ceiling surface itself", darkgray
-	StaticText ""
 	Option "Enabled",				"gitd_cg_enabled", "OnOff"
 	StaticText ""
-	Option "Colours in rotation",	"gitd_cg_slots", "GITDSlots"
-	Option "Randomise instead",		"gitd_cg_random", "YesNo"
-	StaticText "Ignores the colours below and picks", darkgray
-	StaticText "fresh ones each cycle", darkgray
-	ColorPicker "Colour 1",		"gitd_cg_c1"
-	Slider "  holds for (s)",		"gitd_cg_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_cg_c2"
-	Slider "  holds for (s)",		"gitd_cg_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_cg_c3"
-	Slider "  holds for (s)",		"gitd_cg_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_cg_c4"
-	Slider "  holds for (s)",		"gitd_cg_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_cg_c5"
-	Slider "  holds for (s)",		"gitd_cg_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_cg_c6"
-	Slider "  holds for (s)",		"gitd_cg_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_cg_c7"
-	Slider "  holds for (s)",		"gitd_cg_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_cg_c8"
-	Slider "  holds for (s)",		"gitd_cg_hold8", 0.0, 30.0, 0.5, 1
+	Slider "Coverage",				"gitd_cg_coverage", 0, 512, 8, 0
+	Slider "Saturation",			"gitd_cg_saturation", 0.0, 2.0, 0.05, 2
+	Option "Falloff",				"gitd_cg_falloff", "GITDFalloff"
+	Slider "Intensity",				"gitd_cg_intensity", 0.0, 3.0, 0.05, 2
 	StaticText ""
+	StaticText ""
+	Option "Colours in rotation",	"gitd_cg_slots", "GITDSlots"
+	StaticText "Duration 0 = keep cycling, never hold.", darkgray
+	StaticText ""
+	ColorPicker "Colour 1",		"gitd_cg_c1"
+	Slider "  Duration",			"gitd_cg_hold1", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 2",		"gitd_cg_c2"
+	Slider "  Duration",			"gitd_cg_hold2", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 3",		"gitd_cg_c3"
+	Slider "  Duration",			"gitd_cg_hold3", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 4",		"gitd_cg_c4"
+	Slider "  Duration",			"gitd_cg_hold4", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 5",		"gitd_cg_c5"
+	Slider "  Duration",			"gitd_cg_hold5", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 6",		"gitd_cg_c6"
+	Slider "  Duration",			"gitd_cg_hold6", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 7",		"gitd_cg_c7"
+	Slider "  Duration",			"gitd_cg_hold7", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 8",		"gitd_cg_c8"
+	Slider "  Duration",			"gitd_cg_hold8", 0.0, 30.0, 0.5, 1
+	StaticText ""
+	Option "Transition",			"gitd_cg_pattern", "GITDPattern"
+	Slider "  Transition speed",	"gitd_cg_speed", 0.001, 0.05, 0.001, 3
 	StaticText ""
 	Option "Can bleed into other lanes","gitd_cg_bleed", "YesNo"
-	Option "Transition",			"gitd_cg_pattern", "GITDPattern"
-	Slider "Transition speed",		"gitd_cg_speed", 0.001, 0.05, 0.001, 3
+	StaticText "Pulls this lane's colour partway toward", darkgray
+	StaticText "the lanes it physically meets, so a corner", darkgray
+	StaticText "reads as one light rather than two.", darkgray
 	StaticText ""
 	StaticText "Animation", gold
+	StaticText ""
 	Option "Travels",				"gitd_cg_anim", "GITDAnim"
-	Slider "  Speed",				"gitd_cg_anim_speed", 0.05, 4.0, 0.05, 2
-	Slider "  Distance between pulses","gitd_cg_anim_length", 64, 4096, 64, 0
-	Slider "  Depth",				"gitd_cg_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "  Sharpness",			"gitd_cg_anim_sharp", 1.0, 16.0, 0.5, 1
-	StaticText "Depth 1 + high sharpness = a bright", darkgray
-	StaticText "streak travelling through a dark lane", darkgray
-	StaticText ""
-	StaticText "Shape", gold
-	Slider "Coverage",				"gitd_cg_coverage", 1, 2048, 16, 0
-	StaticText "How far in from the edges it reaches", darkgray
-	Slider "Saturation",			"gitd_cg_saturation", 0.0, 2.0, 0.05, 2
-	StaticText "0 = greyscale, 2 = pushed toward white", darkgray
-	Option "Falloff",				"gitd_cg_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_cg_intensity", 0.0, 2.0, 0.05, 2
-	StaticText ""
-	Submenu "Advanced",				"GITDCeilingAdv"
-}
-
-OptionMenu "GITDCeilingAdv"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Ceiling -- Advanced"
-	StaticText ""
-	Slider "Animation phase offset",	"gitd_cg_anim_phase", 0.0, 1.0, 0.05, 2
+	Slider "Speed",					"gitd_cg_anim_speed", 0.0, 4.0, 0.1, 1
+	Slider "Distance between pulses","gitd_cg_anim_length", 32.0, 2048.0, 32.0, 0
+	Slider "Depth",					"gitd_cg_anim_depth", 0.0, 1.0, 0.05, 2
+	Slider "Sharpness",				"gitd_cg_anim_sharp", 0.25, 4.0, 0.25, 2
+	Slider "Offset from other lanes","gitd_cg_anim_phase", 0.0, 1.0, 0.05, 2
 	StaticText "Shifts this lane's animation in time so", darkgray
 	StaticText "lanes chase each other instead of pulsing", darkgray
 	StaticText "together. 0.5 puts it exactly opposite.", darkgray
@@ -886,62 +850,50 @@ OptionMenu "GITDFloorGlow"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Floor Glow"
 	StaticText ""
-	StaticText "The floor surface itself", darkgray
-	StaticText ""
 	Option "Enabled",				"gitd_fg_enabled", "OnOff"
 	StaticText ""
-	Option "Colours in rotation",	"gitd_fg_slots", "GITDSlots"
-	Option "Randomise instead",		"gitd_fg_random", "YesNo"
-	StaticText "Ignores the colours below and picks", darkgray
-	StaticText "fresh ones each cycle", darkgray
-	ColorPicker "Colour 1",		"gitd_fg_c1"
-	Slider "  holds for (s)",		"gitd_fg_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_fg_c2"
-	Slider "  holds for (s)",		"gitd_fg_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_fg_c3"
-	Slider "  holds for (s)",		"gitd_fg_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_fg_c4"
-	Slider "  holds for (s)",		"gitd_fg_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_fg_c5"
-	Slider "  holds for (s)",		"gitd_fg_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_fg_c6"
-	Slider "  holds for (s)",		"gitd_fg_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_fg_c7"
-	Slider "  holds for (s)",		"gitd_fg_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_fg_c8"
-	Slider "  holds for (s)",		"gitd_fg_hold8", 0.0, 30.0, 0.5, 1
+	Slider "Coverage",				"gitd_fg_coverage", 0, 512, 8, 0
+	Slider "Saturation",			"gitd_fg_saturation", 0.0, 2.0, 0.05, 2
+	Option "Falloff",				"gitd_fg_falloff", "GITDFalloff"
+	Slider "Intensity",				"gitd_fg_intensity", 0.0, 3.0, 0.05, 2
 	StaticText ""
+	StaticText ""
+	Option "Colours in rotation",	"gitd_fg_slots", "GITDSlots"
+	StaticText "Duration 0 = keep cycling, never hold.", darkgray
+	StaticText ""
+	ColorPicker "Colour 1",		"gitd_fg_c1"
+	Slider "  Duration",			"gitd_fg_hold1", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 2",		"gitd_fg_c2"
+	Slider "  Duration",			"gitd_fg_hold2", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 3",		"gitd_fg_c3"
+	Slider "  Duration",			"gitd_fg_hold3", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 4",		"gitd_fg_c4"
+	Slider "  Duration",			"gitd_fg_hold4", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 5",		"gitd_fg_c5"
+	Slider "  Duration",			"gitd_fg_hold5", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 6",		"gitd_fg_c6"
+	Slider "  Duration",			"gitd_fg_hold6", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 7",		"gitd_fg_c7"
+	Slider "  Duration",			"gitd_fg_hold7", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 8",		"gitd_fg_c8"
+	Slider "  Duration",			"gitd_fg_hold8", 0.0, 30.0, 0.5, 1
+	StaticText ""
+	Option "Transition",			"gitd_fg_pattern", "GITDPattern"
+	Slider "  Transition speed",	"gitd_fg_speed", 0.001, 0.05, 0.001, 3
 	StaticText ""
 	Option "Can bleed into other lanes","gitd_fg_bleed", "YesNo"
-	Option "Transition",			"gitd_fg_pattern", "GITDPattern"
-	Slider "Transition speed",		"gitd_fg_speed", 0.001, 0.05, 0.001, 3
+	StaticText "Pulls this lane's colour partway toward", darkgray
+	StaticText "the lanes it physically meets, so a corner", darkgray
+	StaticText "reads as one light rather than two.", darkgray
 	StaticText ""
 	StaticText "Animation", gold
+	StaticText ""
 	Option "Travels",				"gitd_fg_anim", "GITDAnim"
-	Slider "  Speed",				"gitd_fg_anim_speed", 0.05, 4.0, 0.05, 2
-	Slider "  Distance between pulses","gitd_fg_anim_length", 64, 4096, 64, 0
-	Slider "  Depth",				"gitd_fg_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "  Sharpness",			"gitd_fg_anim_sharp", 1.0, 16.0, 0.5, 1
-	StaticText "Depth 1 + high sharpness = a bright", darkgray
-	StaticText "streak travelling through a dark lane", darkgray
-	StaticText ""
-	StaticText "Shape", gold
-	Slider "Coverage",				"gitd_fg_coverage", 1, 2048, 16, 0
-	StaticText "How far in from the edges it reaches", darkgray
-	Slider "Saturation",			"gitd_fg_saturation", 0.0, 2.0, 0.05, 2
-	StaticText "0 = greyscale, 2 = pushed toward white", darkgray
-	Option "Falloff",				"gitd_fg_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_fg_intensity", 0.0, 2.0, 0.05, 2
-	StaticText ""
-	Submenu "Advanced",				"GITDFloorAdv"
-}
-
-OptionMenu "GITDFloorAdv"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Floor -- Advanced"
-	StaticText ""
-	Slider "Animation phase offset",	"gitd_fg_anim_phase", 0.0, 1.0, 0.05, 2
+	Slider "Speed",					"gitd_fg_anim_speed", 0.0, 4.0, 0.1, 1
+	Slider "Distance between pulses","gitd_fg_anim_length", 32.0, 2048.0, 32.0, 0
+	Slider "Depth",					"gitd_fg_anim_depth", 0.0, 1.0, 0.05, 2
+	Slider "Sharpness",				"gitd_fg_anim_sharp", 0.25, 4.0, 0.25, 2
+	Slider "Offset from other lanes","gitd_fg_anim_phase", 0.0, 1.0, 0.05, 2
 	StaticText "Shifts this lane's animation in time so", darkgray
 	StaticText "lanes chase each other instead of pulsing", darkgray
 	StaticText "together. 0.5 puts it exactly opposite.", darkgray
@@ -1094,9 +1046,9 @@ OptionValue "GITDLawFx"
 OptionMenu "GITDColorLaw"
 {
 	Class "DarkDoomZ_OptionMenu"
-	Title "Colour Law"
+	Title "Colours Change the Fight"
 	StaticText ""
-	Option "Colour law",			"gitd_law_enabled", "OnOff"
+	Option "Colours change the fight","gitd_law_enabled", "OnOff"
 	Option "Conducted by",			"gitd_law_lane", "GITDLawLane"
 	StaticText "Whichever colour that lane is wearing", darkgray
 	StaticText "is the phase. Its hold time (set beside", darkgray
