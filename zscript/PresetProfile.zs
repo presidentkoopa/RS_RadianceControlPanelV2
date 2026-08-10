@@ -74,6 +74,7 @@ class GITD_PresetProfile abstract
 	{
 		switch (preset)
 		{
+			case 1: Blackout(); return;
 			case 2: LowPower(); return;
 			case 3: RedAlert(); return;
 			case 6: NeonUnison(); return;
@@ -701,5 +702,49 @@ class GITD_PresetProfile abstract
 		SweepColor(6, 0x30FFB0);
 		SweepColor(7, 0x30FFB0);
 		SweepColor(8, 0x30FFB0);
+	}
+
+	// =====================================================================
+	// 1. BLACKOUT -- the absence
+	//
+	// Every other preset is a place. This is the lack of one, and it needs a
+	// profile precisely BECAUSE it is defined by what it does not do: without
+	// one, selecting Blackout only changed the 32 colours to black and left
+	// whatever sweep the previous preset had running. Pure darkness with a
+	// wave still crossing it is not pure darkness, it is a lightshow in an
+	// unlit room -- and the wave would have been the only thing visible,
+	// which is the exact opposite of the intent.
+	//
+	// So this switches things OFF. That is the whole design.
+	// =====================================================================
+	static void Blackout()
+	{
+		// The colours are already pure black -- GITD_Presets.SlotColor
+		// special-cases preset 1 and returns 0,0,0 for all thirty-two. The
+		// lanes are left enabled rather than disabled so the mod is still
+		// composing the room; it is just composing nothing.
+		LanesI("_enabled", 1);
+		LanesI("_pattern", 0);
+		LanesI("_coverage", 0);
+		Lanes("_intensity", 0.0);
+		LanesI("_anim", 0);
+		Lanes("_speed", 0.050);
+		Hold(30.0);
+
+		// As dark as the mod goes. Crush is the exponential curve, Pure is
+		// the bottom of the ladder.
+		B("gitd_dd_enabled", true);
+		I("ddz_mode", 4);      // Crush
+		I("ddz_preset", 8);    // Pure
+		I("ddz_desat", 255);   // no colour survives here either
+
+		// AND NOTHING TRAVELS THROUGH IT.
+		B("gitd_ss_enabled", false);
+		B("gitd_ss_light", false);
+		F("gitd_ss_spin", 0.0);
+		F("gitd_ss_spin_radius", 0.0);
+		I("gitd_ss_spin_colors", 0);
+		B("gitd_ss_drop", false);
+		F("gitd_ss_drop_every", 0.0);
 	}
 }
