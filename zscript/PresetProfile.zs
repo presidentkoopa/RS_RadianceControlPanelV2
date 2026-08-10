@@ -63,6 +63,7 @@ class GITD_PresetProfile abstract
 		switch (preset)
 		{
 			case 2: LowPower(); return;
+			case 3: RedAlert(); return;
 			default: return;   // no profile yet: colours only, as before
 		}
 	}
@@ -212,5 +213,111 @@ class GITD_PresetProfile abstract
 		SweepColor(2, 0xC08A5A);
 		SweepColor(3, 0x4A3A30);
 		SweepColor(4, 0x241C18);
+	}
+
+	// =====================================================================
+	// 3. RED ALERT -- containment breach
+	//
+	// The opposite of Low Power in every axis, deliberately. Low Power is a
+	// building that has given up and gone quiet; this is a building SHOUTING.
+	// Where that one is still and waits minutes between events, this never
+	// stops moving and never lets you settle.
+	//
+	// And it is the preset the spin exists for. A klaxon is not a light that
+	// travels across a room -- it is a light that TURNS. So the sweep does not
+	// go anywhere: its origin orbits you, and the beam rakes the walls as it
+	// comes round. The whole facility has noticed you and is circling.
+	// =====================================================================
+	static void RedAlert()
+	{
+		// ---- the room, under emergency power ----------------------------
+		//
+		// An alarm means the emergency circuit is ON, so this is not dark the
+		// way Low Power is dark -- it is dim and RED and entirely legible.
+		// Hue 358 is blood rather than fire; saturation near maximum, because
+		// an alarm colour that has gone pastel is not an alarm.
+		//
+		// Narrow spread: all four lanes say the same thing. A warning that
+		// disagrees with itself is decoration.
+		F("gitd_pc_hue", 358.0);
+		F("gitd_pc_spread", 30.0);
+		F("gitd_pc_sat", 0.88);
+		F("gitd_pc_satvar", 0.08);
+		F("gitd_pc_val", 0.40);
+		F("gitd_pc_valvar", 0.26);
+
+		// BREATHE, not snap. Low Power sits still because it is dying; this
+		// pulses because something is still running and wants you to know.
+		// Second-and-a-half holds with a wide brightness swing is the slow
+		// throb under a klaxon -- the room inhaling between beacon passes.
+		LanesI("_enabled", 1);
+		LanesI("_pattern", 3);
+		LanesI("_coverage", 144);
+		Lanes("_intensity", 1.00);
+		Lanes("_saturation", 1.00);
+		LanesI("_anim", 0);
+		LanesI("_slots", 8);
+		Hold(1.5);
+
+		// Subtract, not Compress: emergency lighting is uniformly dim rather
+		// than proportionally scaled, and a flat fade is what that looks
+		// like. Colour drain stays LOW -- draining an alarm is the one place
+		// it would be actively wrong.
+		B("gitd_dd_enabled", true);
+		I("ddz_mode", 1);      // Subtract
+		I("ddz_preset", 3);    // Dismal
+		I("ddz_desat", 20);
+
+		// ---- the beacon --------------------------------------------------
+		//
+		// Origin follows YOU, and then spins around you at 320 units: about
+		// four and a half seconds a revolution, which is roughly what a real
+		// rotating warning lamp does. Three bands sit 120 degrees apart on
+		// that orbit, so there is always one coming and one going.
+		//
+		// The rings themselves barely travel -- 640 over 320 is a two-second
+		// cycle -- so each one is a short outward stab rather than a journey.
+		// The MOTION you read is the orbit, not the expansion.
+		B("gitd_ss_enabled", true);
+		I("gitd_ss_count", 3);
+		I("gitd_ss_shape", 1);
+		I("gitd_ss_origin", 2);       // follows you
+		I("gitd_ss_direction", 0);
+		I("gitd_ss_trigger", 0);
+		I("gitd_ss_drive", 0);
+		I("gitd_ss_range", 640);
+		F("gitd_ss_softness", 2.0);
+		F("gitd_ss_intensity", 1.7);
+		I("gitd_ss_trail", 140);
+		F("gitd_ss_drift", 0.0);
+		F("gitd_ss_health_speed", 0.0);
+		I("gitd_ss_thickness", 100);
+
+		F("gitd_ss_spin", 80.0);        // degrees a second
+		F("gitd_ss_spin_radius", 320.0);
+		I("gitd_ss_spin_colors", 0);    // the bands carry their own
+
+		// Per-pixel again; the coarse per-sector path stays off.
+		B("gitd_ss_light", false);
+		B("gitd_ss_perband", true);
+		for (int i = 1; i <= 8; i++) I("gitd_ss_fx" .. i, 0);
+
+		// Two lamps and what they show you. The first two ADD -- they are
+		// light sources and Add is the only mode whose colour you see -- and
+		// the third REVEALS, wider and softer, so the beam is followed by a
+		// moment of actually seeing the room rather than just seeing red.
+		I("gitd_ss_draw1", 1);  I("gitd_ss_thick1", 70);   F("gitd_ss_speed1", 320.0);
+		I("gitd_ss_draw2", 1);  I("gitd_ss_thick2", 90);   F("gitd_ss_speed2", 300.0);
+		I("gitd_ss_draw3", 2);  I("gitd_ss_thick3", 200);  F("gitd_ss_speed3", 280.0);
+		for (int i = 4; i <= 8; i++) { I("gitd_ss_draw" .. i, 1); I("gitd_ss_thick" .. i, 0); }
+
+		// Tight. Half a second between the two lamps, three quarters to the
+		// reveal behind them -- fast enough to read as one turning fixture.
+		I("gitd_ss_gap1", 20);
+		I("gitd_ss_gap2", 25);
+
+		SweepColor(1, 0xFF1810);   // the alarm itself
+		SweepColor(2, 0xFF5A18);   // its hot edge
+		SweepColor(3, 0x904038);   // reveal ignores rgb; kept for the swatch
 	}
 }
