@@ -515,3 +515,46 @@ Near-misses kept on the record: P3 comet crests, P4 bleed dial, X2
 `GITD_LaneAction` (build it the moment a second mod wants in), X5 tempo
 (build as part of #1), T2/T3 (they ship *as rows* of #1), E2 gradient
 (revisit if P1+P2 leave anyone wanting), T6 setpiece-Moments (after M1).
+
+---
+
+## Seamless Corners, and the version that was actually wanted
+
+Shipped: both surfaces take one shared colour at the junction, with matched
+reach and falloff. The seam goes away.
+
+**Not what was asked for.** The ask was a GRADIENT across the corner -- floor
+purple ramping into wall blue -- keeping both lane colours and blending
+between them. What shipped makes both sides *the same colour* near the join,
+so the seam dies and the two-colour transition dies with it.
+
+**What the real version needs.** Today a glow holds one colour and only its
+STRENGTH varies with distance:
+
+```glsl
+color.rgb += uGlowBottomColor.rgb * botatten * uGlowBottomIntensity;
+```
+
+Give each glow channel a SECOND colour and let it ramp:
+
+```glsl
+vec3 gc = mix(uGlowBottomFar.rgb, uGlowBottomColor.rgb, botatten);
+color.rgb += gc * botatten * uGlowBottomIntensity;
+```
+
+`uGlowBottomColor` becomes the JUNCTION colour (at the line, atten 1) and
+`uGlowBottomFar` the lane's own (as it fades out). Same for the flat-edge
+glow. The corner then reads as one continuous ramp: floor colour → blend →
+wall colour, with no flat region anywhere in it.
+
+Cost: one extra colour uniform per glow channel (wall top, wall bottom, flat
+floor, flat ceiling), a `mix()` in each glow block, and the script side
+feeding both ends. Small, but engine work rather than a script toggle -- which
+is why the shipped version is script-only.
+
+**Related bug to fix in the same pass.** The two Intensity values are not the
+same quantity: on a wall it multiplies the colour, on a flat it multiplies the
+REACH (hw_flats.cpp scales FlatGlowHeight by it). Seamless Corners works
+around that by scaling the flat's colour by the wall's intensity. A real
+brightness term for flats would remove the workaround and make the two
+Intensity sliders mean the same thing, which they currently do not.
