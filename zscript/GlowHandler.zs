@@ -1723,7 +1723,14 @@ class GITD_PresetCustomiser : StaticEventHandler
 		if (preset != lastPreset)
 		{
 			lastPreset = preset;
-			if (preset > 0) LoadWorkingSet(preset);
+			if (preset > 0)
+			{
+				LoadWorkingSet(preset);
+				// And the rest of the environment -- rhythm, sweeps,
+				// darkness. A preset with no profile writes nothing here and
+				// stays colours-only, exactly as it was.
+				GITD_PresetProfile.Apply(preset);
+			}
 		}
 	}
 
