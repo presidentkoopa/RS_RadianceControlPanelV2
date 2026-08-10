@@ -651,3 +651,33 @@ class GITD_SeamStrip
 		parts.Clear();
 	}
 }
+
+
+// ---------------------------------------------------------------------------
+// The menu offers ONE choice -- kill counter, or cumulative damage -- because
+// two independent switches can contradict each other and the player has no way
+// to see which one won. gitd_neon_draw is that choice; the two original
+// switches remain the things the rest of the code reads, and this keeps them
+// honest. Writing them only on change means a player who sets the underlying
+// cvars directly from the console is not fought every tic.
+// ---------------------------------------------------------------------------
+class GITD_NeonDrawSync : StaticEventHandler
+{
+	int lastDraw;
+
+	override void WorldLoaded(WorldEvent e) { lastDraw = -1; }
+
+	override void WorldTick()
+	{
+		let d = CVar.FindCVar("gitd_neon_draw");
+		if (!d) return;
+		int want = d.GetInt();
+		if (want == lastDraw) return;
+		lastDraw = want;
+
+		let kc = CVar.FindCVar("gitd_neon_killcount");
+		let dm = CVar.FindCVar("gitd_neon_damage");
+		if (kc) kc.SetInt(want == 0 ? 1 : 0);
+		if (dm) dm.SetInt(want == 1 ? 1 : 0);
+	}
+}

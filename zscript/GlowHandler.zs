@@ -16,6 +16,33 @@ class GITD_Palette : Object
 {
 	static Color RandomColor()
 	{
+		// The GOVERNOR decides what "random" is allowed to mean. Unconstrained
+		// RGB is the honest default but it produces mud as often as neon --
+		// three independent channels average to grey. The other modes work in
+		// hue space instead, where "random" still lands somewhere deliberate.
+		let g = CVar.FindCVar("gitd_rnd_governor");
+		int mode = g ? g.GetInt() : 0;
+
+		if (mode == 1)
+		{
+			// One hue family: a narrow wedge, re-rolled per map so a session
+			// is not always the same colour. maptime/rounds to a stable base.
+			double base = double((level.maptime / 2100) * 53 % 360);
+			return FromHSV(base + frandom(-25, 25), frandom(0.75, 1.0), frandom(0.7, 1.0));
+		}
+		if (mode == 2)
+		{
+			// Complementary: one of two opposed hues, so a room reads as two
+			// colours arguing rather than eight colours mumbling.
+			double base = double((level.maptime / 2100) * 53 % 360);
+			if (random(0, 1) == 1) base += 180;
+			return FromHSV(base + frandom(-12, 12), frandom(0.8, 1.0), frandom(0.75, 1.0));
+		}
+		if (mode == 3)
+		{
+			// Neon only: full saturation, high value, any hue. Never muddy.
+			return FromHSV(frandom(0, 360), 1.0, frandom(0.85, 1.0));
+		}
 		return Color(255, random(0, 255), random(0, 255), random(0, 255));
 	}
 
@@ -135,7 +162,10 @@ class GITD_Lane : Object
 		// Randomise is a lane switch rather than a magic value in a slot: a
 		// colour picker has no way to express "surprise me", and hiding it in
 		// one of the 16.7 million pickable values would be a trap.
-		if (GetBool("_random")) return GITD_Palette.RandomColor();
+		// The lane's own switch, OR the global one. Either says surprise me.
+		let gr = CVar.FindCVar("gitd_rnd_colors");
+		if (GetBool("_random") || (gr && gr.GetBool()))
+			return GITD_Palette.RandomColor();
 
 		int count = clamp(GetInt("_slots"), 1, 8);
 		int which = (n % count) + 1;   // cvars are 1-based: _c1 .. _c8
@@ -155,6 +185,13 @@ class GITD_Lane : Object
 	{
 		int pattern = GetInt("_pattern");
 		double speed = GetFloat("_speed");
+
+		// Random patterns: this lane picks its own transition, stable for the
+		// map rather than re-rolled per tic (a transition that changed every
+		// frame would just look broken). laneIndex keeps the four disagreeing.
+		let rp = CVar.FindCVar("gitd_rnd_patterns");
+		if (rp && rp.GetBool())
+			pattern = ((level.maptime / 2100) * 7 + laneIndex * 3) % 5;
 		// A preset always walks all eight slots -- its 32 colours are the
 		// point of it, so the lane's own slot count does not narrow them.
 		int count = (preset > 0) ? 8 : clamp(GetInt("_slots"), 1, 8);
@@ -186,7 +223,11 @@ class GITD_Lane : Object
 			// it for its hold before the next transition may begin. Read at
 			// the wrap, not per tic -- this path runs once per lane per
 			// transition, not per sector.
-			holdLeft = int(GetFloat("_hold" .. (slotIndex + 1)) * 35.0);
+			// Random times overrides the slot's own hold with a fresh roll
+			// each time the colour is arrived at, so the rhythm never repeats.
+			let rt = CVar.FindCVar("gitd_rnd_times");
+			if (rt && rt.GetBool()) holdLeft = int(frandom(0.0, 6.0) * 35.0);
+			else holdLeft = int(GetFloat("_hold" .. (slotIndex + 1)) * 35.0);
 			if (holdLeft > 0) phase = 0.0;
 		}
 
@@ -1536,6 +1577,9 @@ class GITD_ResetHandler : EventHandler
 		static const string holdpre[] = { "gitd_wb", "gitd_wt", "gitd_cg", "gitd_fg", "fl" };
 		for (int p = 0; p < holdpre.Size(); p++)
 			for (int c = 1; c <= 8; c++) Rst(holdpre[p] .. "_hold" .. c);
+		static const string rnd[] = { "gitd_rnd_colors", "gitd_rnd_governor",
+			"gitd_rnd_times", "gitd_rnd_patterns", "gitd_neon_draw" };
+		for (int i = 0; i < rnd.Size(); i++) Rst(rnd[i]);
 		static const string law[] = { "gitd_law_enabled", "gitd_law_lane",
 			"gitd_law_strength", "gitd_law_rain_x", "gitd_law_rain_y",
 			"gitd_law_rain_every", "gitd_law_rain_life" };

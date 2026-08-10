@@ -570,3 +570,20 @@ server float gitd_law_rain_life = 10.0;  // seconds a dropped pickup survives
 server bool  gitd_ambush_wall = true;      // show the ring while the HOLD lasts
 server float gitd_ambush_gap = 0.0;        // break width in degrees; 0 = sealed
 server float gitd_ambush_gap_drift = 10.0; // degrees/second the break orbits
+
+// ---- Global randomise, across all four lanes -------------------------------
+// The per-lane _random switches still exist and still work; these sit ON TOP
+// of them, so a player can say "surprise me everywhere" without visiting four
+// pages. Any lane with its own switch on stays random regardless.
+server bool gitd_rnd_colors = false;    // every lane picks fresh colours
+server int  gitd_rnd_governor = 0;      // what constrains the randomness
+                                        // 0 anything, 1 one hue family,
+                                        // 2 complementary, 3 neon only
+server bool gitd_rnd_times = false;     // randomise each colour's hold time
+server bool gitd_rnd_patterns = false;  // each lane picks its own transition
+
+// ---- Numeric engine: one choice instead of two switches --------------------
+// gitd_neon_killcount and gitd_neon_damage are the underlying switches and
+// still drive everything; this is the single menu choice that sets them, so
+// the two can never contradict each other on screen.
+server int gitd_neon_draw = 0;          // 0 kill counter, 1 cumulative damage

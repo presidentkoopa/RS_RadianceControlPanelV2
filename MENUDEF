@@ -3,6 +3,20 @@
 // are deliberately identical in shape -- if a control exists for one lane it
 // exists for all of them.
 
+OptionValue "GITDGovernor"
+{
+	0, "Anything goes"
+	1, "One hue family"
+	2, "Complementary"
+	3, "Neon only (never muddy)"
+}
+
+OptionValue "GITDNeonDraw"
+{
+	0, "Kill counter"
+	1, "Cumulative damage"
+}
+
 OptionValue "GITDPattern"
 {
 	0, "Snap"
@@ -177,9 +191,9 @@ OptionValue "GITDNeonDmgMode"
 
 OptionValue "GITDNeonLinger"
 {
-	0, "Close again"
+	0, "Blink out"
 	1, "Fade out"
-	2, "Stay (max 64)"
+	2, "Stay put (max 64)"
 }
 
 OptionValue "GITDNeonPlace"
@@ -275,66 +289,62 @@ OptionMenu "GITDOptions"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Glow In The Dark"
 	StaticText ""
+	StaticText ""
 
-	// DARKNESS FIRST, AND ALL OF IT ON THIS PAGE.
-	//
-	// It is the premise the rest of the mod sits on, and it is the one thing a
-	// player recalibrates constantly -- every WAD, every monitor, every room.
-	// Anything you move that often should not cost a navigation, so the whole
-	// DarkDoom set lives directly under its own master switch rather than
-	// behind a submenu.
-	Option "Darkness",				"gitd_dd_enabled", "OnOff"
+	Option "Glow In The Dark",		"gitd_enabled", "OnOff"
+	StaticText ""
+
+	StaticText "Presets  (override every glow setting)", gold
+	Option "  Preset",				"gitd_preset", "GITDPreset"
+	Submenu "  Customise this preset","GITDPresetOptions"
+	StaticText ""
+	StaticText ""
+
+	Option "DarkDoom",				"gitd_dd_enabled", "OnOff"
 	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
 	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
-	Slider "  Colour drain",		"ddz_desat", 0, 255, 15, 0
-	StaticText "Colour vision fails in low light --", darkgray
-	StaticText "draining it reads as dark, not just dim.", darkgray
-	Slider "  Sky brightness",		"ddz_skymode", 0.0, 1.0, 0.1, 1
-	Option "  Sector effects",		"ddz_lighting", "OnOff", "gitd_dd_enabled"
-	StaticText "Doom's own blinking and flickering lights.", darkgray
-	StaticText "Turning them OFF applies at once; ON needs", darkgray
-	StaticText "a map reload, since a destroyed thinker", darkgray
-	StaticText "cannot be brought back.", darkgray
-	Option "  $GLPREFMNU_FOGMODE",	gl_fogmode, "FogMode"
-	Slider "  Fog thickness",		"ddz_fog", 0, 512, 8, 0
-	Option "  No muzzle flash glow","gitd_dd_noflash", "OnOff"
-	StaticText "Vanilla brightens the whole view while a", darkgray
-	StaticText "weapon fires. Unnoticeable when lit,", darkgray
-	StaticText "ruinous in the dark.", darkgray
 	StaticText ""
 
-	Option "Flashlight",			"fl_enabled", "OnOff"
-	Submenu "  Flashlight settings","GITDFlashlight"
+	Submenu "Volumetric Flashlight Options...","GITDFlashlight"
+	Submenu "Bloom Options...",		"GITDBloom"
+	Submenu "Fog Options...",		"GITDFog"
+	StaticText ""
 	StaticText ""
 
-	Submenu "Numbers and readouts",	"GITDNeon"
+	StaticText "Customize Glows", gold
+	Option "Random Colours",		"gitd_rnd_colors", "OnOff"
+	Option "Random Colour Governor","gitd_rnd_governor", "GITDGovernor"
+	Option "Random Times",			"gitd_rnd_times", "OnOff"
+	Option "Random Patterns",		"gitd_rnd_patterns", "OnOff"
+	Submenu "Wall Bottom Glow...",	"GITDWallBottom"
+	Submenu "Wall Top Glow...",		"GITDWallTop"
+	Submenu "Ceiling Glow...",		"GITDCeilingGlow"
+	Submenu "Floor Glow...",		"GITDFloorGlow"
 	StaticText ""
 
-	Option "Glow",					"gitd_enabled", "OnOff"
-	Submenu "Colour Law",			"GITDColorLaw"
-	StaticText ""
-	StaticText "Presets", gold
-	StaticText ""
-	Option "Preset",				"gitd_preset", "GITDPreset"
-	StaticText "A preset overrides every lane's colours.", darkgray
-	StaticText "Turning it off restores your own.", darkgray
-	Submenu "Preset Options",		"GITDPresetOptions"
-	StaticText ""
-	StaticText ""
-	SafeCommand "Reset EVERYTHING to defaults","netevent gitd_reset"
-	StaticText ""
-	StaticText "Lane control", gold
-	Submenu "Wall Bottom Glow",		"GITDWallBottom"
-	Submenu "Wall Top Glow",		"GITDWallTop"
-	Submenu "Ceiling Glow",			"GITDCeilingGlow"
-	Submenu "Floor Glow",			"GITDFloorGlow"
-	StaticText ""
+	StaticText "Sector Sweep", gold
 	Option "Sector Sweep",			"gitd_ss_enabled", "OnOff"
-	StaticText "Overrides presets and lane settings", darkgray
-	Submenu "Sector Sweep Options","GITDSweep"
-	Submenu "Ambush Setpieces",		"GITDAmbush"
+	Submenu "Visual Options...",	"GITDSweepVisual"
+	Submenu "Gameplay Options...",	"GITDSweepPlay"
 	StaticText ""
-	Submenu "Bloom Options",		"GITDBloom"
+
+	StaticText "Numeric Controls", gold
+	Option "Draw Numbers",			"gitd_neon_enabled", "OnOff"
+	StaticText ""
+	Option "Style",					"gitd_neon_style", "GITDNeonStyle"
+	StaticText ""
+	Option "Draw",					"gitd_neon_draw", "GITDNeonDraw"
+	Option "Where",					"gitd_neon_kc_place", "GITDNeonPlace"
+	StaticText ""
+	ColorPicker "Fallback colour",	"gitd_neon_color"
+	Slider "Radial size",			"gitd_neon_scale", 0.10, 3.0, 0.05, 2
+	Slider "Display time",			"gitd_neon_life", 0.25, 20.0, 0.25, 2
+	Option "Removal",				"gitd_neon_kc_linger", "GITDNeonLinger"
+	Submenu "More number options...","GITDNeon"
+	StaticText ""
+	StaticText ""
+
+	SafeCommand "Reset EVERYTHING to defaults","netevent gitd_reset"
 }
 
 // ---------------------------------------------------------------------------
@@ -535,10 +545,18 @@ OptionMenu "GITDPresetOptions"
 // effect can hold a thin line across a seam.
 // ---------------------------------------------------------------------------
 
-OptionMenu "GITDSweep"
+// ---------------------------------------------------------------------------
+// SECTOR SWEEP, split in two: what it LOOKS like, and what it DOES.
+//
+// The single page had grown to sixty rows and mixed "how thick is the band"
+// with "does it wake monsters", which are not the same question and are never
+// tuned in the same sitting.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDSweepVisual"
 {
 	Class "DarkDoomZ_OptionMenu"
-	Title "Sector Sweep Options"
+	Title "Sector Sweep -- Visual"
 	StaticText ""
 	StaticText "Lines of light travelling through the map,", darkgray
 	StaticText "wrapping across floor, walls and ceiling", darkgray
@@ -546,7 +564,9 @@ OptionMenu "GITDSweep"
 	Option "Shape",					"gitd_ss_shape", "GITDSweepShape"
 	Option "Starts from",			"gitd_ss_origin", "GITDSweepOrigin"
 	Option "Number of sweeps",		"gitd_ss_count", "GITDSweepCount"
+	Option "Travels",				"gitd_ss_direction", "GITDSweepDir"
 	StaticText ""
+	StaticText "Colours", gold
 	ColorPicker "Sweep 1 colour",	"gitd_ss_c1"
 	ColorPicker "Sweep 2 colour",	"gitd_ss_c2"
 	ColorPicker "Sweep 3 colour",	"gitd_ss_c3"
@@ -556,26 +576,13 @@ OptionMenu "GITDSweep"
 	ColorPicker "Sweep 7 colour",	"gitd_ss_c7"
 	ColorPicker "Sweep 8 colour",	"gitd_ss_c8"
 	StaticText ""
-	StaticText "Sector light level", gold
-	Option "As a sweep passes",		"gitd_ss_light_mode", "GITDSweepLight"
-	Slider "  Amount",				"gitd_ss_light_amount", 0, 128, 4, 0
-	StaticText "Re-colour drives all four lanes to shades", darkgray
-	StaticText "of the passing sweep's own colour", darkgray
-	StaticText ""
-
-	StaticText "When it runs", gold
-	Option "Fires",					"gitd_ss_trigger", "GITDSweepTrigger"
-	StaticText "Anything but the first turns the sweep from", darkgray
-	StaticText "weather into the room answering you.", darkgray
-	Option "Travels",				"gitd_ss_direction", "GITDSweepDir"
-	Option "Driven by",				"gitd_ss_drive", "GITDSweepDrive"
-	StaticText "Driven by kills or health, the band's", darkgray
-	StaticText "POSITION is the readout -- nothing on", darkgray
-	StaticText "screen has to say the number.", darkgray
-	Slider "Hurry as you weaken",	"gitd_ss_health_speed", 0.0, 3.0, 0.1, 1
-	StaticText ""
-
 	StaticText "Shape of each band", gold
+	Slider "Brightness",			"gitd_ss_intensity", 0.0, 3.0, 0.1, 1
+	Slider "Thickness",				"gitd_ss_thickness", 1, 128, 1, 0
+	Slider "Edge hardness",			"gitd_ss_softness", 0.5, 8.0, 0.25, 2
+	StaticText "Higher = a tighter, harder line", darkgray
+	Slider "Speed",					"gitd_ss_speed", 20, 2000, 20, 0
+	Slider "Travel distance",		"gitd_ss_range", 128, 8192, 128, 0
 	Slider "Wake behind it",		"gitd_ss_trail", 0, 512, 8, 0
 	StaticText "Stretches each band backwards, so it reads", darkgray
 	StaticText "as something moving through the room", darkgray
@@ -583,6 +590,31 @@ OptionMenu "GITDSweep"
 	Slider "Spread the train",		"gitd_ss_drift", 0.0, 1.0, 0.05, 2
 	StaticText "Gives each band its own speed, so they", darkgray
 	StaticText "drift in and out of phase forever.", darkgray
+	StaticText ""
+	Submenu "Spacing between bands...","GITDSweepAdv"
+}
+
+OptionMenu "GITDSweepPlay"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Sector Sweep -- Gameplay"
+	StaticText ""
+	StaticText "When it runs", gold
+	Option "Fires",					"gitd_ss_trigger", "GITDSweepTrigger"
+	StaticText "Anything but the first turns the sweep from", darkgray
+	StaticText "weather into the room answering you.", darkgray
+	Option "Driven by",				"gitd_ss_drive", "GITDSweepDrive"
+	StaticText "Driven by kills or health, the band's", darkgray
+	StaticText "POSITION is the readout -- nothing on", darkgray
+	StaticText "screen has to say the number.", darkgray
+	Slider "Hurry as you weaken",	"gitd_ss_health_speed", 0.0, 3.0, 0.1, 1
+	StaticText ""
+
+	StaticText "Sector light level", gold
+	Option "As a sweep passes",		"gitd_ss_light_mode", "GITDSweepLight"
+	Slider "  Amount",				"gitd_ss_light_amount", 0, 128, 4, 0
+	StaticText "Re-colour drives all four lanes to shades", darkgray
+	StaticText "of the passing sweep's own colour", darkgray
 	StaticText ""
 
 	StaticText "Per-band effects", gold
@@ -614,12 +646,8 @@ OptionMenu "GITDSweep"
 	StaticText "of every monster each tic, so it is off", darkgray
 	StaticText "until something asks for it.", darkgray
 	StaticText ""
-	SafeCommand "Demo: sweep a setpiece in and out","netevent gitd_setpiece"
-	StaticText "Recolours the level as it passes and puts it", darkgray
-	StaticText "back on the second run. A worked example of", darkgray
-	StaticText "the scripting hooks -- see SweepEngine.zs.", darkgray
-	StaticText ""
-	Submenu "Advanced",				"GITDSweepAdv"
+	Submenu "Ambush Setpieces...",	"GITDAmbush"
+	Submenu "Colour Law...",		"GITDColorLaw"
 }
 
 OptionMenu "GITDSweepAdv"
@@ -1096,4 +1124,37 @@ OptionMenu "GITDColorLaw"
 	Slider "Drops last (s)",		"gitd_law_rain_life", 1, 60, 1, 0
 	StaticText "Dropped across the whole map footprint;", darkgray
 	StaticText "points inside walls are simply skipped.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// FOG -- pulled off the root page into its own submenu. gl_fogmode is the
+// engine's own setting, reached by name; ddz_fog is DarkDoom's density.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDFog"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Fog Options"
+	StaticText ""
+	Option "$GLPREFMNU_FOGMODE",	gl_fogmode, "FogMode"
+	Slider "Fog thickness",			"ddz_fog", 0, 512, 8, 0
+	StaticText ""
+	Slider "Sky brightness",		"ddz_skymode", 0.0, 1.0, 0.1, 1
+	StaticText "How much of the darkening reaches sky", darkgray
+	StaticText "sectors. Some skyboxes resist it anyway.", darkgray
+	StaticText ""
+	Slider "Colour drain",			"ddz_desat", 0, 255, 15, 0
+	StaticText "Colour vision fails in low light --", darkgray
+	StaticText "draining it reads as dark, not just dim.", darkgray
+	StaticText ""
+	Option "Sector effects",		"ddz_lighting", "OnOff"
+	StaticText "Doom's own blinking and flickering lights.", darkgray
+	StaticText "Turning them OFF applies at once; ON needs", darkgray
+	StaticText "a map reload, since a destroyed thinker", darkgray
+	StaticText "cannot be brought back.", darkgray
+	StaticText ""
+	Option "No muzzle flash glow",	"gitd_dd_noflash", "OnOff"
+	StaticText "Vanilla brightens the whole view while a", darkgray
+	StaticText "weapon fires. Unnoticeable when lit,", darkgray
+	StaticText "ruinous in the dark.", darkgray
 }
