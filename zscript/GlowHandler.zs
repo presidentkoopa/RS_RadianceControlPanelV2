@@ -28,7 +28,7 @@ class GITD_Palette : Object
 			// One hue family: a narrow wedge, re-rolled per map so a session
 			// is not always the same colour. maptime/rounds to a stable base.
 			double base = double((level.maptime / 2100) * 53 % 360);
-			return FromHSV(base + frandom(-25, 25), frandom(0.75, 1.0), frandom(0.7, 1.0));
+			return GITD_Presets.FromHSV(base + frandom(-25, 25), frandom(0.75, 1.0), frandom(0.7, 1.0));
 		}
 		if (mode == 2)
 		{
@@ -36,12 +36,12 @@ class GITD_Palette : Object
 			// colours arguing rather than eight colours mumbling.
 			double base = double((level.maptime / 2100) * 53 % 360);
 			if (random(0, 1) == 1) base += 180;
-			return FromHSV(base + frandom(-12, 12), frandom(0.8, 1.0), frandom(0.75, 1.0));
+			return GITD_Presets.FromHSV(base + frandom(-12, 12), frandom(0.8, 1.0), frandom(0.75, 1.0));
 		}
 		if (mode == 3)
 		{
 			// Neon only: full saturation, high value, any hue. Never muddy.
-			return FromHSV(frandom(0, 360), 1.0, frandom(0.85, 1.0));
+			return GITD_Presets.FromHSV(frandom(0, 360), 1.0, frandom(0.85, 1.0));
 		}
 		return Color(255, random(0, 255), random(0, 255), random(0, 255));
 	}
@@ -457,7 +457,7 @@ class GITD_Presets : Object
 		double val = valBase + valVar * sin(slot * 45.0 + lane * 30.0);
 		double sat = satBase + satVar * cos(slot * 67.5 + lane * 20.0);
 
-		return FromHSV(hue, sat, val);
+		return GITD_Presets.FromHSV(hue, sat, val);
 	}
 }
 

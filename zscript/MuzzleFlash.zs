@@ -209,19 +209,20 @@ class GITD_MuzzleFlashHandler : EventHandler
 			let p = players[pn];
 			if (!p.mo || p.mo.health <= 0) continue;
 
-			let psp = p.FindPSprite(PSprite.PSP_FLASH);
-			State now = psp ? psp.CurState : null;
-			State was = lastFlashState[pn];
-			lastFlashState[pn] = now;
+			let psp = p.FindPSprite(PSP_FLASH);
+			State curFlash = psp ? psp.CurState : null;
+			State prevFlash = lastFlashState[pn];
+			lastFlashState[pn] = curFlash;
 
-			if (!now) continue;
+			if (!curFlash) continue;
 
 			// A NEW SHOT is the flash chain STARTING: either the layer was not
 			// there a tic ago, or it was and its state has jumped back to the
 			// sequence's first frame -- which is exactly what A_GunFlash does
 			// on every trigger pull, including the fortieth of a held burst.
 			// No weapon has to be named for this to work.
-			bool restarted = (was == null) || (now != was && IsFlashEntry(p, now));
+			bool restarted = (prevFlash == null)
+				|| (curFlash != prevFlash && IsFlashEntry(p, curFlash));
 			if (!restarted) continue;
 
 			// A floor on the rate, for anything that re-flashes faster than
