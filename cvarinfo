@@ -700,3 +700,4 @@ server int   gitd_mf_life = 1;          // tics the light lives
 server int   gitd_mf_cooldown = 3;      // minimum tics between player flashes
 server color gitd_mf_color = "ff dc 96";
 server color gitd_mf_mon_color = "ff b4 64";
+server bool  gitd_mf_bright = true;     // fire on the fullbright attack frame

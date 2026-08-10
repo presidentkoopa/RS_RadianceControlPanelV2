@@ -1207,8 +1207,13 @@ OptionMenu "GITDMuzzle"
 	Option "  Monsters",			"gitd_mf_monsters", "OnOff"
 	Slider "  Reach",				"gitd_mf_mon_radius", 16, 512, 8, 0
 	ColorPicker "  Colour",			"gitd_mf_mon_color"
-	StaticText "Fires once when an attack STARTS, so a", darkgray
-	StaticText "long animation flashes once, not per frame.", darkgray
+	Option "  Use the flash frame",	"gitd_mf_bright", "OnOff"
+	StaticText "A vanilla monster has its muzzle flash drawn", darkgray
+	StaticText "into one attack frame, marked fullbright.", darkgray
+	StaticText "On, the light fires on exactly that frame.", darkgray
+	StaticText "Off, or if a monster marks none, it fires at", darkgray
+	StaticText "the start of the attack instead -- a few tics", darkgray
+	StaticText "early, but never missing.", darkgray
 	StaticText ""
 	Slider "How long (tics)",		"gitd_mf_life", 1, 8, 1, 0
 	Slider "Minimum gap (tics)",	"gitd_mf_cooldown", 1, 12, 1, 0
