@@ -642,3 +642,17 @@ server int gitd_ss_draw5 = 1;
 server int gitd_ss_draw6 = 1;
 server int gitd_ss_draw7 = 1;
 server int gitd_ss_draw8 = 1;
+
+// ---- Per-sweep thickness ---------------------------------------------------
+// 0 means "use the shared Thickness slider", which is what every band did
+// before this existed. A band is twice its thickness wide, so thickness over
+// speed is how many seconds it takes to cross you -- a thin fast band is a
+// snap, a thick slow one is weather.
+server int gitd_ss_thick1 = 0;
+server int gitd_ss_thick2 = 0;
+server int gitd_ss_thick3 = 0;
+server int gitd_ss_thick4 = 0;
+server int gitd_ss_thick5 = 0;
+server int gitd_ss_thick6 = 0;
+server int gitd_ss_thick7 = 0;
+server int gitd_ss_thick8 = 0;

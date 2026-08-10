@@ -821,6 +821,17 @@ class GITD_Handler : StaticEventHandler
 	// old single value for a scripted wave, which has no per-band table.
 	// 1 add, 2 lift (reveal), 3 crush. A scripted wave adds, unless it says
 	// otherwise, because that is what every existing caller expects.
+	// 0 in the per-band slot means "use the wave's shared thickness", so a
+	// preset that does not care sets nothing and behaves as it always did.
+	double WaveBandThickness(GITD_Wave w, int i)
+	{
+		if (!w.ambient) return w.thickness;
+		let cv = CVar.FindCVar("gitd_ss_thick" .. (i + 1));
+		if (!cv) return w.thickness;
+		int t = cv.GetInt();
+		return (t > 0) ? double(t) : w.thickness;
+	}
+
 	int WaveBandDraw(GITD_Wave w, int i)
 	{
 		if (!w.ambient) return 1;
@@ -1137,7 +1148,7 @@ class GITD_Handler : StaticEventHandler
 					// A band that has not started yet is parked far away
 					// rather than drawn sitting at the origin.
 					if (pos < 0 && w.dir > 0) pos = -100000;
-					level.SetSweepBand(slot, pos, w.thickness, w.softness,
+					level.SetSweepBand(slot, pos, WaveBandThickness(w, band), w.softness,
 						BandColor(w, band), w.intensity);
 					// This band's OWN origin and shape.
 					level.SetSweepBandAt(slot, w.BandOrigin(band), w.shape);
@@ -1635,6 +1646,7 @@ class GITD_ResetHandler : EventHandler
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_speed" .. c);
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_amount" .. c);
 		for (int c = 1; c <= 8; c++) Rst("gitd_ss_draw" .. c);
+		for (int c = 1; c <= 8; c++) Rst("gitd_ss_thick" .. c);
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
