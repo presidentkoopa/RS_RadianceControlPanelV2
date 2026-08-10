@@ -518,18 +518,51 @@ Near-misses kept on the record: P3 comet crests, P4 bleed dial, X2
 
 ---
 
-## Seamless Corners, and the version that was actually wanted
+## Seamless Corners — DONE, both junctions, engine side included
 
-Shipped: both surfaces take one shared colour at the junction, with matched
-reach and falloff. The seam goes away.
+**Status: built.** Each of the four glow channels now carries a second
+colour and ramps between them by attenuation. Both junctions ship together.
+The rest of this section is kept as the record of what was wrong and what
+the fix actually was.
+
+What landed:
+
+| piece | where |
+|---|---|
+| `uGlowTopFar`, `uGlowBottomFar`, `uFlatGlowFar` | `hw_renderstate.h`, `vk_shader.cpp`, `gl_shader.*` |
+| the `mix()` in all three glow blocks | `main.fp` |
+| `GlowColorFar` / `FlatGlowColorFar` per plane | `r_defs.h` |
+| `Sector.SetGlowColorFar` / `SetFlatGlowColorFar` | `vmthunks.cpp`, `mapdata.zs` |
+| junction colour fed to both sides | `GlowHandler.zs`, the `gitd_seamless` block |
+
+Three new uniforms, not four: floor and ceiling flat glow time-share one
+slot because a draw only ever covers one of them. The cost was paid out of
+the `padding4` slack already in `StreamData`, so `MAX_STREAM_DATA` is still
+34 and draw batching is unchanged — verified by `static_assert`, both
+directions.
+
+Alpha 0 on a far colour means unset and the glow is byte-for-byte the flat
+wash it always was, so nothing changes until `gitd_seamless` is on.
+
+**E1 went in with it.** Flat intensity now multiplies colour, not reach, so
+the wall and flat Intensity sliders are finally the same quantity — and the
+workaround that scaled the flat's colour by the wall's intensity is deleted
+rather than left in place.
+
+---
+
+### The record: what was wrong
+
+Previously shipped: both surfaces took one shared colour at the junction,
+with matched reach and falloff. The seam went away.
 
 **Not what was asked for.** The ask was a GRADIENT across the corner -- floor
 purple ramping into wall blue -- keeping both lane colours and blending
-between them. What shipped makes both sides *the same colour* near the join,
-so the seam dies and the two-colour transition dies with it.
+between them. What shipped made both sides *the same colour* near the join,
+so the seam died and the two-colour transition died with it.
 
-**What the real version needs.** Today a glow holds one colour and only its
-STRENGTH varies with distance:
+**What the real version needed.** A glow held one colour and only its
+STRENGTH varied with distance:
 
 ```glsl
 color.rgb += uGlowBottomColor.rgb * botatten * uGlowBottomIntensity;

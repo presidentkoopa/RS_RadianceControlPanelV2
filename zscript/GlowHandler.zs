@@ -648,11 +648,15 @@ class GITD_Handler : StaticEventHandler
 		int idx = sec.Index();
 		if (!handler.IsOverridden(idx)) handler.overridden.Push(idx);
 
+		// No far colours: an override is a claim on one sector's exact look,
+		// so its glows stay the single colour the caller asked for. The
+		// signature is left alone deliberately -- it is the documented entry
+		// point for other mods.
 		ApplyOne(sec,
-			wbOn, wbCol, wbCov, wbFall, wbInten,
-			wtOn, wtCol, wtCov, wtFall, wtInten,
-			cgOn, cgCol, cgCov, cgFall, cgInten,
-			fgOn, fgCol, fgCov, fgFall, fgInten);
+			wbOn, wbCol, Color(0,0,0,0), wbCov, wbFall, wbInten,
+			wtOn, wtCol, Color(0,0,0,0), wtCov, wtFall, wtInten,
+			cgOn, cgCol, Color(0,0,0,0), cgCov, cgFall, cgInten,
+			fgOn, fgCol, Color(0,0,0,0), fgCov, fgFall, fgInten);
 	}
 
 	static void ClearSectorOverride(Sector sec)
@@ -675,11 +679,12 @@ class GITD_Handler : StaticEventHandler
 	// Bleed pulls a lane's colour partway toward the lanes it physically
 	// meets, so a corner reads as one light rather than two clashing ones.
 	//
-	// This is a controller-side approximation, and worth being honest about:
-	// a true per-pixel blend at the corner would need the wall's shader to
-	// sample the floor's glow, which it cannot do -- wall and flat are drawn
-	// in separate passes with no knowledge of each other. Shifting the
-	// colours toward each other gets the same read without engine work.
+	// This is a controller-side approximation: it moves whole lanes closer
+	// together, which is a different thing from a gradient across the join.
+	// Seamless corners does that part now -- both surfaces agree on a colour
+	// AT the line and ramp away to their own. Bleed still earns its place
+	// above it, because it decides how far apart the two lanes are before
+	// anything is blended between them.
 	Color BleedToward(Color base, Color a, Color b, bool enabled)
 	{
 		if (!enabled) return base;
@@ -1401,15 +1406,23 @@ class GITD_Handler : StaticEventHandler
 				else if (fx == 3)
 				{
 					// Shades of the band's own colour across the four lanes.
+					// The far colours are cleared, not left alone: under
+					// underlay the lanes may have set a junction colour this
+					// tic, and a band's recolour ramping toward a junction
+					// between two colours it just replaced is nobody's intent.
 					Color bc = BandColor(w, band);
 					int cov = int(96 * strength);
 					sec.SetGlowColor(Sector.floor, GITD_Palette.Scale(bc, 0.55 * strength));
+					sec.SetGlowColorFar(Sector.floor, Color(0,0,0,0));
 					sec.SetGlowHeight(Sector.floor, cov);
 					sec.SetGlowColor(Sector.ceiling, GITD_Palette.Scale(bc, 0.85 * strength));
+					sec.SetGlowColorFar(Sector.ceiling, Color(0,0,0,0));
 					sec.SetGlowHeight(Sector.ceiling, cov);
 					sec.SetFlatGlowColor(Sector.floor, GITD_Palette.Scale(bc, 0.40 * strength));
+					sec.SetFlatGlowColorFar(Sector.floor, Color(0,0,0,0));
 					sec.SetFlatGlowHeight(Sector.floor, cov);
 					sec.SetFlatGlowColor(Sector.ceiling, GITD_Palette.Scale(bc, 0.70 * strength));
+					sec.SetFlatGlowColorFar(Sector.ceiling, Color(0,0,0,0));
 					sec.SetFlatGlowHeight(Sector.ceiling, cov);
 				}
 				else if (fx == 4)
@@ -1637,23 +1650,36 @@ class GITD_Handler : StaticEventHandler
 		// is not an absence of blending. It is the two sides disagreeing
 		// about what colour and brightness to be at the line they share.
 		//
-		// Bleed already nudges them 35% toward each other, which makes them
-		// closer and never equal, so the seam survives. This makes them equal
-		// AT the junction: one colour, halfway between the two lanes, handed
-		// to both surfaces. Nothing is lost by doing so, because both of
-		// these glows only exist NEAR the junction anyway -- further away
-		// they fade out and the surface's own texture takes over. Agreeing at
-		// the seam is the entire job they have.
+		// The first fix made both sides the SAME colour near the join. The
+		// seam died and the two-colour transition died with it: a corner that
+		// was meant to read floor-purple into wall-blue read as one flat
+		// wash of the average.
 		//
-		// Reach and falloff are forced to match too. Two bands of different
-		// width, or with different curves, read as a seam even when the
-		// colour is identical.
+		// A glow now carries TWO colours and ramps between them by
+		// attenuation, so it can agree at the join without giving up its own
+		// colour. Both surfaces take the junction colour at the line and fade
+		// to their own lane's colour going away from it -- one continuous
+		// ramp, floor colour to blend to wall colour, with no flat region and
+		// no seam. Off, the far colour goes unset and each glow is the single
+		// flat colour it always was.
+		//
+		// BOTH junctions or neither. Floor/wall-bottom and ceiling/wall-top
+		// are the same problem mirrored, and the eye reads the mismatch
+		// immediately if only one of them ramps.
+		//
+		// Reach, falloff and brightness are forced to match too. A ramp that
+		// changes width, curve or brightness halfway across the corner reads
+		// as a seam even when the colour is continuous.
+		Color wbFar = Color(0,0,0,0), wtFar = Color(0,0,0,0);
+		Color cgFar = Color(0,0,0,0), fgFar = Color(0,0,0,0);
 		if (CvB("gitd_seamless", false))
 		{
 			Color floorJoin = GITD_Palette.Lerp(wbCol, fgCol, 0.5);
 			Color ceilJoin  = GITD_Palette.Lerp(wtCol, cgCol, 0.5);
-			wbCol = floorJoin; fgCol = floorJoin;
-			wtCol = ceilJoin;  cgCol = ceilJoin;
+			wbFar = wbCol; wbCol = floorJoin;
+			fgFar = fgCol; fgCol = floorJoin;
+			wtFar = wtCol; wtCol = ceilJoin;
+			cgFar = cgCol; cgCol = ceilJoin;
 		}
 
 		bool wbOn = wb.GetBool("_enabled");
@@ -1693,30 +1719,30 @@ class GITD_Handler : StaticEventHandler
 			double cgI = (presetInten >= 0) ? presetInten : cg.outIntensity;
 			double fgI = (presetInten >= 0) ? presetInten : fg.outIntensity;
 
+			double wbIA = wbI * wb.AnimFactor(sec, mapCentre);
+			double wtIA = wtI * wt.AnimFactor(sec, mapCentre);
+			double sfgI = fgI * fg.AnimFactor(sec, mapCentre);
+			double scgI = cgI * cg.AnimFactor(sec, mapCentre);
+
 			int sfgCov = fgCov, scgCov = cgCov, sfgFall = fgFall, scgFall = cgFall;
-			Color sfgCol = fgCol, scgCol = cgCol;
 			if (seamless)
 			{
-				// Match the band's WIDTH and CURVE to the wall it meets.
-				sfgCov = wbCov;  sfgFall = wbFall;
-				scgCov = wtCov;  scgFall = wtFall;
-
-				// And its BRIGHTNESS, which cannot be done the obvious way.
-				// The two Intensity values are not the same quantity: on a
-				// wall it multiplies the colour, on a flat it multiplies the
-				// REACH (hw_flats.cpp scales FlatGlowHeight by it). So the
-				// flat side has no brightness dial at all, and the only way
-				// to make it as bright as the wall it meets is to scale the
-				// COLOUR by the wall's intensity before handing it over.
-				sfgCol = GITD_Palette.Scale(fgCol, wbI * wb.AnimFactor(sec, mapCentre));
-				scgCol = GITD_Palette.Scale(cgCol, wtI * wt.AnimFactor(sec, mapCentre));
+				// Match the band's WIDTH, CURVE and BRIGHTNESS to the wall it
+				// meets. Brightness can be handed over directly now: the
+				// flat's Intensity scales its colour, the same quantity the
+				// wall's always did. It used to scale REACH instead, so the
+				// only way to match brightness was to pre-scale the flat's
+				// colour by the wall's intensity -- a workaround for a slider
+				// that meant two different things.
+				sfgCov = wbCov;  sfgFall = wbFall;  sfgI = wbIA;
+				scgCov = wtCov;  scgFall = wtFall;  scgI = wtIA;
 			}
 
 			ApplyOne(sec,
-				wbOn, wbCol, wbCov, wbFall, wbI * wb.AnimFactor(sec, mapCentre),
-				wtOn, wtCol, wtCov, wtFall, wtI * wt.AnimFactor(sec, mapCentre),
-				cgOn, scgCol, scgCov, scgFall, cgI * cg.AnimFactor(sec, mapCentre),
-				fgOn, sfgCol, sfgCov, sfgFall, fgI * fg.AnimFactor(sec, mapCentre));
+				wbOn, wbCol, wbFar, wbCov, wbFall, wbIA,
+				wtOn, wtCol, wtFar, wtCov, wtFall, wtIA,
+				cgOn, cgCol, cgFar, scgCov, scgFall, scgI,
+				fgOn, fgCol, fgFar, sfgCov, sfgFall, sfgI);
 		}
 	}
 
@@ -1726,25 +1752,30 @@ class GITD_Handler : StaticEventHandler
 		{
 			if (IsOverridden(i)) continue;
 			ApplyOne(level.Sectors[i],
-				false, Color(0,0,0,0), 0, 0, 1.0,
-				false, Color(0,0,0,0), 0, 0, 1.0,
-				false, Color(0,0,0,0), 0, 0, 1.0,
-				false, Color(0,0,0,0), 0, 0, 1.0);
+				false, Color(0,0,0,0), Color(0,0,0,0), 0, 0, 1.0,
+				false, Color(0,0,0,0), Color(0,0,0,0), 0, 0, 1.0,
+				false, Color(0,0,0,0), Color(0,0,0,0), 0, 0, 1.0,
+				false, Color(0,0,0,0), Color(0,0,0,0), 0, 0, 1.0);
 		}
 	}
 
 	// The single place any of this reaches the engine. Shared by the map
 	// default and per-sector overrides so the two cannot drift.
+	// The *Far colours are the far end of each glow's ramp -- see the
+	// seamless-corners block above. Alpha 0 means unset and the glow is a
+	// single flat colour, so passing Color(0,0,0,0) is the old behaviour
+	// exactly.
 	static void ApplyOne(Sector sec,
-		bool wbOn, color wbCol, int wbCov, int wbFall, double wbInten,
-		bool wtOn, color wtCol, int wtCov, int wtFall, double wtInten,
-		bool cgOn, color cgCol, int cgCov, int cgFall, double cgInten,
-		bool fgOn, color fgCol, int fgCov, int fgFall, double fgInten)
+		bool wbOn, color wbCol, color wbFar, int wbCov, int wbFall, double wbInten,
+		bool wtOn, color wtCol, color wtFar, int wtCov, int wtFall, double wtInten,
+		bool cgOn, color cgCol, color cgFar, int cgCov, int cgFall, double cgInten,
+		bool fgOn, color fgCol, color fgFar, int fgCov, int fgFall, double fgInten)
 	{
 		// wb -- wall bottom, driven by the floor plane
 		if (wbOn)
 		{
 			sec.SetGlowColor(Sector.floor, wbCol);
+			sec.SetGlowColorFar(Sector.floor, wbFar);
 			sec.SetGlowHeight(Sector.floor, wbCov);
 			sec.SetGlowFalloff(Sector.floor, wbFall);
 			sec.SetGlowIntensity(Sector.floor, wbInten);
@@ -1752,6 +1783,7 @@ class GITD_Handler : StaticEventHandler
 		else
 		{
 			sec.SetGlowColor(Sector.floor, Color(0,0,0,0));
+			sec.SetGlowColorFar(Sector.floor, Color(0,0,0,0));
 			sec.SetGlowHeight(Sector.floor, 0);
 		}
 
@@ -1759,6 +1791,7 @@ class GITD_Handler : StaticEventHandler
 		if (wtOn)
 		{
 			sec.SetGlowColor(Sector.ceiling, wtCol);
+			sec.SetGlowColorFar(Sector.ceiling, wtFar);
 			sec.SetGlowHeight(Sector.ceiling, wtCov);
 			sec.SetGlowFalloff(Sector.ceiling, wtFall);
 			sec.SetGlowIntensity(Sector.ceiling, wtInten);
@@ -1766,6 +1799,7 @@ class GITD_Handler : StaticEventHandler
 		else
 		{
 			sec.SetGlowColor(Sector.ceiling, Color(0,0,0,0));
+			sec.SetGlowColorFar(Sector.ceiling, Color(0,0,0,0));
 			sec.SetGlowHeight(Sector.ceiling, 0);
 		}
 
@@ -1773,6 +1807,7 @@ class GITD_Handler : StaticEventHandler
 		if (cgOn)
 		{
 			sec.SetFlatGlowColor(Sector.ceiling, cgCol);
+			sec.SetFlatGlowColorFar(Sector.ceiling, cgFar);
 			sec.SetFlatGlowHeight(Sector.ceiling, cgCov);
 			sec.SetFlatGlowFalloff(Sector.ceiling, cgFall);
 			sec.SetFlatGlowIntensity(Sector.ceiling, cgInten);
@@ -1780,6 +1815,7 @@ class GITD_Handler : StaticEventHandler
 		else
 		{
 			sec.SetFlatGlowColor(Sector.ceiling, Color(0,0,0,0));
+			sec.SetFlatGlowColorFar(Sector.ceiling, Color(0,0,0,0));
 			sec.SetFlatGlowHeight(Sector.ceiling, 0);
 		}
 
@@ -1787,6 +1823,7 @@ class GITD_Handler : StaticEventHandler
 		if (fgOn)
 		{
 			sec.SetFlatGlowColor(Sector.floor, fgCol);
+			sec.SetFlatGlowColorFar(Sector.floor, fgFar);
 			sec.SetFlatGlowHeight(Sector.floor, fgCov);
 			sec.SetFlatGlowFalloff(Sector.floor, fgFall);
 			sec.SetFlatGlowIntensity(Sector.floor, fgInten);
@@ -1794,6 +1831,7 @@ class GITD_Handler : StaticEventHandler
 		else
 		{
 			sec.SetFlatGlowColor(Sector.floor, Color(0,0,0,0));
+			sec.SetFlatGlowColorFar(Sector.floor, Color(0,0,0,0));
 			sec.SetFlatGlowHeight(Sector.floor, 0);
 		}
 	}
