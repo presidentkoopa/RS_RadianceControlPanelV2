@@ -470,7 +470,6 @@ server string gitd_ss_script6 = "";
 server string gitd_ss_script7 = "";
 server string gitd_ss_script8 = "";
 
-server bool gitd_ss_demo = false;   // self-test: sweep the demo setpiece in and out
 
 // ---- Ambush setpieces ------------------------------------------------------
 // A wave sweeps a lockdown over the room you are in, spawns a fight sized to

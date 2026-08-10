@@ -1815,7 +1815,7 @@ class GITD_ResetHandler : EventHandler
 			"gitd_ss_direction", "gitd_ss_trigger", "gitd_ss_drive",
 			"gitd_ss_health_speed", "gitd_ss_drift", "gitd_ss_trail",
 			"gitd_ss_actors", "gitd_ss_sonar_floor", "gitd_ss_sonar_fade",
-			"gitd_ss_perband", "gitd_ss_demo",
+			"gitd_ss_perband",
 			"gitd_dd_enabled", "gitd_dd_noflash", "gitd_bloom_forced",
 			"ddz_mode", "ddz_preset", "ddz_desat", "ddz_skymode", "ddz_lighting",
 			"ddz_fog", "ddz_minlight", "ddz_pregain", "ddz_postgain",

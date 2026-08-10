@@ -927,37 +927,3 @@ class GITD_SetpieceConsole : EventHandler
 		applied = !applied;
 	}
 }
-
-// Headless self-test. gitd_ss_demo 1 fires the setpiece in at two seconds and
-// back out at six, with no input -- which is the only way to exercise the
-// journal from a command line, since netevent needs a live player.
-class GITD_SetpieceSelfTest : StaticEventHandler
-{
-	int t;
-	override void WorldLoaded(WorldEvent e) { t = 0; }
-	override void WorldTick()
-	{
-		if (!CVar.FindCVar("gitd_ss_demo").GetBool()) return;
-		t++;
-		let pmo = players[consoleplayer].mo;
-		if (!pmo) return;
-		if (t == 69 || t == 200 || t == 340) Report(t);
-		if (t == 70)  GITD_Sweep.FireScript(pmo.pos, "GITD_DemoArena", 0xFF2000, 900, 2400);
-		if (t == 210) GITD_Setpiece.SweepOut("GITD_DemoArena", pmo.pos, 900, 2400);
-	}
-
-	// Sample a few sectors so the log shows the setpiece actually landing and
-	// actually coming back off, rather than just failing to crash.
-	void Report(int t)
-	{
-		string tag = (t < 70) ? "BEFORE" : (t < 300 ? "APPLIED" : "REVERTED");
-		int n = min(level.Sectors.Size(), 3);
-		for (int i = 0; i < n; i++)
-		{
-			Sector s = level.Sectors[i];
-			Color c = s.ColorMap.LightColor;
-			Console.Printf("SWEEPTEST %s sec%d light=%d color=%02x%02x%02x desat=%d",
-				tag, i, s.lightlevel, c.r, c.g, c.b, s.ColorMap.Desaturation);
-		}
-	}
-}
