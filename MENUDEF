@@ -169,14 +169,6 @@ OptionValue "Nice_Flashlight_Position"
 // adjusting while you adjust it.
 // ---------------------------------------------------------------------------
 
-OptionValue "GITDShadowQual"
-{
-	128,  "128 (VR default)"
-	256,  "256"
-	512,  "512"
-	1024, "1024 (sharpest)"
-}
-
 OptionValue "GITDNeonDmgMode"
 {
 	0, "One per hit"
@@ -484,15 +476,6 @@ OptionMenu "GITDFlashlight"
 	StaticText "Samples along the beam. Lower is cheaper and", darkgray
 	StaticText "grainier, not dimmer.", darkgray
 
-	StaticText ""
-	StaticText "Shadows", gold
-	StaticText "OFF by default in the engine, which is why", darkgray
-	StaticText "the beam lights things through walls.", darkgray
-	Option "Ray-traced shadows",	"vk_raytrace", "OnOff"
-	StaticText "Pixel accurate. Vulkan only, and needs a", darkgray
-	StaticText "restart -- it rebuilds the render device.", darkgray
-	Option "Shadow maps",			"gl_light_shadowmap", "OnOff"
-	Option "Shadow map detail",		"gl_shadowmap_quality", "GITDShadowQual"
 }
 
 // ---------------------------------------------------------------------------
