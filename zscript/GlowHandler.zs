@@ -758,7 +758,7 @@ class GITD_Handler : StaticEventHandler
 	void PrepareWave(GITD_Wave w)
 	{
 		w.bandPos.Clear(); w.bandFx.Clear();
-		w.bandCol.Clear(); w.bandAct.Clear();
+		w.bandCol.Clear(); w.bandAct.Clear(); w.bandAmt.Clear();
 		for (int i = 0; i < w.subBands; i++)
 		{
 			w.bandPos.Push(WaveBandPos(w, i));
@@ -766,6 +766,7 @@ class GITD_Handler : StaticEventHandler
 			Color c = WaveBandColor(w, i);
 			w.bandCol.Push((c.r << 16) | (c.g << 8) | c.b);
 			w.bandAct.Push(WaveBandAction(w, i));
+			w.bandAmt.Push(WaveBandAmount(w, i));
 		}
 	}
 
@@ -781,9 +782,33 @@ class GITD_Handler : StaticEventHandler
 		return (i >= 0 && i < w.bandFx.Size()) ? w.bandFx[i] : 0;
 	}
 
+	int BandAmount(GITD_Wave w, int i)
+	{
+		return (i >= 0 && i < w.bandAmt.Size()) ? w.bandAmt[i] : 48;
+	}
+
 	GITD_SweepAction BandAction(GITD_Wave w, int i)
 	{
 		return (i >= 0 && i < w.bandAct.Size()) ? w.bandAct[i] : null;
+	}
+
+	// Sweep 1 is the clock. w.pos is how far IT has travelled, so a band with
+	// its own speed has covered pos * (its speed / sweep 1's speed) in the
+	// same time. Expressing per-band speed as a ratio rather than giving every
+	// band its own position keeps one clock for the whole train -- which is
+	// what makes the gaps between them mean anything.
+	//
+	// Drift still applies on top, so "spread the train" remains a one-slider
+	// way to get the same effect without setting eight numbers.
+	double WaveBandSpeedScale(GITD_Wave w, int i)
+	{
+		if (!w.ambient) return 1.0;
+		let lead = CVar.FindCVar("gitd_ss_speed1");
+		let mine = CVar.FindCVar("gitd_ss_speed" .. (i + 1));
+		if (!lead || !mine) return 1.0;
+		double l = lead.GetFloat();
+		if (l <= 0.0) return 1.0;
+		return mine.GetFloat() / l;
 	}
 
 	double WaveBandPos(GITD_Wave w, int i)
@@ -792,7 +817,20 @@ class GITD_Handler : StaticEventHandler
 		double lag = 0;
 		for (int g = 0; g < i; g++)
 			lag += CVar.FindCVar("gitd_ss_gap" .. (g + 1)).GetInt() * w.speed / 35.0;
-		return w.pos * (1.0 + w.drift * i) - lag;
+		return w.pos * WaveBandSpeedScale(w, i) * (1.0 + w.drift * i) - lag;
+	}
+
+	// How hard band i pushes the light level. Per band, falling back to the
+	// old single value for a scripted wave, which has no per-band table.
+	int WaveBandAmount(GITD_Wave w, int i)
+	{
+		if (!w.ambient)
+		{
+			let cv = CVar.FindCVar("gitd_ss_light_amount");
+			return cv ? cv.GetInt() : 48;
+		}
+		let cv = CVar.FindCVar("gitd_ss_amount" .. (i + 1));
+		return cv ? cv.GetInt() : 48;
 	}
 
 	Color WaveBandColor(GITD_Wave w, int i)
@@ -824,7 +862,10 @@ class GITD_Handler : StaticEventHandler
 
 	double SSSpeed()
 	{
-		double speed = CVar.FindCVar("gitd_ss_speed").GetFloat();
+		// Sweep 1 IS the clock -- see WaveBandSpeedScale. gitd_ss_speed stays
+		// as the fallback for anything that predates the per-band table.
+		let s1 = CVar.FindCVar("gitd_ss_speed1");
+		double speed = s1 ? s1.GetFloat() : CVar.FindCVar("gitd_ss_speed").GetFloat();
 
 		// Faster as you weaken. Nothing on screen says it, which is the
 		// point -- the room starts hurrying and you feel it before you work
@@ -1099,7 +1140,10 @@ class GITD_Handler : StaticEventHandler
 
 	void ApplySectorSweepEffects()
 	{
-		int amount = CVar.FindCVar("gitd_ss_light_amount").GetInt();
+		// The master switch. Off, no band shifts light at all, whatever its
+		// own effect says -- the sweep is then purely something you look at.
+		let lightCv = CVar.FindCVar("gitd_ss_light");
+		bool lightOn = lightCv ? lightCv.GetBool() : false;
 		int sonarFloor = CVar.FindCVar("gitd_ss_sonar_floor").GetInt();
 		double sonarFade = max(CVar.FindCVar("gitd_ss_sonar_fade").GetInt(), 1);
 
@@ -1147,13 +1191,14 @@ class GITD_Handler : StaticEventHandler
 				// Declared against the MAP's level, never the live one --
 				// reading live and adding is what used to saturate every room
 				// the sweep touched to 255 within four tics.
+				int amount = BandAmount(w, band);
 				if (fx == 1)
 				{
-					GITD_Composite.AddLight(i, int(amount * strength));
+					if (lightOn) GITD_Composite.AddLight(i, int(amount * strength));
 				}
 				else if (fx == 2)
 				{
-					GITD_Composite.AddLight(i, -int(amount * strength));
+					if (lightOn) GITD_Composite.AddLight(i, -int(amount * strength));
 				}
 				else if (fx == 3)
 				{
@@ -1540,6 +1585,9 @@ class GITD_ResetHandler : EventHandler
 			"gitd_ss_pingpong" };
 		for (int i = 0; i < 12; i++) CVar.FindCVar(sweeps[i]).ResetToDefault();
 		for (int c = 1; c <= 8; c++) CVar.FindCVar("gitd_ss_c" .. c).ResetToDefault();
+		for (int c = 1; c <= 8; c++) Rst("gitd_ss_speed" .. c);
+		for (int c = 1; c <= 8; c++) Rst("gitd_ss_amount" .. c);
+		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
 
 		// Darkness, flashlight, numbers, pickup cones.

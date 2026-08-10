@@ -133,6 +133,7 @@ class GITD_Wave : Object play
 	Array<int> bandFx;
 	Array<int> bandCol;
 	Array<GITD_SweepAction> bandAct;
+	Array<int> bandAmt;
 
 	// True once the whole train, not just the leader, has left the range --
 	// otherwise a wave with eight bands would vanish while seven of them were

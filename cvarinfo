@@ -587,3 +587,34 @@ server bool gitd_rnd_patterns = false;  // each lane picks its own transition
 // still drive everything; this is the single menu choice that sets them, so
 // the two can never contradict each other on screen.
 server int gitd_neon_draw = 0;          // 0 kill counter, 1 cumulative damage
+
+// ---- Per-sweep speed -------------------------------------------------------
+// Each band in the train may travel at its own rate. Sweep 1 is the LEADER and
+// its speed is the clock; the others are expressed against it, so a band at
+// double sweep 1's speed covers twice the ground in the same time. Setting all
+// eight the same reproduces the old single-speed train exactly.
+//
+// gitd_ss_speed remains the fallback for anything that has no per-band value
+// and for scripted waves, which carry their own speed.
+server float gitd_ss_speed1 = 260.0;
+server float gitd_ss_speed2 = 260.0;
+server float gitd_ss_speed3 = 260.0;
+server float gitd_ss_speed4 = 260.0;
+server float gitd_ss_speed5 = 260.0;
+server float gitd_ss_speed6 = 260.0;
+server float gitd_ss_speed7 = 260.0;
+server float gitd_ss_speed8 = 260.0;
+
+// ---- Per-sweep light amount ------------------------------------------------
+// How far each band shifts the light level of the sectors it crosses. Per band
+// because a train whose members all push by the same amount is a thicker band,
+// not a train -- the point of eight is that they can disagree.
+server bool gitd_ss_light = false;      // does the sweep touch light at all
+server int gitd_ss_amount1 = 48;
+server int gitd_ss_amount2 = 48;
+server int gitd_ss_amount3 = 48;
+server int gitd_ss_amount4 = 48;
+server int gitd_ss_amount5 = 48;
+server int gitd_ss_amount6 = 48;
+server int gitd_ss_amount7 = 48;
+server int gitd_ss_amount8 = 48;
