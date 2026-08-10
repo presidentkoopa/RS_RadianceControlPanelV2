@@ -129,31 +129,33 @@ OptionValue "GITDPreset"
 // The four dial modes read How dark. The three fixed modes ignore it.
 OptionValue "GITDDarkMode"
 {
-	0,  "Off"
+	0,  "Disable"
 	1,  "Subtract"
 	2,  "Compress"
-	3,  "Cap brightest"
-	4,  "Deepen shadows"
+	3,  "Clamp"
+	4,  "Crush"
 	10, "DarkDoom Lite"
 	11, "DarkDoom Classic"
 	12, "DarkDoom Black"
 }
 
-// Numbered, not named. The words were "Slightly dark / Dark / Very dark /
-// Gloomy / Very gloomy / Near black / Almost pitch / Pitch black" -- and
-// nothing in that list tells you whether Gloomy is darker than Very dark. A
-// number cannot be misread and the row already says "How dark".
+// DarkDoomZ's own names for its darkness levels, restored from the source
+// (Nice_Settings). They were briefly numbered, on the reasoning that invented
+// words like "Gloomy" versus "Very dark" give no sense of order -- but these
+// are not invented, and they ARE an ordered ladder: dim, murky, dismal,
+// oppressive, inky, stygian, pitch, pure. That is the mod's own voice and it
+// was not mine to replace.
 OptionValue "GITDDarkLevel"
 {
-	0, "Off"
-	1, "1"
-	2, "2"
-	3, "3"
-	4, "4"
-	5, "5"
-	6, "6"
-	7, "7"
-	8, "8 (darkest)"
+	0, "Disable"
+	1, "Dim"
+	2, "Murky"
+	3, "Dismal"
+	4, "Oppressive"
+	5, "Inky"
+	6, "Stygian"
+	7, "Pitch"
+	8, "Pure"
 }
 
 OptionValue "Nice_Flashlight_Quality"
