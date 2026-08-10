@@ -563,28 +563,28 @@ OptionMenu "GITDSweepVisual"
 	Option "Number of sweeps",		"gitd_ss_count", "GITDSweepCount"
 	StaticText ""
 	ColorPicker "Sweep 1 colour",	"gitd_ss_c1"
-	Slider "  Speed",				"gitd_ss_speed1", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed1", 5, 2000, 5, 0
 	Slider "  Time to sweep 2",		"gitd_ss_gap1", 1, 210, 1, 0
 	ColorPicker "Sweep 2 colour",	"gitd_ss_c2"
-	Slider "  Speed",				"gitd_ss_speed2", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed2", 5, 2000, 5, 0
 	Slider "  Time to sweep 3",		"gitd_ss_gap2", 1, 210, 1, 0
 	ColorPicker "Sweep 3 colour",	"gitd_ss_c3"
-	Slider "  Speed",				"gitd_ss_speed3", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed3", 5, 2000, 5, 0
 	Slider "  Time to sweep 4",		"gitd_ss_gap3", 1, 210, 1, 0
 	ColorPicker "Sweep 4 colour",	"gitd_ss_c4"
-	Slider "  Speed",				"gitd_ss_speed4", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed4", 5, 2000, 5, 0
 	Slider "  Time to sweep 5",		"gitd_ss_gap4", 1, 210, 1, 0
 	ColorPicker "Sweep 5 colour",	"gitd_ss_c5"
-	Slider "  Speed",				"gitd_ss_speed5", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed5", 5, 2000, 5, 0
 	Slider "  Time to sweep 6",		"gitd_ss_gap5", 1, 210, 1, 0
 	ColorPicker "Sweep 6 colour",	"gitd_ss_c6"
-	Slider "  Speed",				"gitd_ss_speed6", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed6", 5, 2000, 5, 0
 	Slider "  Time to sweep 7",		"gitd_ss_gap6", 1, 210, 1, 0
 	ColorPicker "Sweep 7 colour",	"gitd_ss_c7"
-	Slider "  Speed",				"gitd_ss_speed7", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed7", 5, 2000, 5, 0
 	Slider "  Time to sweep 8",		"gitd_ss_gap7", 1, 210, 1, 0
 	ColorPicker "Sweep 8 colour",	"gitd_ss_c8"
-	Slider "  Speed",				"gitd_ss_speed8", 20, 2000, 20, 0
+	Slider "  Speed",				"gitd_ss_speed8", 5, 2000, 5, 0
 	StaticText ""
 	StaticText ""
 	Option "Sweep affects light level","gitd_ss_light", "YesNo"
@@ -664,35 +664,6 @@ OptionMenu "GITDSweepPlay"
 	StaticText ""
 	Submenu "Ambush Setpieces...",	"GITDAmbush"
 	Submenu "Colours Change the Fight...","GITDColorLaw"
-}
-
-OptionMenu "GITDSweepAdv"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Sector Sweep -- Advanced"
-	StaticText ""
-	StaticText "Spacing", gold
-	StaticText "Tics before each sweep follows the one", darkgray
-	StaticText "before it", darkgray
-	Slider "Time to sweep 2",		"gitd_ss_gap1", 1, 210, 1, 0
-	Slider "Time to sweep 3",		"gitd_ss_gap2", 1, 210, 1, 0
-	Slider "Time to sweep 4",		"gitd_ss_gap3", 1, 210, 1, 0
-	Slider "Time to sweep 5",		"gitd_ss_gap4", 1, 210, 1, 0
-	Slider "Time to sweep 6",		"gitd_ss_gap5", 1, 210, 1, 0
-	Slider "Time to sweep 7",		"gitd_ss_gap6", 1, 210, 1, 0
-	Slider "Time to sweep 8",		"gitd_ss_gap7", 1, 210, 1, 0
-	StaticText ""
-	StaticText "Shape and motion", gold
-	Slider "Brightness",			"gitd_ss_intensity", 0.0, 3.0, 0.1, 1
-	Slider "Thickness",				"gitd_ss_thickness", 1, 128, 1, 0
-	Slider "Edge hardness",			"gitd_ss_softness", 0.5, 8.0, 0.25, 2
-	StaticText "Higher = a tighter, harder line", darkgray
-	Slider "Speed",					"gitd_ss_speed", 20, 2000, 20, 0
-	Slider "Travel distance",		"gitd_ss_range", 128, 8192, 128, 0
-	// "Sweep back and forth" is gone: it bound gitd_ss_pingpong, which
-	// nothing reads any more -- gitd_ss_direction superseded it and has its
-	// own row ("Travels") on the main sweep page. A control wired to a dead
-	// cvar is a lying control, and this mod has already paid for four.
 }
 
 // ---------------------------------------------------------------------------
