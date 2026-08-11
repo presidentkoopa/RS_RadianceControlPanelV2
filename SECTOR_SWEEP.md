@@ -322,3 +322,7 @@ numbers that cannot change in between.
 - The trigger-pull trigger fires on the button edge, not per projectile.
 - Cost of the effect pass is sectors x live waves. 64 waves over a large map
   is not free.
+
+
+
+The rotating effect isn't great, it's too much chaos. It should be like, standing in the middle of a ferris wheel.
