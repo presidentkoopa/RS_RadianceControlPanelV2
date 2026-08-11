@@ -347,6 +347,7 @@ class GITD_Presets : Object
 			case 9:  return "Deep Sea";
 			case 10: return "Monochrome";
 			case 11: return "Black and White";
+			case 12: return "OMGWTF";
 			default: return "Off";
 		}
 	}
@@ -475,6 +476,68 @@ class GITD_Presets : Object
 			};
 
 			int packed = redAlert[clamp(lane, 0, 3) * 8 + clamp(slot, 0, 7)];
+			return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
+		}
+
+		// LOW POWER. Not violet-for-mood: this is a facility, so the light it
+		// has left is the light it was BUILT with. Dying sodium and
+		// fluorescent go orange-grey as they fail, with one cold cast off the
+		// emergency circuit that is still nominally alive. Nothing here is
+		// saturated, because there is no energy left to be colourful with.
+		//
+		// The rolling glow does most of the work in this preset, so the
+		// palette deliberately holds still underneath it -- eight near
+		// neighbours rather than eight colours. What moves is the light, not
+		// the hue, which is what a brownout actually looks like.
+		if (preset == 2)
+		{
+			static const int lowPower[] =
+			{
+				// wall bottom -- the corridor strip, lowest and warmest
+				0x4A3208, 0x3E2A06, 0x523A0C, 0x2E2004,
+				0x463006, 0x38280A, 0x4E3608, 0x281C04,
+
+				// wall top -- further from the floor lamps, colder
+				0x2A2410, 0x221E0C, 0x302814, 0x1A160A,
+				0x282210, 0x1E1A0C, 0x2C2612, 0x161208,
+
+				// ceiling -- the emergency circuit, and the one cold thing
+				0x141A26, 0x10141E, 0x18202C, 0x0C1018,
+				0x121822, 0x0E1218, 0x161E28, 0x0A0C12,
+
+				// floor -- what the walls spill onto, dimmest of all
+				0x261A06, 0x1E1404, 0x2A1E08, 0x160E02,
+				0x221806, 0x1A1204, 0x281C06, 0x120C02,
+			};
+
+			int packed = lowPower[clamp(lane, 0, 3) * 8 + clamp(slot, 0, 7)];
+			return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
+		}
+
+		// OMGWTF. Every lane in a different colour family, every slot a
+		// different hue, nothing related to anything. This is the one preset
+		// that exists because the system can, and the palette is written out
+		// rather than generated for the same reason the others are: a hue
+		// range produces eight RELATED colours, and relatedness is the one
+		// thing this must not have.
+		if (preset == 12)
+		{
+			static const int omg[] =
+			{
+				0xFF00E6, 0x00FF66, 0xFFD400, 0x6600FF,
+				0x00E5FF, 0xFF3300, 0x99FF00, 0xFF0066,
+
+				0x00FF66, 0xFFD400, 0x6600FF, 0x00E5FF,
+				0xFF3300, 0x99FF00, 0xFF0066, 0xFF00E6,
+
+				0x6600FF, 0x00E5FF, 0xFF3300, 0x99FF00,
+				0xFF0066, 0xFF00E6, 0x00FF66, 0xFFD400,
+
+				0xFF3300, 0x99FF00, 0xFF0066, 0xFF00E6,
+				0x00FF66, 0xFFD400, 0x6600FF, 0x00E5FF,
+			};
+
+			int packed = omg[clamp(lane, 0, 3) * 8 + clamp(slot, 0, 7)];
 			return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
 		}
 
@@ -1046,7 +1109,16 @@ class GITD_Handler : StaticEventHandler
 
 	Vector3 SSAmbientOrigin()
 	{
-		int mode = CVar.FindCVar("gitd_ss_origin").GetInt();
+		return OriginFor(CVar.FindCVar("gitd_ss_origin").GetInt());
+	}
+
+	// Was SSAmbientOrigin's whole body, with the cvar read inline. The glow
+	// wave wants the same six origins from its own cvar, and two copies of
+	// this would be two places for "follows you" to mean something slightly
+	// different -- which is exactly the drift the shared distance function
+	// exists to prevent.
+	Vector3 OriginFor(int mode)
+	{
 		let pmo = players[consoleplayer].mo;
 
 		if (mode == 2 && pmo) return pmo.pos;
@@ -1703,6 +1775,13 @@ class GITD_Handler : StaticEventHandler
 			return;
 		}
 
+		// The render settings, and the one part of them that needs the world.
+		// GITD_Render is also called from the menu's ticker, so everything it
+		// pushes is live while you drag a slider; the origin cannot be
+		// resolved from there and is pushed here, where the playsim is.
+		GITD_Render.PushAll();
+		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
+
 		int preset = CVar.FindCVar("gitd_preset").GetInt();
 
 		wb.Step(preset);
@@ -1981,6 +2060,14 @@ class GITD_ResetHandler : EventHandler
 		Rst("gitd_ss_spin"); Rst("gitd_ss_spin_radius"); Rst("gitd_ss_spin_colors");
 		Rst("gitd_ss_drop"); Rst("gitd_ss_drop_every"); Rst("gitd_ss_drop_max");
 		Rst("gitd_ss_underlay"); Rst("gitd_seamless");
+		static const string wave[] = { "gitd_wave_enabled", "gitd_wave_length",
+			"gitd_wave_speed", "gitd_wave_sharp", "gitd_wave_shape",
+			"gitd_wave_origin", "gitd_wave_reach", "gitd_wave_bright",
+			"gitd_wave_colour", "gitd_wave_detune", "gitd_wave_seed",
+			"gitd_wave_climb", "gitd_dd_perpixel", "gitd_dd_dist",
+			"gitd_dd_dist_range", "gitd_dd_height", "gitd_dd_height_ref",
+			"gitd_dd_height_range" };
+		for (int i = 0; i < wave.Size(); i++) Rst(wave[i]);
 		static const string mf[] = { "gitd_mf_enabled", "gitd_mf_life",
 			"gitd_mf_player", "gitd_mf_radius", "gitd_mf_bright",
 			"gitd_mf_random", "gitd_mf_cooldown", "gitd_mf_monsters",
@@ -2098,7 +2185,12 @@ class GITD_PresetCustomiser : StaticEventHandler
 	// preset path concatenates this number into a cvar name, so an unclamped
 	// value resolves to nothing and the write dereferences null. Clamped at
 	// both read sites rather than trusted.
-	const GITD_PRESET_MAX = 11;
+	// Raised to 12 for OMGWTF. THIS NUMBER IS LOAD-BEARING AND SILENT: it
+	// clamps, so a preset above it does not fail, it becomes a DIFFERENT
+	// preset. Left at 11, choosing OMGWTF would quietly have selected Black
+	// and White and every symptom would have pointed at the profile rather
+	// than at a bound.
+	const GITD_PRESET_MAX = 12;
 
 	// ---- The sweep working set -------------------------------------------
 	//

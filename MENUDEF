@@ -128,8 +128,10 @@ OptionValue "GITDPreset"
 {
 	0,  "Off (use my colours)"
 	1,  "Blackout"
+	2,  "Low Power"
 	3,  "Red Alert"
 	11, "Black and White"
+	12, "OMGWTF"
 }
 
 // DarkDoom's own mode names, restored. They were briefly all labelled "Use
@@ -337,6 +339,7 @@ OptionMenu "GITDOptions"
 	Option "DarkDoom",				"gitd_dd_enabled", "OnOff"
 	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
 	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
+	Submenu "  Per-pixel darkness...","GITDDarkPixel"
 	Submenu "  Muzzle Flash Options...","GITDMuzzle"
 	StaticText ""
 
@@ -379,7 +382,147 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText ""
 
+	StaticText "Glow Waves", gold
+	Option "Waves",					"gitd_wave_enabled", "OnOff"
+	StaticText "A glow fades smoothly UP a wall and was", darkgray
+	StaticText "one flat value along it -- a dead straight", darkgray
+	StaticText "edge from one end of a room to the other.", darkgray
+	StaticText "This gives it the other axis: the edge", darkgray
+	StaticText "itself rises and falls as it travels.", darkgray
+	Submenu "  Wave options...",	"GITDWaves"
+	StaticText ""
+	StaticText ""
+
 	SafeCommand "Reset EVERYTHING to defaults","netevent gitd_reset"
+}
+
+// ---------------------------------------------------------------------------
+// Per-pixel darkness.
+//
+// The four curves do not change and neither do their dials -- How dark and
+// Darkness curve above still mean exactly what they meant. This changes what
+// the curve is ASKED ABOUT: each pixel's own light rather than each room's.
+//
+// Everything on this page except the first row is a term that a per-sector
+// multiplier cannot express at all, which is the whole reason for the move.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDDarkPixel"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Per-pixel Darkness"
+	StaticText ""
+	Option "Darken per pixel",		"gitd_dd_perpixel", "OnOff"
+	StaticText "Off, a room is darkened as one: a long hall", darkgray
+	StaticText "is exactly as dark at the far end as at your", darkgray
+	StaticText "feet, because a sector is the smallest thing", darkgray
+	StaticText "the old way can talk about.", darkgray
+	StaticText ""
+	StaticText "On, the same curves run per pixel. How dark", darkgray
+	StaticText "and Darkness curve still do what they did --", darkgray
+	StaticText "but they will not FEEL the same, because they", darkgray
+	StaticText "were tuned against the old way. Expect to", darkgray
+	StaticText "re-taste the dial.", darkgray
+	StaticText ""
+
+	StaticText "Distance", gold
+	Slider "Deepens with range",	"gitd_dd_dist", 0.0, 1.0, 0.05, 2
+	Slider "  Full dark at",		"gitd_dd_dist_range", 256, 8192, 128, 0
+	StaticText "The one that makes a dark room feel like it", darkgray
+	StaticText "has depth rather than like the brightness", darkgray
+	StaticText "slider went down. Impossible per sector --", darkgray
+	StaticText "every pixel in a room is the same distance as", darkgray
+	StaticText "far as a sector multiplier knows.", darkgray
+	StaticText ""
+
+	StaticText "Height", gold
+	Slider "Pools below",			"gitd_dd_height", 0.0, 1.0, 0.05, 2
+	Slider "  Starting at Z",		"gitd_dd_height_ref", -1024, 1024, 16, 0
+	Slider "  Full dark after",		"gitd_dd_height_range", 16, 2048, 16, 0
+	StaticText "Dark gathering on the floor, or a rising", darkgray
+	StaticText "tide of it. Above the line nothing changes.", darkgray
+	StaticText ""
+	StaticText "Colour drain stays per sector in both modes.", darkgray
+	StaticText "That is what makes it reach the textures and", darkgray
+	StaticText "not just the glow.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// Glow Waves.
+//
+// EXCLUSIVE WITH SEAMLESS CORNERS, and the menu says so rather than quietly
+// picking a winner. The corner works by matching reach across the junction so
+// both sides arrive at the shared line agreeing; undulate one side and they
+// stop meeting, and every corner in the game grows a seam that moves. Either
+// the room is bounded by continuous colour with no edge anywhere, or it is
+// bounded by an edge that moves. Two different rooms, one choice.
+//
+// The payoff for letting the corner go is Climb: with the four channels free
+// to disagree, one wave can travel UP through a room -- floor, wall bottom,
+// wall top, ceiling -- which the matched version could never have done.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDWaves"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Glow Waves"
+	StaticText ""
+	Option "Waves",					"gitd_wave_enabled", "OnOff"
+	StaticText "Turning this on turns Seamless Corners off.", darkgray
+	StaticText "They want opposite things at a corner and", darkgray
+	StaticText "cannot both be right.", darkgray
+	StaticText ""
+
+	StaticText "The wave", gold
+	Slider "Wavelength",			"gitd_wave_length", 32, 2048, 16, 0
+	StaticText "World units per cycle. Small is corrugation;", darkgray
+	StaticText "large is a swell that takes a corridor to", darkgray
+	StaticText "arrive.", darkgray
+	Slider "Speed",					"gitd_wave_speed", 0.0, 8.0, 0.1, 1
+	StaticText "0 freezes it -- a fixed rippled edge, which", darkgray
+	StaticText "is a different thing worth having.", darkgray
+	Slider "Sharpness",				"gitd_wave_sharp", 1.0, 12.0, 0.5, 1
+	StaticText "Narrows the crest and never the trough. 1 is", darkgray
+	StaticText "a swell, high is a spike through a flat lane", darkgray
+	StaticText ""
+	Option "Shape",					"gitd_wave_shape", "GITDSweepShape"
+	Option "Starts from",			"gitd_wave_origin", "GITDSweepOrigin"
+	StaticText "Same shapes and origins as Sector Sweep, so", darkgray
+	StaticText "a wave and a band can be given the same one", darkgray
+	StaticText "and made to arrive together.", darkgray
+	StaticText ""
+
+	StaticText "What it moves", gold
+	Slider "Edge",					"gitd_wave_reach", 0.0, 0.9, 0.05, 2
+	StaticText "Moves the glow's EDGE -- the peaks and", darkgray
+	StaticText "valleys. This is the one nothing else can do.", darkgray
+	Slider "Brightness",			"gitd_wave_bright", 0.0, 1.0, 0.05, 2
+	StaticText "Pulses the light inside a band whose shape", darkgray
+	StaticText "never changes. Stacks with Edge.", darkgray
+	Slider "Colour",				"gitd_wave_colour", 0.0, 1.0, 0.05, 2
+	StaticText "Slides the two-colour boundary up and down", darkgray
+	StaticText "instead -- colour moving through still", darkgray
+	StaticText "geometry. Needs Seamless Corners' far colour", darkgray
+	StaticText "to have been set, so it does nothing on a", darkgray
+	StaticText "one-colour glow.", darkgray
+	StaticText ""
+
+	StaticText "Making it live", gold
+	Slider "Climb",					"gitd_wave_climb", 0, 360, 15, 0
+	StaticText "Phase added per surface going up: floor,", darkgray
+	StaticText "wall bottom, wall top, ceiling. This is what", darkgray
+	StaticText "makes one wave travel UP through a room", darkgray
+	StaticText "rather than every surface pulsing at once.", darkgray
+	Slider "Detune",				"gitd_wave_detune", 0.0, 1.0, 0.05, 2
+	StaticText "A second sine that does not divide the", darkgray
+	StaticText "first, so the room never quite repeats. One", darkgray
+	StaticText "sine is readable as machinery within about", darkgray
+	StaticText "ten seconds; two are not.", darkgray
+	Slider "Per-room scatter",		"gitd_wave_seed", 0.0, 1.0, 0.05, 2
+	StaticText "At 0 the whole map undulates as one, which", darkgray
+	StaticText "reads as a filter over the game rather than", darkgray
+	StaticText "as lighting in it. Give every room its own", darkgray
+	StaticText "moment.", darkgray
 }
 
 // ---------------------------------------------------------------------------

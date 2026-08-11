@@ -234,6 +234,23 @@ class DarkDoomZ_Handler : EventHandler {
 		// loop entirely is exactly equivalent to running it -- the compositor
 		// resets its accumulators every tic regardless.
 		bool on = CVar.FindCVar("gitd_dd_enabled").GetBool();
+
+		// [GITD] PER-PIXEL DARKNESS TAKES THIS PASS'S JOB, NOT ITS PLACE.
+		//
+		// The shader term and this loop compute the same curve. Running both
+		// applies it TWICE -- the sector is scaled down and then every
+		// fragment in it is scaled down again by the same factor -- so the
+		// room goes roughly twice as dark as either setting asked for and
+		// every level on the dial reads wrong. Not a subtle failure, but a
+		// confusing one, because both halves are behaving correctly.
+		//
+		// So exactly one of them runs. Colour drain is NOT one of them: it is
+		// a sector desaturation, which is what makes it reach the TEXTURES
+		// and not just what this mod draws, and there is no per-fragment
+		// equivalent that would keep that. It stays here in both modes.
+		bool perPixel = GITD_Render.GetB("gitd_dd_perpixel", false);
+		if (perPixel) on = false;
+
 		if ((!on || ddz_mode == 0) && desat == 0) return;
 
 		// Per sector, because three of the four curves read the sector's own
@@ -570,6 +587,71 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 		super.Init(parent, desc);
 		DontDim = true;
 		DontBlur = true;
+
+		// [GITD] AND THE WORLD KEEPS RUNNING BEHIND IT.
+		//
+		// Turning off the dim and the blur was always a promise of a live
+		// preview, and it was only ever half kept: a menu pauses the game in
+		// single player, so the room you could suddenly see clearly was a
+		// FROZEN one. Nothing re-evaluated, so a slider took effect when you
+		// backed out rather than when you moved it.
+		//
+		// It could not be fixed on the menu's side alone. The lane colours,
+		// the preset palette and the sweep's band positions are written to
+		// SECTORS, and a sector write is playsim work that a paused game does
+		// not do -- there is no scope trick that makes it happen. The only
+		// thing that shows those live is letting the world run.
+		//
+		// So it runs. DMenu::DontPause is a fork addition for exactly this,
+		// and the cost is worth saying out loud rather than hiding behind an
+		// option nobody would find: monsters keep moving and you can be hurt
+		// while this page is open. For a page whose entire purpose is to show
+		// you the room you are adjusting, that is the right trade -- and a
+		// lighting page you have to keep leaving to see is not one.
+		DontPause = true;
+	}
+
+	// [GITD] The menu's clock, which keeps running while the playsim is
+	// paused. Two jobs, both idempotent and both cheap enough to do every
+	// menu tic rather than trying to detect a change:
+	//
+	//   - preset apply/recall, so choosing one takes hold while you are still
+	//     looking at the room, and so a preset chosen at the title screen --
+	//     where there is no playsim at all -- is not silently dropped
+	//   - the render settings, so every slider on the waves and darkness
+	//     pages moves the picture as you drag it
+	//
+	// Both call the same functions the playsim calls. Nothing here is a
+	// second implementation, which is what stops the two drifting apart.
+	override void Ticker() {
+		super.Ticker();
+
+		let c = CVar.FindCVar("gitd_preset");
+		if (c) GITD_PresetProfile.Sync(c.GetInt());
+
+		GITD_Render.PushAll();
+	}
+
+	// [GITD] THE ENGINE HALF OF A PROFILE, AND WHY IT LIVES HERE.
+	//
+	// Bloom and exposure are gl_* -- ENGINE cvars, not this mod's. ZScript
+	// refuses to write one unless DMenu::InMenu is set, and it is set around
+	// MenuEvent, OnUIEvent and OnInputEvent but NOT around Ticker. So the
+	// rest of a profile can be pushed from the ticker and this part cannot;
+	// it has to ride a key press.
+	//
+	// Which is exactly when it is needed. A preset is chosen by moving an
+	// option, and moving an option IS a MenuEvent, so the bloom half lands on
+	// the same keystroke as everything else. The one case it does not cover
+	// is setting gitd_preset from the console, where a profile's colours and
+	// sweep apply and its bloom does not until the menu is next touched --
+	// stated plainly rather than papered over, because a silent half-apply is
+	// worse than a known one.
+	override bool MenuEvent(int mkey, bool fromcontroller) {
+		bool handled = super.MenuEvent(mkey, fromcontroller);
+		let c = CVar.FindCVar("gitd_preset");
+		if (c) GITD_PresetProfile.ApplyEngine(c.GetInt());
+		return handled;
 	}
 
 	// [GITD] THE PRESET HAS TO TAKE HOLD WHILE YOU ARE STILL LOOKING AT IT.
