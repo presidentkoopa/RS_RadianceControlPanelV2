@@ -434,6 +434,50 @@ class GITD_Presets : Object
 			return Color(255, 0, 0, 0);
 		}
 
+		// RED ALERT is written out slot by slot rather than generated,
+		// because the thing it is trying to say cannot be said as a hue
+		// range. A generated palette spreads eight related colours evenly
+		// across a lane; this needs the CEILING to be pure black for four
+		// minutes and then a lamp for forty seconds, which is a sequence,
+		// not a spread. Same reason Blackout and Black and White are
+		// literal: the generator is a good way to describe a scheme and no
+		// way at all to describe an event.
+		//
+		// Read down a column and you get one surface's five minutes. Read
+		// across and you get the room at one moment. The holds that pace it
+		// are in GITD_PresetProfile.RedAlert, and the two tables have to be
+		// read together -- a colour here means nothing without the seconds
+		// it sits for.
+		if (preset == 3)
+		{
+			static const int redAlert[] =
+			{
+				// wall bottom -- the corridor strip, and the whole story:
+				// trip, three klaxon beats, sustain, decay, a long wait.
+				0xFFE8C0, 0xFF1810, 0x380000, 0xFF1810,
+				0x380000, 0xC81000, 0x6A1400, 0x2E1A00,
+
+				// wall top -- the beacon's spill, deliberately three
+				// seconds out of step with the ceiling so the two read as
+				// one lamp turning rather than two lanes changing.
+				0xFF3018, 0x200000, 0xFF3018, 0x200000,
+				0xFF3018, 0x200000, 0x401008, 0x140800,
+
+				// ceiling -- the beacon itself. Six alternating slots and
+				// then black for four and a half minutes.
+				0xFF0000, 0x0A0000, 0xFF0000, 0x0A0000,
+				0xFF0000, 0x0A0000, 0x200000, 0x000000,
+
+				// floor -- the deck. Everything the walls do, reflected,
+				// darker and one beat slower.
+				0xFFD0A0, 0x8A0800, 0xC01000, 0x8A0800,
+				0x500400, 0x7A0C00, 0x3A0A00, 0x1A0E00,
+			};
+
+			int packed = redAlert[clamp(lane, 0, 3) * 8 + clamp(slot, 0, 7)];
+			return Color(255, (packed >> 16) & 255, (packed >> 8) & 255, packed & 255);
+		}
+
 		// The working set, which the Preset Options menu edits. It is loaded
 		// from this preset (saved version, or shipped default) whenever the
 		// selection changes -- see GITD_PresetCustomiser.
@@ -2038,15 +2082,16 @@ class GITD_PresetCustomiser : StaticEventHandler
 {
 	int lastPreset;
 
-	// True for the first tic of a map, so a map LOAD can be told apart from
-	// the player CHOOSING a preset. They must not be treated the same.
-	bool freshMap;
-
+	// freshMap is gone. It existed to tell a map LOAD apart from the player
+	// CHOOSING a preset, because applying a profile was gated on having seen
+	// the change. Nothing is gated on that any more -- see
+	// GITD_PresetProfile.Sync -- and the two cases no longer need telling
+	// apart, because "is a profile already holding the player's settings?"
+	// answers both.
 	override void WorldLoaded(WorldEvent e)
 	{
 		lastPreset = -1;    // force the working set to load on the first tick
 		lastSweepSel = -1;  // and the sweep working set with it
-		freshMap = true;
 	}
 
 	// The menu offers 0..11. A console user can type anything, and every
@@ -2130,30 +2175,13 @@ class GITD_PresetCustomiser : StaticEventHandler
 		int preset = clamp(CVar.FindCVar("gitd_preset").GetInt(), 0, GITD_PRESET_MAX);
 		if (preset != lastPreset)
 		{
-			// A REAL CHOICE, OR JUST A NEW MAP?
-			//
-			// lastPreset is reset to -1 on every load so the working set gets
-			// rebuilt, which means "preset != lastPreset" is true on the first
-			// tic of every single map. Applying the profile there re-asserted
-			// the whole environment -- sweeps, darkness, lane settings -- on
-			// every level change, so switching sweeps off lasted exactly until
-			// the next door out. It also looked like the game was starting
-			// sweeps by itself, because it was.
-			//
-			// A profile is a thing you CHOOSE. It writes once, the settings
-			// persist in the config like any others, and after that they are
-			// yours to override. Only the working set, which is the preset's
-			// generated colours and belongs to the preset, reloads per map.
-			bool chosen = !freshMap;
 			lastPreset = preset;
-			freshMap = false;
-			if (preset > 0)
-			{
-				LoadWorkingSet(preset);
-				if (chosen) GITD_PresetProfile.Apply(preset);
-			}
+			if (preset > 0) LoadWorkingSet(preset);
 		}
-		else if (freshMap) freshMap = false;
+
+		// Applying and recalling is state-derived and scope-free -- the menu
+		// asks the same question every tic it is open. See PresetProfile.zs.
+		GITD_PresetProfile.Sync(preset);
 	}
 
 	// GUARDED, like PresetProfile.zs:28-30. An unguarded FindCVar().Set* is a

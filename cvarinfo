@@ -23,6 +23,24 @@ server bool gitd_dd_enabled = true;      // DarkDoomZ master
 // 1-10 override every lane's colours while active.
 server int gitd_preset = 0;
 
+// WHAT THE PLAYER HAD BEFORE THE PRESET.
+//
+// A preset REPLACES settings -- that is the point of it, and it is why a
+// preset can be a whole environment rather than a swatch. Replacing without
+// a way back is just destroying, so every value a profile overwrites is
+// recorded here first, as "name=value;name=value;...", and Disable Preset
+// writes them all back.
+//
+// One string rather than sixty shadow cvars, deliberately: profiles will
+// grow to cover volumetrics, bloom, the sweep and more, and none of that
+// should need a new cvar per setting. The capture is automatic -- see
+// GITD_PresetProfile.Capture -- so anything a future profile writes is
+// recallable the day it is written, with nothing to keep in step.
+//
+// Empty means no preset is currently holding the player's settings, which
+// is also the flag used to decide whether a profile still needs applying.
+server string gitd_preset_backup = "";
+
 // ---- Floor glow (fg) -----------------------------------------------------
 server bool gitd_fg_enabled = true;
 server color gitd_fg_c1 = "00 dc ff";
@@ -38,7 +56,7 @@ server bool gitd_fg_random = false;   // ignore the slots, pick fresh colours ea
 server int gitd_fg_pattern = 1;          // 0 snap, 1 fade, 2 flash, 3 breathe, 4 ping-pong
 server float gitd_fg_speed = 0.004;
 server bool gitd_fg_bleed = true;        // pull colour toward neighbouring lanes
-server int gitd_fg_coverage = 160;
+server int gitd_fg_coverage = 128;
 server int gitd_fg_falloff = 1;
 server float gitd_fg_intensity = 1.0;
 server float gitd_fg_saturation = 1.0;   // 0 = greyscale, 1 = full colour, >1 pushes toward white
@@ -64,7 +82,7 @@ server bool gitd_cg_random = false;   // ignore the slots, pick fresh colours ea
 server int gitd_cg_pattern = 1;
 server float gitd_cg_speed = 0.004;
 server bool gitd_cg_bleed = true;
-server int gitd_cg_coverage = 160;
+server int gitd_cg_coverage = 128;
 server int gitd_cg_falloff = 1;
 server float gitd_cg_intensity = 1.0;
 server float gitd_cg_saturation = 1.0;
@@ -90,7 +108,7 @@ server bool gitd_wb_random = false;   // ignore the slots, pick fresh colours ea
 server int gitd_wb_pattern = 1;
 server float gitd_wb_speed = 0.004;
 server bool gitd_wb_bleed = true;
-server int gitd_wb_coverage = 176;       // deliberately past halfway on most walls
+server int gitd_wb_coverage = 128;       // all four lanes start here now, deliberately
 server int gitd_wb_falloff = 1;
 server float gitd_wb_intensity = 1.0;
 server float gitd_wb_saturation = 1.0;
@@ -116,7 +134,7 @@ server bool gitd_wt_random = false;   // ignore the slots, pick fresh colours ea
 server int gitd_wt_pattern = 1;
 server float gitd_wt_speed = 0.004;
 server bool gitd_wt_bleed = true;
-server int gitd_wt_coverage = 176;       // overlaps wb mid-wall on purpose
+server int gitd_wt_coverage = 128;       // wb and wt no longer overlap mid-wall
 server int gitd_wt_falloff = 1;
 server float gitd_wt_intensity = 1.0;
 server float gitd_wt_saturation = 1.0;

@@ -116,19 +116,19 @@ OptionValue "GITDFLMount"
 	3, "Chest mounted"
 }
 
+// Only the presets that are FINISHED. The others described a palette and a
+// sweep and called that an environment; a preset is meant to carry the lanes,
+// the sweep, the darkness, the air and in time the bloom, together. They are
+// in git until they do.
+//
+// The numbering is deliberately not tidied. These are the indices the profiles
+// and the colour tables are written against, and renumbering them to close the
+// gaps would silently repoint every saved config at a different preset.
 OptionValue "GITDPreset"
 {
 	0,  "Off (use my colours)"
 	1,  "Blackout"
-	2,  "Low Power"
 	3,  "Red Alert"
-	4,  "Cold War"
-	5,  "Toxic"
-	6,  "Neon Unison"
-	7,  "Neon Chaos"
-	8,  "Ember"
-	9,  "Deep Sea"
-	10, "Monochrome"
 	11, "Black and White"
 }
 
@@ -320,7 +320,17 @@ OptionMenu "GITDOptions"
 
 	StaticText "Presets  (override every glow setting)", gold
 	Option "  Preset",				"gitd_preset", "GITDPreset"
+	Command "  Disable Preset",		"gitd_preset 0"
+	StaticText "A preset REPLACES your settings. Disable", darkgray
+	StaticText "puts back exactly what you had when you", darkgray
+	StaticText "chose it -- including anything you changed", darkgray
+	StaticText "while it was on.", darkgray
+	StaticText ""
 	Submenu "  Customise this preset","GITDPresetOptions"
+	StaticText "That page generates a palette from a hue", darkgray
+	StaticText "range. Every preset here is written out", darkgray
+	StaticText "colour by colour instead, so it has nothing", darkgray
+	StaticText "to alter on any of them.", darkgray
 	StaticText ""
 	StaticText ""
 
