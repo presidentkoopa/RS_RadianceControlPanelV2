@@ -340,7 +340,6 @@ OptionMenu "GITDOptions"
 	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
 	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
 	Submenu "  Per-pixel darkness...","GITDDarkPixel"
-	Submenu "  Muzzle Flash Options...","GITDMuzzle"
 	StaticText ""
 
 	Submenu "Volumetric Flashlight Options...","GITDFlashlight"
@@ -1361,48 +1360,3 @@ OptionMenu "GITDFog"
 // Vanilla has no muzzle light -- it lifts the brightness of the whole VIEW,
 // which casts nothing and is ruinous in the dark. DarkDoom kills that; this
 // puts back what it was gesturing at, as an actual light in the world.
-// ---------------------------------------------------------------------------
-
-OptionMenu "GITDMuzzle"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Muzzle Flash"
-	StaticText ""
-	Option "Muzzle flash",			"gitd_mf_enabled", "OnOff"
-	Slider "How long (tics)",		"gitd_mf_life", 1, 12, 1, 0
-	StaticText ""
-
-	StaticText "Your weapons", gold
-	Option "Enabled",				"gitd_mf_player", "OnOff"
-	Slider "Radius",				"gitd_mf_radius", 16, 512, 8, 0
-	Slider "Brightness",			"gitd_mf_bright", 0.1, 3.0, 0.05, 2
-	StaticText ""
-	ColorPicker "Colour 1",			"gitd_mf_c1"
-	ColorPicker "Colour 2",			"gitd_mf_c2"
-	ColorPicker "Colour 3",			"gitd_mf_c3"
-	ColorPicker "Colour 4",			"gitd_mf_c4"
-	Option "Randomise colours",		"gitd_mf_random", "OnOff"
-	StaticText "Off, the four rotate one per shot.", darkgray
-	SafeCommand "Set all four to default","netevent gitd_mf_defaults"
-	StaticText ""
-	Slider "Minimum gap (tics)",	"gitd_mf_cooldown", 1, 12, 1, 0
-	StaticText "Full auto needs no throttle -- a new shot is", darkgray
-	StaticText "the flash sequence RESTARTING, so the light", darkgray
-	StaticText "already fires at the gun's own rate. This is", darkgray
-	StaticText "only a floor if something outruns your eye.", darkgray
-	StaticText ""
-
-	StaticText "Monsters", gold
-	Option "Enabled",				"gitd_mf_monsters", "OnOff"
-	ColorPicker "Colour",			"gitd_mf_mon_color"
-	Slider "Radius",				"gitd_mf_mon_radius", 16, 512, 8, 0
-	Slider "Brightness",			"gitd_mf_mon_bright", 0.1, 3.0, 0.05, 2
-	StaticText ""
-	Option "Use the flash frame",	"gitd_mf_bright_frame", "OnOff"
-	StaticText "A monster's muzzle flash is painted into one", darkgray
-	StaticText "attack frame, marked fullbright. On, the", darkgray
-	StaticText "light fires on exactly that frame. Off, or", darkgray
-	StaticText "for a monster that marks none, it fires at", darkgray
-	StaticText "the start of the attack -- early, never", darkgray
-	StaticText "missing.", darkgray
-}

@@ -725,37 +725,6 @@ server int gitd_ss_shape8 = 0;
 // original behaviour: a dark room with nothing in it but the travelling lines.
 server bool gitd_ss_underlay = true;
 
-// ---- Muzzle flash ----------------------------------------------------------
-// A real point light on whatever just fired, replacing vanilla's whole-view
-// brightening (which gitd_dd_noflash kills). Attached to the shooter, so it
-// rides them and needs no carrier actor.
-server bool  gitd_mf_enabled = true;
-server int   gitd_mf_life = 4;           // tics the flash lasts, fading out
-
-// The player. Four colours rotate per shot, or one is picked at random.
-// Brightness scales the colour channels; radius is reach. Two questions.
-server bool  gitd_mf_player = true;
-server int   gitd_mf_radius = 160;
-server float gitd_mf_bright = 1.0;
-server color gitd_mf_c1 = "ff dc 96";
-server color gitd_mf_c2 = "ff dc 96";
-server color gitd_mf_c3 = "ff dc 96";
-server color gitd_mf_c4 = "ff dc 96";
-server bool  gitd_mf_random = false;
-// Full auto needs no throttle: the light already follows the gun's own
-// cadence, because a new shot is detected as the flash sequence RESTARTING.
-// This is a floor for anything that re-flashes faster than the eye resolves.
-server int   gitd_mf_cooldown = 1;
-
-// Monsters.
-server bool  gitd_mf_monsters = true;
-server int   gitd_mf_mon_radius = 120;
-server float gitd_mf_mon_bright = 1.0;
-server color gitd_mf_mon_color = "ff b4 64";
-// Fire on the fullbright attack frame -- the one the artist painted the flash
-// onto. Off, or for a monster that marks none, the attack's first frame.
-server bool  gitd_mf_bright_frame = true;
-
 // ---- Seamless corners ------------------------------------------------------
 // Where a wall meets a floor, two glows already meet nose to nose -- the wall's
 // fades upward from the line, the floor's fades inward from it, both at full
