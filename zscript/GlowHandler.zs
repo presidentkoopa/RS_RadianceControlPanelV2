@@ -472,7 +472,7 @@ class GITD_Presets : Object
 				// floor -- the deck. Everything the walls do, reflected,
 				// darker and one beat slower.
 				0xFFD0A0, 0x8A0800, 0xC01000, 0x8A0800,
-				0x500400, 0x7A0C00, 0x3A0A00, 0x1A0E00,
+				0x500400, 0x7A0C00, 0x3A0A00, 0x1A0E00
 			};
 
 			int packed = redAlert[clamp(lane, 0, 3) * 8 + clamp(slot, 0, 7)];
@@ -507,7 +507,7 @@ class GITD_Presets : Object
 
 				// floor -- what the walls spill onto, dimmest of all
 				0x261A06, 0x1E1404, 0x2A1E08, 0x160E02,
-				0x221806, 0x1A1204, 0x281C06, 0x120C02,
+				0x221806, 0x1A1204, 0x281C06, 0x120C02
 			};
 
 			int packed = lowPower[clamp(lane, 0, 3) * 8 + clamp(slot, 0, 7)];
@@ -534,7 +534,7 @@ class GITD_Presets : Object
 				0xFF0066, 0xFF00E6, 0x00FF66, 0xFFD400,
 
 				0xFF3300, 0x99FF00, 0xFF0066, 0xFF00E6,
-				0x00FF66, 0xFFD400, 0x6600FF, 0x00E5FF,
+				0x00FF66, 0xFFD400, 0x6600FF, 0x00E5FF
 			};
 
 			int packed = omg[clamp(lane, 0, 3) * 8 + clamp(slot, 0, 7)];

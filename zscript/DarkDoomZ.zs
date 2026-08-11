@@ -654,23 +654,4 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 		return handled;
 	}
 
-	// [GITD] THE PRESET HAS TO TAKE HOLD WHILE YOU ARE STILL LOOKING AT IT.
-	//
-	// Every GITD menu turns off the dim and the blur so the room behind is the
-	// room you are adjusting. That promise breaks for presets specifically,
-	// because applying one is playsim work and the playsim is not running: the
-	// menu pauses the game in single player, and choosing a preset from the
-	// title screen has no playsim to run at all. So the choice sat in the cvar
-	// and the room only changed once you backed out -- or, from the title
-	// screen, never.
-	//
-	// A menu tic is the one clock still running, and menu code may write
-	// cvars, so it asks the same question the playsim asks. Sync is idempotent
-	// and derived from state, so both asking costs nothing and neither has to
-	// know about the other.
-	override void Ticker() {
-		super.Ticker();
-		let c = CVar.FindCVar("gitd_preset");
-		if (c) GITD_PresetProfile.Sync(c.GetInt());
-	}
 }

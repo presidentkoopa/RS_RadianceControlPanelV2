@@ -1355,8 +1355,3 @@ OptionMenu "GITDFog"
 }
 
 // ---------------------------------------------------------------------------
-// MUZZLE FLASH
-//
-// Vanilla has no muzzle light -- it lifts the brightness of the whole VIEW,
-// which casts nothing and is ruinous in the dark. DarkDoom kills that; this
-// puts back what it was gesturing at, as an actual light in the world.
