@@ -783,6 +783,7 @@ class GITD_Handler : StaticEventHandler
 	{
 		w.bandPos.Clear(); w.bandFx.Clear();
 		w.bandCol.Clear(); w.bandAct.Clear(); w.bandAmt.Clear();
+		w.bandShape.Clear(); w.bandThick.Clear(); w.bandDraw.Clear();
 		for (int i = 0; i < w.subBands; i++)
 		{
 			w.bandPos.Push(WaveBandPos(w, i));
@@ -791,7 +792,25 @@ class GITD_Handler : StaticEventHandler
 			w.bandCol.Push((c.r << 16) | (c.g << 8) | c.b);
 			w.bandAct.Push(WaveBandAction(w, i));
 			w.bandAmt.Push(WaveBandAmount(w, i));
+			w.bandShape.Push(WaveBandShape(w, i));
+			w.bandThick.Push(int(WaveBandThickness(w, i)));
+			w.bandDraw.Push(WaveBandDraw(w, i));
 		}
+	}
+
+	int BandShape(GITD_Wave w, int i)
+	{
+		return (i >= 0 && i < w.bandShape.Size()) ? w.bandShape[i] : w.shape;
+	}
+
+	int BandThick(GITD_Wave w, int i)
+	{
+		return (i >= 0 && i < w.bandThick.Size()) ? w.bandThick[i] : int(w.thickness);
+	}
+
+	int BandDraw(GITD_Wave w, int i)
+	{
+		return (i >= 0 && i < w.bandDraw.Size()) ? w.bandDraw[i] : 1;
 	}
 
 	Color BandColor(GITD_Wave w, int i)
@@ -1282,11 +1301,11 @@ class GITD_Handler : StaticEventHandler
 					// A band that has not started yet is parked far away
 					// rather than drawn sitting at the origin.
 					if (pos < 0 && w.dir > 0) pos = -100000;
-					level.SetSweepBand(slot, pos, WaveBandThickness(w, band), w.softness,
+					level.SetSweepBand(slot, pos, BandThick(w, band), w.softness,
 						BandColor(w, band), w.intensity);
 					// This band's OWN origin and shape.
-					level.SetSweepBandAt(slot, w.BandOrigin(band), WaveBandShape(w, band));
-					level.SetSweepBandDraw(slot, WaveBandDraw(w, band));
+					level.SetSweepBandAt(slot, w.BandOrigin(band), BandShape(w, band));
+					level.SetSweepBandDraw(slot, BandDraw(w, band));
 					slot++;
 				}
 			}
@@ -1306,7 +1325,7 @@ class GITD_Handler : StaticEventHandler
 	// the shader.
 	double WaveDistanceFor(GITD_Wave w, Vector3 c, int band)
 	{
-		int shape = WaveBandShape(w, band);
+		int shape = BandShape(w, band);
 		Vector3 o = w.BandOrigin(band);
 		if (shape == 2)      return abs(c.x - o.x);
 		else if (shape == 3) return abs(c.y - o.y);
@@ -1323,17 +1342,30 @@ class GITD_Handler : StaticEventHandler
 	// centre while the next is a plane climbing from your feet -- and one
 	// number cannot describe both. Same restructuring main.fp took when its
 	// distance moved inside the band loop, for the same reason.
-	int, double WaveNearestAt(GITD_Wave w, Vector3 c, double reach)
+	// REACH IS PER BAND, not per wave. Fixed 2026-08-11: the caller used to
+	// pass one reach derived from w.thickness while the shader draws each band
+	// at its OWN gitd_ss_thick<n>, so a band drawn thin changed light in a
+	// band-width it was never drawn at -- exactly the light-lags-the-band
+	// mismatch SECTOR_SWEEP.md names as a must-never. The `fallback` argument
+	// is still taken because a wave with no per-band thickness set resolves
+	// every band to its shared value anyway.
+	int, double WaveNearestAt(GITD_Wave w, Vector3 c, double fallback)
 	{
 		double nearest = 1e9;
+		double nearestReach = fallback;
 		int which = -1;
 		for (int b = 0; b < w.bandPos.Size(); b++)
 		{
 			double d = abs(WaveDistanceFor(w, c, b) - w.bandPos[b]);
-			if (d < nearest) { nearest = d; which = b; }
+			if (d < nearest)
+			{
+				nearest = d;
+				which = b;
+				nearestReach = max(max(BandThick(w, b), 1), 1.0) * 3.0;
+			}
 		}
-		if (which < 0 || nearest > reach) return -1, 0.0;
-		return which, 1.0 - clamp(nearest / reach, 0.0, 1.0);
+		if (which < 0 || nearest > nearestReach) return -1, 0.0;
+		return which, 1.0 - clamp(nearest / nearestReach, 0.0, 1.0);
 	}
 
 	// ---- What arrival does ----------------------------------------------
@@ -1670,22 +1702,35 @@ class GITD_Handler : StaticEventHandler
 		// Reach, falloff and brightness are forced to match too. A ramp that
 		// changes width, curve or brightness halfway across the corner reads
 		// as a seam even when the colour is continuous.
-		Color wbFar = Color(0,0,0,0), wtFar = Color(0,0,0,0);
-		Color cgFar = Color(0,0,0,0), fgFar = Color(0,0,0,0);
-		if (CvB("gitd_seamless", false))
-		{
-			Color floorJoin = GITD_Palette.Lerp(wbCol, fgCol, 0.5);
-			Color ceilJoin  = GITD_Palette.Lerp(wtCol, cgCol, 0.5);
-			wbFar = wbCol; wbCol = floorJoin;
-			fgFar = fgCol; fgCol = floorJoin;
-			wtFar = wtCol; wtCol = ceilJoin;
-			cgFar = cgCol; cgCol = ceilJoin;
-		}
-
+		// HOISTED ABOVE THE JOIN, 2026-08-11. These used to be read after the
+		// seamless block, which meant the join could not consult them -- so a
+		// lane with its partner switched off still ramped halfway toward that
+		// partner's colour, agreeing with a surface that is not drawn.
 		bool wbOn = wb.GetBool("_enabled");
 		bool wtOn = wt.GetBool("_enabled");
 		bool cgOn = cg.GetBool("_enabled");
 		bool fgOn = fg.GetBool("_enabled");
+
+		Color wbFar = Color(0,0,0,0), wtFar = Color(0,0,0,0);
+		Color cgFar = Color(0,0,0,0), fgFar = Color(0,0,0,0);
+		if (CvB("gitd_seamless", false))
+		{
+			// A corner needs BOTH of its surfaces to be drawn before there is
+			// anything to agree with. With one side off the other keeps its own
+			// flat colour, which is what it looked like before seamless existed.
+			if (wbOn && fgOn)
+			{
+				Color floorJoin = GITD_Palette.Lerp(wbCol, fgCol, 0.5);
+				wbFar = wbCol; wbCol = floorJoin;
+				fgFar = fgCol; fgCol = floorJoin;
+			}
+			if (wtOn && cgOn)
+			{
+				Color ceilJoin = GITD_Palette.Lerp(wtCol, cgCol, 0.5);
+				wtFar = wtCol; wtCol = ceilJoin;
+				cgFar = cgCol; cgCol = ceilJoin;
+			}
+		}
 
 		int wbCov = wb.GetInt("_coverage"), wbFall = wb.GetInt("_falloff");
 		int wtCov = wt.GetInt("_coverage"), wtFall = wt.GetInt("_falloff");
@@ -1734,8 +1779,12 @@ class GITD_Handler : StaticEventHandler
 				// only way to match brightness was to pre-scale the flat's
 				// colour by the wall's intensity -- a workaround for a slider
 				// that meant two different things.
-				sfgCov = wbCov;  sfgFall = wbFall;  sfgI = wbIA;
-				scgCov = wtCov;  scgFall = wtFall;  scgI = wtIA;
+				//
+				// Only from a wall that is actually drawn. Taking reach and
+				// curve from a disabled lane silently gave the flat the shape
+				// of a surface the user had switched off.
+				if (wbOn && fgOn) { sfgCov = wbCov;  sfgFall = wbFall;  sfgI = wbIA; }
+				if (wtOn && cgOn) { scgCov = wtCov;  scgFall = wtFall;  scgI = wtIA; }
 			}
 
 			ApplyOne(sec,
@@ -1951,19 +2000,26 @@ class GITD_ResetHandler : EventHandler
 		for (int i = 0; i < amb.Size(); i++) Rst(amb[i]);
 		for (int b = 1; b <= 8; b++) { Rst("gitd_ss_fx" .. b); Rst("gitd_ss_script" .. b); }
 
-		// Bloom and exposure belong to the ENGINE, not to this mod, so they
-		// survived every previous "reset to defaults" -- which is exactly how
-		// you end up with a menu button that does not fix the thing you broke.
-		// The page offers them, so the reset owes them.
-		static const string engine[] = {
-			"gl_bloom", "gl_bloom_threshold", "gl_bloom_knee", "gl_bloom_amount",
-			"gl_bloom_anamorphic", "gl_bloom_anamorphic_ratio",
-			"gl_bloom_chromatic", "gl_bloom_tint_r", "gl_bloom_tint_g",
-			"gl_bloom_tint_b", "gl_exposure_scale", "gl_exposure_min",
-			"gl_exposure_base", "gl_exposure_speed", "gl_fogmode" };
-		for (int i = 0; i < engine.Size(); i++) Rst(engine[i]);
-
-		Console.Printf("\c[Gold]All Glow In The Dark settings reset to defaults, bloom included.");
+		// BLOOM AND EXPOSURE ARE NOT RESET HERE, AND CANNOT BE. Fixed
+		// 2026-08-11.
+		//
+		// This used to walk a list of gl_bloom_* / gl_exposure_* / gl_fogmode
+		// and Rst() each one. Those belong to the ENGINE, and an engine cvar
+		// cannot be written from play scope -- NetworkProcess runs in play,
+		// so the first one threw and took the whole handler with it. The
+		// abort landed PAST every mod reset above and BEFORE the confirmation
+		// below, so the button half-worked and then died silently: the user
+		// got an abort message instead of the line promising "bloom included",
+		// and not one engine cvar was ever actually reset.
+		//
+		// The intent was right -- the page offers those sliders, so the reset
+		// owes them. But it has to happen in MENU scope, where a cvar write is
+		// legal. DarkDoomZ_OptionMenu (DarkDoomZ.zs:555) is the pattern: a
+		// ZScript OptionMenu subclass whose MenuEvent does the work. Until
+		// that exists, this says what is true rather than what was intended.
+		Console.Printf("\c[Gold]All Glow In The Dark settings reset to defaults.");
+		Console.Printf("\c[DarkGray]Bloom and exposure are engine settings and were not "
+			.. "touched -- reset those from the Bloom page.");
 	}
 }
 
@@ -1988,13 +2044,90 @@ class GITD_PresetCustomiser : StaticEventHandler
 
 	override void WorldLoaded(WorldEvent e)
 	{
-		lastPreset = -1;   // force the working set to load on the first tick
+		lastPreset = -1;    // force the working set to load on the first tick
+		lastSweepSel = -1;  // and the sweep working set with it
 		freshMap = true;
+	}
+
+	// The menu offers 0..11. A console user can type anything, and every
+	// preset path concatenates this number into a cvar name, so an unclamped
+	// value resolves to nothing and the write dereferences null. Clamped at
+	// both read sites rather than trusted.
+	const GITD_PRESET_MAX = 11;
+
+	// ---- The sweep working set -------------------------------------------
+	//
+	// Eight bands x seven controls is forty-eight menu rows, which is already
+	// past readable and left nowhere to put the per-band script. So the menu
+	// edits ONE band and a selector says which. Exactly the trick the preset
+	// customiser above uses, for exactly the same reason.
+	//
+	// The gitd_ss_*N cvars stay the storage. These are a view onto them, so
+	// presets, the reset button and the engine see no change at all.
+
+	int lastSweepSel;
+
+	static string SwKey(string field, int band) { return "gitd_ss_" .. field .. band; }
+
+	// Working set -> band N. Called before the selector moves away from N, so
+	// edits are never silently dropped.
+	void SaveSweep(int band)
+	{
+		if (band < 1 || band > 8) return;
+		let c = CVar.FindCVar("gitd_sw_c");
+		if (c) { let d = CVar.FindCVar(SwKey("c", band)); if (d) d.SetString(c.GetString()); }
+		SetI(SwKey("speed",  band), GetI("gitd_sw_speed",  120));
+		SetI(SwKey("shape",  band), GetI("gitd_sw_shape",  0));
+		SetI(SwKey("draw",   band), GetI("gitd_sw_draw",   1));
+		SetI(SwKey("thick",  band), GetI("gitd_sw_thick",  0));
+		SetI(SwKey("fx",     band), GetI("gitd_sw_fx",     1));
+		SetI(SwKey("amount", band), GetI("gitd_sw_amount", 48));
+		// Band 8 has no "time to next" -- there is no ninth band.
+		if (band < 8) SetI(SwKey("gap", band), GetI("gitd_sw_gap", 30));
+		let s = CVar.FindCVar("gitd_sw_script");
+		if (s) { let d = CVar.FindCVar(SwKey("script", band)); if (d) d.SetString(s.GetString()); }
+	}
+
+	// Band N -> working set.
+	void LoadSweep(int band)
+	{
+		if (band < 1 || band > 8) return;
+		let c = CVar.FindCVar(SwKey("c", band));
+		if (c) { let d = CVar.FindCVar("gitd_sw_c"); if (d) d.SetString(c.GetString()); }
+		SetI("gitd_sw_speed",  GetI(SwKey("speed",  band), 120));
+		SetI("gitd_sw_shape",  GetI(SwKey("shape",  band), 0));
+		SetI("gitd_sw_draw",   GetI(SwKey("draw",   band), 1));
+		SetI("gitd_sw_thick",  GetI(SwKey("thick",  band), 0));
+		SetI("gitd_sw_fx",     GetI(SwKey("fx",     band), 1));
+		SetI("gitd_sw_amount", GetI(SwKey("amount", band), 48));
+		SetI("gitd_sw_gap",    band < 8 ? GetI(SwKey("gap", band), 30) : 30);
+		let s = CVar.FindCVar(SwKey("script", band));
+		if (s) { let d = CVar.FindCVar("gitd_sw_script"); if (d) d.SetString(s.GetString()); }
+	}
+
+	// Live edits go straight through to the selected band, so the sweep you
+	// are watching changes as you drag the slider rather than when you next
+	// move the selector. The selector handler below covers the case where you
+	// move away mid-edit.
+	void CommitSweep()
+	{
+		SaveSweep(clamp(GetI("gitd_sw_sel", 1), 1, 8));
 	}
 
 	override void WorldTick()
 	{
-		int preset = CVar.FindCVar("gitd_preset").GetInt();
+		// The sweep selector, before the preset block: moving it must write
+		// the outgoing band before the incoming one overwrites the fields.
+		int sel = clamp(GetI("gitd_sw_sel", 1), 1, 8);
+		if (sel != lastSweepSel)
+		{
+			if (lastSweepSel >= 1 && lastSweepSel <= 8) SaveSweep(lastSweepSel);
+			lastSweepSel = sel;
+			LoadSweep(sel);
+		}
+		else CommitSweep();
+
+		int preset = clamp(CVar.FindCVar("gitd_preset").GetInt(), 0, GITD_PRESET_MAX);
 		if (preset != lastPreset)
 		{
 			// A REAL CHOICE, OR JUST A NEW MAP?
@@ -2023,8 +2156,17 @@ class GITD_PresetCustomiser : StaticEventHandler
 		else if (freshMap) freshMap = false;
 	}
 
-	static void SetF(string name, double v) { CVar.FindCVar(name).SetFloat(v); }
-	static void SetI(string name, int v) { CVar.FindCVar(name).SetInt(v); }
+	// GUARDED, like PresetProfile.zs:28-30. An unguarded FindCVar().Set* is a
+	// native null dereference -- not a catchable VM abort -- the moment a name
+	// does not resolve, and every caller below builds its name by concatenating
+	// a preset number. One out-of-range number took the process down.
+	static void SetF(string name, double v) { let c = CVar.FindCVar(name); if (c) c.SetFloat(v); }
+	static void SetI(string name, int v)    { let c = CVar.FindCVar(name); if (c) c.SetInt(v); }
+
+	// Reads need the same guard as writes -- GetBool() on a null CVar is the
+	// same native dereference as SetInt().
+	static bool GetB(string name)   { let c = CVar.FindCVar(name); return c ? c.GetBool()  : false; }
+	static int  GetI(string name, int def) { let c = CVar.FindCVar(name); return c ? c.GetInt() : def; }
 
 	// Pull a preset into the working set: your saved version if you have one,
 	// otherwise whatever GITD_Presets ships.
@@ -2032,7 +2174,7 @@ class GITD_PresetCustomiser : StaticEventHandler
 	{
 		string p = "gitd_p" .. preset;
 
-		if (CVar.FindCVar(p .. "_custom").GetBool())
+		if (GetB(p .. "_custom"))
 		{
 			SetF("gitd_pc_hue",     CVar.FindCVar(p .. "_hue").GetFloat());
 			SetF("gitd_pc_spread",  CVar.FindCVar(p .. "_spread").GetFloat());
@@ -2040,7 +2182,7 @@ class GITD_PresetCustomiser : StaticEventHandler
 			SetF("gitd_pc_satvar",  CVar.FindCVar(p .. "_satvar").GetFloat());
 			SetF("gitd_pc_val",     CVar.FindCVar(p .. "_val").GetFloat());
 			SetF("gitd_pc_valvar",  CVar.FindCVar(p .. "_valvar").GetFloat());
-			CVar.FindCVar("gitd_pc_shape").SetInt(CVar.FindCVar(p .. "_shape").GetBool() ? 1 : 0);
+			SetI("gitd_pc_shape", GetB(p .. "_shape") ? 1 : 0);
 			SetI("gitd_pc_coverage",CVar.FindCVar(p .. "_coverage").GetInt());
 			SetI("gitd_pc_falloff", CVar.FindCVar(p .. "_falloff").GetInt());
 			SetF("gitd_pc_intensity",CVar.FindCVar(p .. "_intensity").GetFloat());
@@ -2055,13 +2197,13 @@ class GITD_PresetCustomiser : StaticEventHandler
 			SetF("gitd_pc_satvar", sv);
 			SetF("gitd_pc_val", vb);
 			SetF("gitd_pc_valvar", vv);
-			CVar.FindCVar("gitd_pc_shape").SetInt(0);
+			SetI("gitd_pc_shape", 0);
 		}
 	}
 
 	override void NetworkProcess(ConsoleEvent e)
 	{
-		int preset = CVar.FindCVar("gitd_preset").GetInt();
+		int preset = clamp(CVar.FindCVar("gitd_preset").GetInt(), 0, GITD_PRESET_MAX);
 		if (preset <= 0)
 		{
 			if (e.name == "gitd_preset_save" || e.name == "gitd_preset_restore")
@@ -2078,16 +2220,16 @@ class GITD_PresetCustomiser : StaticEventHandler
 			SetF(p .. "_satvar",   CVar.FindCVar("gitd_pc_satvar").GetFloat());
 			SetF(p .. "_val",      CVar.FindCVar("gitd_pc_val").GetFloat());
 			SetF(p .. "_valvar",   CVar.FindCVar("gitd_pc_valvar").GetFloat());
-			CVar.FindCVar(p .. "_shape").SetInt(CVar.FindCVar("gitd_pc_shape").GetBool() ? 1 : 0);
+			SetI(p .. "_shape", CVar.FindCVar("gitd_pc_shape").GetBool() ? 1 : 0);
 			SetI(p .. "_coverage", CVar.FindCVar("gitd_pc_coverage").GetInt());
 			SetI(p .. "_falloff",  CVar.FindCVar("gitd_pc_falloff").GetInt());
 			SetF(p .. "_intensity",CVar.FindCVar("gitd_pc_intensity").GetFloat());
-			CVar.FindCVar(p .. "_custom").SetInt(1);
+			SetI(p .. "_custom", 1);
 			Console.Printf("Saved over preset: %s", GITD_Presets.Name(preset));
 		}
 		else if (e.name == "gitd_preset_restore")
 		{
-			CVar.FindCVar(p .. "_custom").SetInt(0);
+			SetI(p .. "_custom", 0);
 			LoadWorkingSet(preset);
 			Console.Printf("Restored preset defaults: %s", GITD_Presets.Name(preset));
 		}

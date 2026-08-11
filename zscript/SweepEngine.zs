@@ -187,6 +187,15 @@ class GITD_Wave : Object play
 	Array<GITD_SweepAction> bandAct;
 	Array<int> bandAmt;
 
+	// Cached alongside the five above, 2026-08-11. Shape in particular was
+	// being resolved by string-concatenated CVar.FindCVar from inside the
+	// per-sector x per-band loop -- the exact cost PrepareWave exists to pay
+	// once. Thickness is cached too so a band's light reach can match the
+	// width it is actually drawn at instead of the wave's shared thickness.
+	Array<int> bandShape;
+	Array<int> bandThick;
+	Array<int> bandDraw;
+
 	// True once the whole train, not just the leader, has left the range --
 	// otherwise a wave with eight bands would vanish while seven of them were
 	// still mid-room.

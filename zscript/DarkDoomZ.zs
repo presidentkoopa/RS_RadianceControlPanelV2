@@ -223,11 +223,24 @@ class DarkDoomZ_Handler : EventHandler {
 	void ApplyDarkness() {
 		int desat = clamp(ddz_desat, 0, 255);
 
+		// NOTHING TO SAY? DO NOT WALK THE MAP. Added 2026-08-11.
+		//
+		// The enabled/mode test used to live inside DarknessMulFor, i.e. inside
+		// the loop, so switching darkness off still paid a full per-sector pass
+		// plus a string cvar lookup per sector to declare a no-op tint. Both
+		// conditions are level-wide, so they are answered once, here.
+		//
+		// Tint(1,1,1) and Desaturate(0) are both identities, so skipping the
+		// loop entirely is exactly equivalent to running it -- the compositor
+		// resets its accumulators every tic regardless.
+		bool on = CVar.FindCVar("gitd_dd_enabled").GetBool();
+		if ((!on || ddz_mode == 0) && desat == 0) return;
+
 		// Per sector, because three of the four curves read the sector's own
 		// starting brightness. Sky handling lives inside DarknessMulFor, where
 		// it scales the adjustment the way the original did.
 		for (int i = 0; i < Level.Sectors.Size(); i++) {
-			int v = clamp(int(DarknessMulFor(i) * 255.0), 0, 255);
+			int v = on ? clamp(int(DarknessMulFor(i) * 255.0), 0, 255) : 255;
 			GITD_Composite.Tint(i, Color(255, v, v, v));
 			GITD_Composite.Desaturate(i, desat);
 		}

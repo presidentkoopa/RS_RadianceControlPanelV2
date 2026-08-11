@@ -471,6 +471,28 @@ server string gitd_ss_script7 = "";
 server string gitd_ss_script8 = "";
 
 
+// ---- The sweep working set -------------------------------------------------
+// MENUDEF binds to fixed cvar names, so eight bands x seven controls was
+// forty-eight rows on one page and no room for the script field the setpiece
+// work actually needs. Same answer as the preset customiser: the menu edits
+// ONE band's worth of controls, and a selector decides which band those map
+// to. Changing the selector writes the working set back to the band you were
+// editing and loads the next one.
+//
+// These are a VIEW. gitd_ss_c1..8 and friends remain the storage, so presets,
+// the reset button and the engine are all untouched by this.
+server int    gitd_sw_sel    = 1;
+server color  gitd_sw_c      = "80 80 ff";
+server int    gitd_sw_speed  = 120;
+server int    gitd_sw_shape  = 0;
+server int    gitd_sw_draw   = 1;
+server int    gitd_sw_thick  = 0;
+server int    gitd_sw_gap    = 30;
+server int    gitd_sw_fx     = 1;
+server int    gitd_sw_amount = 48;
+server string gitd_sw_script = "";
+
+
 // ---- Ambush setpieces ------------------------------------------------------
 // A wave sweeps a lockdown over the room you are in, spawns a fight sized to
 // that room, and clearing it sweeps the level back to what it was. Everything

@@ -58,6 +58,12 @@ class GITD_Composite : StaticEventHandler
 	// Sectors whose light WE last wrote, so we know which ones to hand back.
 	private Array<bool> held;
 
+	// The colour+desat we last actually wrote, packed. SetColor is not free --
+	// the engine walks the sector's 3D-floor lightlist behind every call -- and
+	// under a still preset the composed result is identical tic after tic. -1
+	// means "never written", so the first tic always writes.
+	private Array<int> lastWritten;
+
 	private bool ready;
 
 	static GITD_Composite Get()
@@ -71,6 +77,7 @@ class GITD_Composite : StaticEventHandler
 		mapLight.Clear(); mapColor.Clear(); baseDesat.Clear();
 		mulR.Clear(); mulG.Clear(); mulB.Clear();
 		deltaLight.Clear(); ovrLight.Clear(); wantDesat.Clear(); held.Clear();
+		lastWritten.Clear();
 
 		for (int i = 0; i < n; i++)
 		{
@@ -82,6 +89,7 @@ class GITD_Composite : StaticEventHandler
 			mulR.Push(1.0); mulG.Push(1.0); mulB.Push(1.0);
 			deltaLight.Push(0); ovrLight.Push(-1); wantDesat.Push(0);
 			held.Push(false);
+			lastWritten.Push(-1);
 		}
 		ready = (n > 0);
 	}
@@ -160,14 +168,24 @@ class GITD_Composite : StaticEventHandler
 		{
 			Sector s = level.Sectors[i];
 
-			// Colour: always safe to write, nothing else animates it.
+			// Colour: always safe to write, nothing else animates it -- but
+			// only write when the composed result actually CHANGED. SetColor
+			// walks the sector's 3D-floor lightlist internally, so on a still
+			// preset this was paying that walk for every sector every tic to
+			// write the bytes already there.
 			int bp = mapColor[i];
 			int br = (bp >> 16) & 255, bg = (bp >> 8) & 255, bb = bp & 255;
-			s.SetColor(Color(255,
-				clamp(int(br * mulR[i]), 0, 255),
-				clamp(int(bg * mulG[i]), 0, 255),
-				clamp(int(bb * mulB[i]), 0, 255)),
-				max(baseDesat[i], wantDesat[i]));
+			int cr = clamp(int(br * mulR[i]), 0, 255);
+			int cg = clamp(int(bg * mulG[i]), 0, 255);
+			int cb = clamp(int(bb * mulB[i]), 0, 255);
+			int ds = max(baseDesat[i], wantDesat[i]);
+
+			int packed = (ds << 24) | (cr << 16) | (cg << 8) | cb;
+			if (packed != lastWritten[i])
+			{
+				s.SetColor(Color(255, cr, cg, cb), ds);
+				lastWritten[i] = packed;
+			}
 
 			// Light: only when asked, and handed straight back when not, so
 			// Doom's own blinking and pulsing sectors keep working everywhere
