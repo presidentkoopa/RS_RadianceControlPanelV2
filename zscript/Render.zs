@@ -117,6 +117,12 @@ class GITD_Render abstract
 			col);
 
 		level.SetFogPickup(clamp(GetF("gitd_fog_pickup", 0.55), 0.0, 1.0));
+
+		level.SetFogSurface(
+			max(GetF("gitd_fog_surf", 0.0), 0.0),
+			max(GetF("gitd_fog_surf_len", 256.0), 1.0),
+			GetF("gitd_fog_surf_speed", 1.0),
+			clamp(GetF("gitd_fog_surf_cross", 0.6), 0.0, 2.0));
 	}
 
 	// ---- the glow wave --------------------------------------------------

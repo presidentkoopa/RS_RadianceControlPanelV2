@@ -666,6 +666,20 @@ OptionMenu "GITDFloorFog"
 	ColorPicker "Colour",			"gitd_fog_color"
 	StaticText ""
 
+	StaticText "The surface, moving", gold
+	Slider "Swell",					"gitd_fog_surf", 0.0, 64.0, 1.0, 0
+	StaticText "How far the top rises and falls. 0 is a flat", darkgray
+	StaticText "plane, and once you can see it clearly that", darkgray
+	StaticText "is what it reads as -- a sheet, not mist.", darkgray
+	Slider "  Wavelength",			"gitd_fog_surf_len", 32, 1024, 16, 0
+	Slider "  Speed",				"gitd_fog_surf_speed", 0.0, 6.0, 0.1, 1
+	Slider "  Cross-swell",			"gitd_fog_surf_cross", 0.0, 2.0, 0.05, 2
+	StaticText "A second wave at an angle to the first. One", darkgray
+	StaticText "sine alone corrugates -- parallel ridges", darkgray
+	StaticText "marching one way, which reads as machinery.", darkgray
+	StaticText "Two that interfere read as a surface rolling.", darkgray
+	StaticText ""
+
 	StaticText "What lights it", gold
 	Slider "Torch scatter",			"gitd_fog_scatter", 0.0, 4.0, 0.1, 1
 	StaticText "The flashlight cone lights the mist it", darkgray

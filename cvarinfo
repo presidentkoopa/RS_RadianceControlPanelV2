@@ -948,3 +948,16 @@ server float gitd_lgrid_scroll_depth = 0.20;
 server bool  gitd_lgrid_follow_sweep = true;
 server float gitd_lgrid_standoff = 320.0;
 
+
+// THE SURFACE, ANIMATED. A flat top is a horizontal plane, and once you can
+// see it clearly that is what it reads as -- a sheet, not a body of mist.
+//
+// Two waves at an angle to each other, on purpose. One sine corrugates:
+// parallel ridges marching in a single direction, which reads as machinery.
+// A second at an angle and a different period makes them interfere, and
+// interference is what looks like a surface rolling rather than a pattern
+// scrolling.
+server float gitd_fog_surf = 0.0;        // units the top rises and falls; 0 = flat
+server float gitd_fog_surf_len = 256.0;  // wavelength
+server float gitd_fog_surf_speed = 1.0;
+server float gitd_fog_surf_cross = 0.6;  // strength of the second, angled wave
