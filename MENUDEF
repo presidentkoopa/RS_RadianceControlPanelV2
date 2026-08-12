@@ -141,6 +141,8 @@ OptionValue "GITDFLMount"
 OptionValue "GITDPreset"
 {
 	0,  "Off (use my colours)"
+	11, "Black and White"
+	12, "OMGWTF"
 }
 
 // DarkDoom's own mode names, restored. They were briefly all labelled "Use
@@ -332,6 +334,21 @@ OptionMenu "GITDOptions"
 	StaticText "Presets  (override every glow setting)", gold
 	Option "  Preset",				"gitd_preset", "GITDPreset"
 	Command "  Disable Preset",		"gitd_preset 0"
+	StaticText "A preset REPLACES your settings and hands", darkgray
+	StaticText "them back on Disable, so nothing is lost.", darkgray
+	StaticText "", darkgray
+	StaticText "Black and White refuses almost every system", darkgray
+	StaticText "here -- no sweep, no lattice, no wisps, no", darkgray
+	StaticText "funnel. What is left is composition: held", darkgray
+	StaticText "stares on four clocks that never agree, a", darkgray
+	StaticText "hand-cut edge on every band of light, and a", darkgray
+	StaticText "floor that quietly remembers who died on it.", darkgray
+	StaticText "", darkgray
+	StaticText "OMGWTF refuses nothing. Eight bands, a hunting", darkgray
+	StaticText "tornado, a forest of wisps, a laser lattice in", darkgray
+	StaticText "the air and rings going off from every shot --", darkgray
+	StaticText "four systems arguing about the same cubic", darkgray
+	StaticText "metre of air. It is not a look, it is a test.", darkgray
 	StaticText "A preset REPLACES your settings. Disable", darkgray
 	StaticText "puts back exactly what you had when you", darkgray
 	StaticText "chose it -- including anything you changed", darkgray

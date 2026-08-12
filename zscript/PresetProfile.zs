@@ -212,21 +212,132 @@ class GITD_PresetProfile abstract
 		F("gitd_ss_fill_air", 0.0);
 	}
 
+	// ---- the mist as a substance -----------------------------------------
+	//
+	// Everything below arrived with reactive fog. A profile that sets none of
+	// them still has to say so, because a preset that inherits whatever the
+	// last one left running is not a preset, it is a leftover -- so each has
+	// its own explicit Off.
+
+	// Density stops being one number. Depth is the whole dial; scale is how
+	// big the banks are and drift is how fast they cross the room.
+	clearscope static void FogBanks(double depth, double scale, double drift)
+	{
+		F("gitd_fog_noise", depth);
+		F("gitd_fog_noise_scale", scale);
+		F("gitd_fog_noise_drift", drift);
+	}
+
+	// What the mist does when something happens in it. Mode: 0 push aside,
+	// 1 ring, 2 ignite, 3 gout.
+	clearscope static void Reactive(int mode, double shot, double death,
+	                                double speed, double life, double stretch)
+	{
+		B("gitd_fog_react", true);
+		I("gitd_fog_react_mode", mode);
+		F("gitd_fog_react_shot", shot);
+		F("gitd_fog_react_death", death);
+		F("gitd_fog_react_speed", speed);
+		F("gitd_fog_react_life", life);
+		F("gitd_fog_wake_stretch", stretch);
+	}
+
+	clearscope static void NoReactive()
+	{
+		B("gitd_fog_react", false);
+		F("gitd_fog_displace", 0.0);
+		F("gitd_fog_wake_stretch", 0.0);
+	}
+
+	// Wisps off the surface. Spacing is the density dial and it is free in
+	// both directions -- this is a lattice, not a set of objects.
+	clearscope static void Tendrils(double amount, double spacing,
+	                                double radius, double height, double lean)
+	{
+		F("gitd_fog_tendril", amount);
+		F("gitd_fog_tendril_spacing", spacing);
+		F("gitd_fog_tendril_radius", radius);
+		F("gitd_fog_tendril_height", height);
+		F("gitd_fog_tendril_lean", lean);
+	}
+
+	clearscope static void NoTendrils() { F("gitd_fog_tendril", 0.0); }
+
+	// A funnel you can stand inside. Origin 0 is a fixed point; 5 is the
+	// nearest live monster, which is the one that makes it walk the room.
+	clearscope static void Tornado(int origin, double baseZ, double topZ,
+	                               double radBase, double radTop,
+	                               double density, int color,
+	                               double swirl, double spin, double lean)
+	{
+		B("gitd_tornado_enabled", true);
+		I("gitd_tornado_origin", origin);
+		F("gitd_tornado_base", baseZ);
+		F("gitd_tornado_top", topZ);
+		F("gitd_tornado_rad_base", radBase);
+		F("gitd_tornado_rad_top", radTop);
+		F("gitd_tornado_density", density);
+		I("gitd_tornado_color", color);
+		F("gitd_tornado_swirl", swirl);
+		F("gitd_tornado_spin", spin);
+		F("gitd_tornado_lean", lean);
+	}
+
+	clearscope static void NoTornado() { B("gitd_tornado_enabled", false); }
+
+	// The sweep shoulders the air in front of it.
+	clearscope static void Bow(double strength, double width, double thin)
+	{
+		F("gitd_fog_bow", strength);
+		F("gitd_fog_bow_width", width);
+		F("gitd_fog_bow_thin", thin);
+	}
+
+	// Where the fighting happened. Deposits are recorded regardless; this
+	// only decides whether they are drawn and how.
+	clearscope static void Heat(double scale, int low, int high,
+	                            double ceiling, double size, double hurt)
+	{
+		B("gitd_heat_enabled", true);
+		F("gitd_heat_scale", scale);
+		I("gitd_heat_low", low);
+		I("gitd_heat_high", high);
+		F("gitd_heat_ceiling", ceiling);
+		F("gitd_heat_size", size);
+		F("gitd_heat_hurt", hurt);
+	}
+
+	clearscope static void NoHeat() { B("gitd_heat_enabled", false); }
+
+	// A second colour through the layer's own thickness.
+	clearscope static void FogGradient(int color, double mix)
+	{
+		I("gitd_fog_color2", color);
+		F("gitd_fog_color2_mix", mix);
+	}
+
 	// ---- dispatch -------------------------------------------------------
 
 	clearscope static bool HasProfile(int preset)
 	{
-		// NO PRESETS SHIP RIGHT NOW.
+		// TWO SHIP. Black and White (11) and OMGWTF (12), and they are the
+		// two ends of the same range on purpose: one is a composition that
+		// refuses almost every system available to it, the other refuses
+		// nothing. A preset list with only the middle of that range in it
+		// teaches nobody what the mod can do.
 		//
-		// The profiles below are kept, and so is every helper they use -- the
-		// capture-and-recall machinery, the wave, fog, grid and darkness
-		// setters. What is switched off is only the claim that any of them is
-		// finished. The menu offers Off and nothing else, and this answering
-		// false is what stops a stale gitd_preset in someone's config quietly
-		// applying a profile nobody chose.
+		// The rest -- Blackout, Low Power, Red Alert -- are still here and
+		// still switched off. They predate reactive fog, the tornado, the
+		// heatmap and the lattice, and a profile that does not mention a
+		// system does not merely skip it: it INHERITS whatever the last one
+		// left running. That is what makes a stale profile worse than no
+		// profile, and it is why these two both say Off explicitly for
+		// everything they do not use.
 		//
-		// Turning one back on is one number here and one line in MENUDEF.
-		return false;
+		// Turning another back on is one number here and one line in MENUDEF,
+		// plus a pass over it for the systems that did not exist when it was
+		// written.
+		return preset == 11 || preset == 12;
 	}
 
 	clearscope static void Apply(int preset)
@@ -811,6 +922,56 @@ class GITD_PresetProfile abstract
 
 		NoGrid();
 
+		// ---- the air is uneven, and nothing else about it is ------------
+		//
+		// Density banks, and that is the ONLY thing on the reactive page this
+		// preset takes. Uneven grey air is a composition -- it puts weight in
+		// one part of the frame and lifts another -- which is the argument
+		// this whole preset is making. Large, slow banks: 0.0015 is roughly
+		// room-sized, and a drift of 2 crosses one in half a minute.
+		//
+		// NOT tendrils. Wisps are texture and this preset has no texture in it
+		// anywhere. Not a tornado either: a funnel is a baroque object and
+		// there is nothing baroque here.
+		FogBanks(0.55, 0.0015, 2.0);
+		NoTendrils();
+		NoTornado();
+		Bow(0.0, 64.0, 0.6);
+
+		// A RING, AND ONLY OFF THE GUN.
+		//
+		// A hard circular front travelling out through flat grey air is a
+		// geometric event in a still composition, which is the one kind of
+		// motion this preset can afford. Slow -- 190 rather than the usual
+		// 320 -- so it reads as a front you can watch arrive rather than a
+		// pop, and long-lived so it is still crossing the room when the shot
+		// has been forgotten.
+		//
+		// Nothing from deaths. A monster dying should not be decorated here;
+		// the heatmap below is what remembers it, and it remembers in silence.
+		Reactive(1, 0.5, 0.0, 190.0, 3.2, 1.4);
+		F("gitd_fog_displace", 0.0);   // and nothing pushes the air but you
+
+		// A slightly lighter top to the layer. The grey floor of the frame
+		// wants a gradient in it or it is a flat card -- but a small one,
+		// because two greys is already a colour decision.
+		FogGradient(0xC6C9CC, 0.30);
+
+		// ---- THE GROUND REMEMBERS ---------------------------------------
+		//
+		// Greyscale on both ends, so a heatmap that is normally the loudest
+		// thing on screen becomes the quietest: pale pooling where bodies
+		// fell, on a floor already flattened to near black.
+		//
+		// This is the most Bergman thing in the mod and it arrived by
+		// accident. A room you walk back into is not the room you left, and
+		// it says so without a line of dialogue.
+		//
+		// Ceiling 3 so a single death already registers -- one is meant to
+		// mean something here -- and the spread wide and soft so it pools
+		// rather than marks.
+		Heat(0.55, 0x3C3C3C, 0xDCDCDC, 3.0, 150.0, 0.0);
+
 		// The torch is hard and clean. NO DUST: motes are texture, and this
 		// preset has no texture in it anywhere. A cone with an edge.
 		B("fl_enabled", true);
@@ -1323,6 +1484,68 @@ class GITD_PresetProfile abstract
 		}
 		B("gitd_ss_perband", true);
 		B("gitd_ss_light", true);     // yes, both paths at once. On purpose.
+
+		// ===================================================================
+		// AND THE AIR, WHICH IS WHERE THIS PRESET STOPPED BEING A PALETTE.
+		//
+		// Everything above happens ON surfaces. Everything below happens IN
+		// the room, and running both at once is the only reason to have built
+		// the second one. A band crossing a tornado standing in banked fog
+		// with a laser lattice inside it and rings going off from the gun is
+		// four systems arguing about the same cubic metre of air, and the
+		// answer they arrive at is not something any one of them could say.
+		// ===================================================================
+
+		// A DEEP layer, not a knee-high one -- chest height, so the funnel
+		// has something to stand in and the lattice has something to cut.
+		Fog(120, 2.6, 40, 0xFF00A0,
+		    2.2,      // the torch carves hard
+		    1.0,      // and the mist takes every colour behind it
+		    0.85, 220, 0.35);
+
+		// Banked HARD and drifting fast. At 0.9 depth the density swings from
+		// almost clear to soup across a single room, and a drift of 34 walks
+		// those banks past you at a speed you can watch.
+		FogBanks(0.9, 0.006, 34.0);
+		FogGradient(0x00E5FF, 0.85);   // magenta at the floor, cyan at the top
+
+		// A FOREST OF WISPS. Spacing 34 is dense enough to read as a field
+		// rather than as individual columns -- and it costs what four would,
+		// because it is a lattice. This is the setting the tendril field was
+		// built to make affordable and it should be used at least once.
+		Tendrils(1.5, 34.0, 7.0, 220.0, 26.0);
+
+		// A FUNNEL THAT HUNTS. Origin 5 is the nearest live monster, so the
+		// tornado walks the room on its own and is always standing where the
+		// fight is. Leaning hard, spinning fast, wound tight.
+		Tornado(5, 0, 1400, 40, 620, 1.9, 0xFFD400, 1.0, 7.0, 130.0);
+
+		// EVERY REACTIVE PATH AT ONCE. Ignite, so gunfire and death both
+		// light the mist rather than moving it -- which means it works even
+		// where the layer is thin, and every burst feeds bloom that is
+		// already at threshold 0.05 with anamorphic and chromatic both on.
+		Reactive(2, 1.6, 2.2, 640.0, 2.4, 4.0);
+		F("gitd_fog_displace", 0.85);      // and every monster drags a hole
+		I("gitd_fog_displace_count", 6);   // six of them, the cap
+
+		// The bands shoulder the air. With eight of them at 380-1100 units a
+		// second this is a room full of pressure fronts crossing each other.
+		Bow(2.8, 150.0, 0.9);
+
+		// THE LATTICE, IN THE AIR, INSIDE EVERY BAND. Dense, diagonal,
+		// drifting, flickering, jittered -- a screen door that is coming
+		// apart. Every band already has a fill mode from the loop above.
+		Grid(26.0, 1.6, 2.0, 0x00FF66, 45.0, 3.4);
+		F("gitd_ss_fill_drift", 40.0);
+		F("gitd_ss_fill_flicker", 0.22);
+		F("gitd_ss_fill_jitter", 0.5);
+		F("gitd_ss_fill_major", 4.0);
+		F("gitd_ss_fill_gap", 0.25);
+
+		// AND THE FLOOR KEEPS SCORE, in the loudest colours it has. Ceiling
+		// 4 so it saturates almost immediately and a busy room ends up paved.
+		// Hurt on as well, so the map records both halves of every fight.
+		Heat(1.6, 0x00FFFF, 0xFF0000, 4.0, 190.0, 1.2);
 	}
 
 	// Bloom with no restraint left: threshold on the floor so everything
