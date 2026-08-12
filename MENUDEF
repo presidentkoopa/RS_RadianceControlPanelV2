@@ -459,10 +459,18 @@ OptionMenu "GITDOptions"
 	Submenu "  Heatmap...",			"GITDHeatmap"
 	StaticText "Where the fighting happened, drawn on the", darkgray
 	StaticText "floor and accumulated over the whole map.", darkgray
-	StaticText "The mist responds to what happens in it --", darkgray
-	StaticText "rings off your muzzle, mist that banks and", darkgray
-	StaticText "drifts, wisps rising off the surface, and", darkgray
-	StaticText "monsters shouldering it aside.", darkgray
+	StaticText ""
+	StaticText ""
+
+	StaticText "Texture in the Glow", gold
+	Submenu "  Texture options...",	"GITDGlowTex"
+	StaticText "The wave moves a glow's EDGE, which does", darkgray
+	StaticText "nothing once coverage is so high that the", darkgray
+	StaticText "edge is off screen -- a maxed lane is a solid", darkgray
+	StaticText "card of colour. These five happen INSIDE the", darkgray
+	StaticText "lit area instead: noise for material, flow for", darkgray
+	StaticText "current, veins that crawl, gunfire crossing the", darkgray
+	StaticText "walls, and a pulse when the room is in trouble.", darkgray
 	StaticText ""
 	StaticText ""
 
@@ -1912,4 +1920,124 @@ OptionMenu "GITDHeatmap"
 	StaticText "be before they count as different storeys. The", darkgray
 	StaticText "grid is flat, so without this a death on a", darkgray
 	StaticText "balcony would also mark the ground under it.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// TEXTURE IN THE GLOW.
+//
+// The glow wave varies a lane's EDGE. That is the right answer while the edge
+// is on screen and no answer at all once coverage saturates -- turn reach up
+// far enough and the wall is a solid card of colour with a wave moving a
+// boundary nobody can see any more.
+//
+// Everything on this page happens WITHIN the lit area instead. All five are
+// multipliers on the glow's finished contribution, so none of them can move a
+// band's shape: the wave owns shape, these own substance.
+//
+// Sampled in WORLD space rather than per surface, so a pattern crossing a
+// wall/floor join carries on through the corner instead of restarting at it.
+// That is what makes it read as something the room is made of rather than a
+// decal stuck on each face.
+// ---------------------------------------------------------------------------
+
+OptionValue "GITDGlowPulseSrc"
+{
+	0, "A number I set myself"
+	1, "Monsters near you"
+	2, "Your health"
+	3, "Whichever is worse"
+}
+
+OptionMenu "GITDGlowTex"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Texture in the Glow"
+	StaticText ""
+	StaticText "Everything here needs a lane switched on to be", darkgray
+	StaticText "visible, and shows up most at high coverage.", darkgray
+	StaticText ""
+
+	StaticText "Material", gold
+	Slider "Noise",					"gitd_gtex_noise", 0.0, 1.0, 0.05, 2
+	StaticText "A lit wall is one flat brightness across its", darkgray
+	StaticText "whole face. Real glowing material is veined and", darkgray
+	StaticText "uneven. Same move the fog's density field makes,", darkgray
+	StaticText "for the same reason -- a uniform value is the", darkgray
+	StaticText "biggest tell that something is a filter.", darkgray
+	StaticText ""
+	StaticText "If you turn on one thing here, this is the one.", darkgray
+	Slider "  Patch size",			"gitd_gtex_scale", 0.002, 0.15, 0.002, 3
+	StaticText "Smaller makes larger, softer patches.", darkgray
+	Slider "  Drift",				"gitd_gtex_drift", 0.0, 10.0, 0.25, 2
+	StaticText "The field moving through the wall, so the", darkgray
+	StaticText "material is alive rather than painted on.", darkgray
+	Slider "  Contrast",			"gitd_gtex_contrast", 0.2, 8.0, 0.1, 1
+	StaticText "Low is a gentle mottle, like marble. High is", darkgray
+	StaticText "hard patches of lit and unlit, like plasma.", darkgray
+	StaticText ""
+
+	StaticText "Current", gold
+	Slider "Flow",					"gitd_gflow", 0.0, 1.0, 0.05, 2
+	StaticText "The wave arrives FROM somewhere. This travels", darkgray
+	StaticText "ALONG the surface -- a different axis of motion", darkgray
+	StaticText "entirely, and it reads as current running", darkgray
+	StaticText "through the material rather than weather", darkgray
+	StaticText "passing over it.", darkgray
+	StaticText ""
+	StaticText "Vertical on a wall, along X on a floor, taken", darkgray
+	StaticText "from the surface's own normal.", darkgray
+	Slider "  Spacing",				"gitd_gflow_spacing", 8, 512, 8, 0
+	Slider "  Speed",				"gitd_gflow_speed", -4.0, 4.0, 0.1, 1
+	StaticText "Negative runs the other way.", darkgray
+	Slider "  Sharpness",			"gitd_gflow_sharp", 1.0, 12.0, 0.5, 1
+	StaticText "1 is a broad swell. High is thin bright lines", darkgray
+	StaticText "travelling through a dark field.", darkgray
+	StaticText ""
+
+	StaticText "Veins", gold
+	Slider "Cells",					"gitd_gcell", 0.0, 1.0, 0.05, 2
+	StaticText "The lattice trick from the sweep, made organic.", darkgray
+	StaticText "Lighting the distance to the nearest cell EDGE", darkgray
+	StaticText "rather than the cell body gives veins instead", darkgray
+	StaticText "of tiles, and each cell pulses on its own clock", darkgray
+	StaticText "so the network crawls rather than blinking.", darkgray
+	StaticText ""
+	StaticText "Free at any density -- it is a pattern, not a", darkgray
+	StaticText "set of objects.", darkgray
+	Slider "  Cell size",			"gitd_gcell_scale", 8, 512, 8, 0
+	Slider "  Crawl speed",			"gitd_gcell_speed", 0.0, 6.0, 0.1, 1
+	Slider "  Vein width",			"gitd_gcell_width", 0.01, 0.5, 0.01, 2
+	StaticText "Low is hairlines. High is thick channels.", darkgray
+	StaticText ""
+
+	StaticText "The walls react", gold
+	Slider "Pulse from events",		"gitd_greact", 0.0, 3.0, 0.1, 1
+	StaticText "A ring travelling across the LIT SURFACES from", darkgray
+	StaticText "wherever a shot or a death happened -- the same", darkgray
+	StaticText "eight slots the fog already uses, so this costs", darkgray
+	StaticText "nothing new to run.", darkgray
+	StaticText ""
+	StaticText "Needs 'React to events' on the Reactive Fog", darkgray
+	StaticText "page -- that is what fires them.", darkgray
+	StaticText ""
+
+	StaticText "The room knows", gold
+	Slider "Alarm pulse",			"gitd_gpulse", 0.0, 1.0, 0.05, 2
+	StaticText "Every glow in the level pulsing together. The", darkgray
+	StaticText "rate rises with the level as well as the depth,", darkgray
+	StaticText "because faster is what reads as urgency --", darkgray
+	StaticText "brighter alone just reads as brighter.", darkgray
+	StaticText ""
+	StaticText "This is the one that makes the glow carry", darkgray
+	StaticText "information instead of only looking good.", darkgray
+	Option "  Driven by",			"gitd_gpulse_src", "GITDGlowPulseSrc"
+	Slider "  Counts within",		"gitd_gpulse_range", 128, 3072, 64, 0
+	Slider "  Fully alarmed at",	"gitd_gpulse_count", 1, 24, 1, 0
+	StaticText "How many nearby monsters means maximum alarm.", darkgray
+	Slider "  Manual level",		"gitd_gpulse_level", 0.0, 1.0, 0.05, 2
+	StaticText "Only used when 'Driven by' is set to manual.", darkgray
+	StaticText ""
+	StaticText "The level eases toward its target rather than", darkgray
+	StaticText "snapping, so the room settles instead of", darkgray
+	StaticText "flickering when the last monster dies.", darkgray
 }

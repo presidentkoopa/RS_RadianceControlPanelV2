@@ -55,7 +55,39 @@ class GITD_Render abstract
 		PushFog();
 		PushTornado();
 		PushHeatmap();
+		PushGlowTexture();
 		PushSweepFill();
+	}
+
+	// ---- texture inside the glow -----------------------------------------
+	//
+	// The wave varies a lane's EDGE and has nothing left to say once reach
+	// saturates and that edge is off screen. These four happen WITHIN the lit
+	// area, as multipliers on its contribution, so none of them can move a
+	// band's shape.
+	//
+	// The alarm LEVEL is not pushed here -- it needs to count monsters, which
+	// is a playsim read, so GITD_Handler pushes it. Same split as the glow
+	// wave's origin and the tornado's anchor, for the same reason.
+	clearscope static void PushGlowTexture()
+	{
+		level.SetGlowTexture(
+			max(GetF("gitd_gtex_noise", 0.0), 0.0),
+			max(GetF("gitd_gtex_scale", 0.02), 0.00001),
+			GetF("gitd_gtex_drift", 1.0),
+			max(GetF("gitd_gtex_contrast", 1.0), 0.001));
+
+		level.SetGlowFlow(
+			max(GetF("gitd_gflow", 0.0), 0.0),
+			max(GetF("gitd_gflow_spacing", 64.0), 1.0),
+			GetF("gitd_gflow_speed", 0.4),
+			max(GetF("gitd_gflow_sharp", 2.0), 0.001));
+
+		level.SetGlowCells(
+			max(GetF("gitd_gcell", 0.0), 0.0),
+			max(GetF("gitd_gcell_scale", 96.0), 1.0),
+			GetF("gitd_gcell_speed", 1.2),
+			max(GetF("gitd_gcell_width", 0.08), 0.01));
 	}
 
 	// ---- the heatmap -----------------------------------------------------

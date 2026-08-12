@@ -598,6 +598,7 @@ class GITD_Handler : StaticEventHandler
 	// What the world last did, remembered so an origin can point at it.
 	Vector3 lastShotPos, lastKillPos;
 	bool lastFogShotDown;   // rising edge for the muzzle ripple
+	double alarmLevel;      // eased toward the target, never snapped
 	bool haveShot, haveKill;
 	bool lastAttackDown;
 	int lastSecrets;
@@ -732,6 +733,7 @@ class GITD_Handler : StaticEventHandler
 		PushTornadoAnchor();
 		PushFogShot();
 		PushFogDisplacers();
+		PushGlowAlarm();
 
 		if (anyWave)
 		{
@@ -2105,6 +2107,74 @@ class GITD_Handler : StaticEventHandler
 
 		Vector3 o = OriginFor(mode);
 		GITD_Render.PushTornado(true, o.x, o.y);
+	}
+
+	// HOW ALARMED THE ROOM IS, and the disturbance reach that goes with it.
+	//
+	// This is the term that makes the glow carry information rather than only
+	// look good -- the other four textures are material, this one is a state
+	// the player can read off the walls without a HUD element.
+	//
+	// Lives here rather than in GITD_Render because counting nearby monsters
+	// is a playsim read. Same split as the glow wave's origin and the
+	// tornado's anchor.
+	//
+	// The level is SMOOTHED toward its target rather than set. A count that
+	// jumps from three to zero the instant the last monster dies would snap
+	// the whole room's brightness in one tic, which reads as a bug; easing it
+	// reads as the room settling.
+	void PushGlowAlarm()
+	{
+		double depth = max(GITD_Render.GetF("gitd_gpulse", 0.0), 0.0);
+		double react = max(GITD_Render.GetF("gitd_greact", 0.0), 0.0);
+
+		if (depth <= 0.0 && react <= 0.0)
+		{
+			level.SetGlowReact(0, 0, 0);
+			alarmLevel = 0;
+			return;
+		}
+
+		int src = GITD_Render.GetI("gitd_gpulse_src", 1);
+		double target = 0.0;
+
+		let pmo = players[consoleplayer].mo;
+
+		if (src == 0)
+		{
+			target = clamp(GITD_Render.GetF("gitd_gpulse_level", 0.0), 0.0, 1.0);
+		}
+		else if (pmo)
+		{
+			if (src == 1 || src == 3)
+			{
+				double range = max(GITD_Render.GetF("gitd_gpulse_range", 768.0), 1.0);
+				int want = max(GITD_Render.GetI("gitd_gpulse_count", 6), 1);
+				int near = 0;
+
+				ThinkerIterator it = ThinkerIterator.Create("Actor", Thinker.STAT_DEFAULT);
+				Actor a;
+				while (a = Actor(it.Next()))
+				{
+					if (!a.bISMONSTER || a.health <= 0) continue;
+					if ((a.pos.xy - pmo.pos.xy).Length() > range) continue;
+					near++;
+					if (near >= want) break;   // saturated; counting on is waste
+				}
+				target = clamp(double(near) / double(want), 0.0, 1.0);
+			}
+
+			if (src == 2 || src == 3)
+			{
+				// Inverted: LOW health is high alarm.
+				double hp = pmo.health / double(max(pmo.GetMaxHealth(true), 1));
+				double hurt = clamp(1.0 - hp, 0.0, 1.0);
+				target = (src == 3) ? max(target, hurt) : hurt;
+			}
+		}
+
+		alarmLevel += (target - alarmLevel) * 0.06;
+		level.SetGlowReact(react, depth, clamp(alarmLevel, 0.0, 1.0));
 	}
 
 	void PushFogWake()

@@ -1193,3 +1193,86 @@ server float gitd_dd_keep_soft = 0.15;
 // that means "blood, and nothing else" -- a green nukage pool at full
 // saturation drains with the walls.
 server int gitd_dd_keep_hue = 0;
+
+// ===========================================================================
+// TEXTURE INSIDE THE GLOW
+//
+// The glow wave varies a lane's EDGE. That is the right answer while the edge
+// is on screen, and no answer at all once coverage saturates -- turn reach up
+// far enough and the wall is a solid card of colour with a wave moving a
+// boundary nobody can see any more.
+//
+// Everything here happens WITHIN the lit area instead, so a maxed-out lane
+// still has somewhere to go. All five are multipliers on the glow's finished
+// contribution, so none of them can move a band's shape: the wave owns shape,
+// these own substance.
+//
+// Sampled in WORLD space, not per surface, so a pattern crossing a wall/floor
+// join does not restart at the corner -- it reads as something the room is
+// made of rather than a decal stuck on each face.
+// ===========================================================================
+
+// ---- 1. Noise: the wash gets body -----------------------------------------
+//
+// A lit wall is currently one flat brightness across its whole face. Real
+// glowing material is veined and uneven. This is the same move the fog's
+// density field makes, for the same reason: a uniform value is the biggest
+// single tell that something is a filter rather than a substance.
+server float gitd_gtex_noise = 0.0;      // 0 = flat, as before
+server float gitd_gtex_scale = 0.02;     // smaller = larger, softer patches
+server float gitd_gtex_drift = 1.0;      // how fast the field moves through
+server float gitd_gtex_contrast = 1.0;   // 1 = gentle mottle, high = plasma
+
+// ---- 2. Flow: current along the surface -----------------------------------
+//
+// The wave arrives FROM an origin. This travels ALONG the surface -- a
+// different axis of motion entirely, and it reads as current running through
+// the material rather than weather passing over it.
+//
+// The axis comes from the surface normal, so it means the same thing
+// everywhere: vertical on a wall, along world X on a floor or ceiling.
+server float gitd_gflow = 0.0;
+server float gitd_gflow_spacing = 64.0;  // world units between bands
+server float gitd_gflow_speed = 0.4;
+server float gitd_gflow_sharp = 2.0;     // 1 = broad swell, high = thin lines
+
+// ---- 3. Cells: veins with light crawling them -----------------------------
+//
+// The lattice trick from the sweep, made organic. Lighting the distance to
+// the nearest CELL EDGE rather than the cell body gives veins instead of
+// tiles, and each cell pulses on its own hashed clock so the network crawls
+// rather than blinking as one.
+//
+// Free at any density, exactly like the laser lattice: this is a pattern, not
+// a set of objects.
+server float gitd_gcell = 0.0;
+server float gitd_gcell_scale = 96.0;    // world size of one cell
+server float gitd_gcell_speed = 1.2;
+server float gitd_gcell_width = 0.08;    // vein thickness; low = hairlines
+
+// ---- 4. The walls react too -----------------------------------------------
+//
+// The disturbance array already exists and already fires on gunfire and on
+// death -- until now only the fog consumed it. Feeding the same eight slots
+// into the glow costs nothing to build and makes a shot visibly travel across
+// the lit surfaces of a room rather than only through the air in it.
+//
+// Needs Reactive Fog's events on; it shares those slots. Rings only, because
+// a disc that dimmed the wall would read as damage to the light rather than
+// as a pulse through it.
+server float gitd_greact = 0.0;
+
+// ---- 5. The room knows something is wrong ---------------------------------
+//
+// One level, driven from the world, pulsing every glow at once. The lane
+// stops being decoration and starts carrying information, which is the one
+// thing none of the four above can do however good they look.
+//
+// The rate rises with the level as well as the depth, because faster is what
+// reads as urgency -- brighter alone just reads as brighter.
+server float gitd_gpulse = 0.0;          // depth of the pulse
+server int   gitd_gpulse_src = 1;        // 0 manual, 1 monsters near you,
+                                         // 2 your health, 3 both
+server float gitd_gpulse_range = 768.0;  // how near counts, for source 1
+server int   gitd_gpulse_count = 6;      // monsters that means "fully alarmed"
+server float gitd_gpulse_level = 0.0;    // the manual level, for source 0
