@@ -916,38 +916,23 @@ server int gitd_ss_fill6 = 0;
 server int gitd_ss_fill7 = 0;
 server int gitd_ss_fill8 = 0;
 
-// ---- Laser grid ------------------------------------------------------------
+// ---- Laser grid --------------------------------------------------------
 //
-// REAL beams standing across a corridor, not a pattern painted on the walls.
+// THE LASER GRID IS NOT ITS OWN SYSTEM. It is what a sector sweep fires into
+// the air, and it lives on the sweep's own page under "In the air"
+// (gitd_ss_fill_air, with the lattice's spacing, width and colour beside it).
 //
-// The sweep band fill draws a lattice on every SURFACE the band crosses --
-// continuous around corners and up walls, which beams cannot do because a beam
-// is straight. This is the other half: each line is an actual segment of light
-// hanging in the air between those surfaces, which a fill cannot do because a
-// fill has no volume. Run both and the grid is drawn on the room AND in it.
+// It used to be a separate toggle that placed eight real beam segments in a
+// rectangle riding the sweep. Eight is a fence, not a screen door, and the
+// rectangle was a small panel floating in a big room rather than a wall of
+// light filling the corridor -- which is what the thing is supposed to be.
+// Raising the beam count would have made it worse, because every beam is
+// another segment solve for every pixel on screen.
 //
-// Eight lines total, because that is the beam budget. Four across and four up
-// is a convincing lattice; more is a screen door.
-server bool  gitd_lgrid_enabled = false;
-server int   gitd_lgrid_across = 4;      // horizontal rungs
-server int   gitd_lgrid_up = 4;          // vertical uprights
-server float gitd_lgrid_width = 160.0;   // how wide the opening is
-server float gitd_lgrid_height = 128.0;
-server float gitd_lgrid_thick = 1.2;     // the hot core. Thin is what reads as a laser.
-server float gitd_lgrid_soft = 2.5;      // halo reach past the core
-server float gitd_lgrid_intensity = 1.6;
-server float gitd_lgrid_glow = 0.5;
-server color gitd_lgrid_color = "ff 18 10";
-server float gitd_lgrid_air = 1.0;       // 0 = only lights surfaces, no beam in the air
-server float gitd_lgrid_scroll = 4.0;    // energy travelling along each line
-server float gitd_lgrid_scroll_depth = 0.20;
-
-// Rides the sweep when the sweep is running -- the grid sits at band 1's
-// current distance and comes down the hall with it. With the sweep off it
-// stands this far ahead of the map centre instead, for a static tripwire.
-server bool  gitd_lgrid_follow_sweep = true;
-server float gitd_lgrid_standoff = 320.0;
-
+// The lattice is a PATTERN evaluated where the view ray crosses the band's
+// plane, so four lines by four and four hundred by four hundred cost exactly
+// the same. That is what makes a screen door affordable, and it is why the
+// grid became part of the sweep instead of competing with it.
 
 // THE SURFACE, ANIMATED. A flat top is a horizontal plane, and once you can
 // see it clearly that is what it reads as -- a sheet, not a body of mist.
@@ -1065,3 +1050,18 @@ server float gitd_tornado_spin = 2.0;
 server float gitd_tornado_twist = 8.0;
 server float gitd_tornado_lean = 0.0;
 server float gitd_tornado_lean_period = 6.0;
+
+// ITS OWN COLOUR, AND ITS OWN TORCH.
+//
+// The funnel used to be whatever colour the floor fog was, because it shared
+// the layer's accumulator and one number cannot say which shape a pixel's mist
+// came from. It carries its own now, and the two are merged weighted by how
+// much each actually contributed -- so a red column standing in blue ground
+// mist reads as two mists mingling where they cross, rather than one winning.
+//
+// Scatter is separate for the same reason and a sharper one: the layer's
+// scatter dial is pushed by SetFogSlab, so it reads zero whenever floor fog is
+// switched off -- which is exactly the case where a funnel standing alone in
+// clear air needs the torch to pick it out of the dark.
+server color gitd_tornado_color = "8c 99 b3";
+server float gitd_tornado_scatter = 1.2;

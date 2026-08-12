@@ -186,28 +186,30 @@ class GITD_PresetProfile abstract
 		B("gitd_fog_enabled", false);
 	}
 
-	// Real beams standing across the corridor. Costs the whole beam budget,
-	// so a preset that turns this on is saying the grid IS the effect.
-	clearscope static void Grid(int across, int up, double width, double height,
-	                            double thick, double soft, double inten,
-	                            int color, double scroll, bool rideSweep)
+	// THE LASER GRID, which is a property of the sweep and not a thing of its
+	// own -- a wall of light standing in the band, dense as you like, because
+	// it is a pattern rather than a set of segments. Spacing in world units.
+	//
+	// Rotate 45 is most of the look on its own: diamonds instead of squares.
+	// Gap 0 lights only the lines, so you see the room between them, which is
+	// what reads as real lasers rather than as a lit pane.
+	clearscope static void Grid(double spacing, double width, double soft,
+	                            int color, double rotate, double strength)
 	{
-		B("gitd_lgrid_enabled", true);
-		I("gitd_lgrid_across", across);
-		I("gitd_lgrid_up", up);
-		F("gitd_lgrid_width", width);
-		F("gitd_lgrid_height", height);
-		F("gitd_lgrid_thick", thick);
-		F("gitd_lgrid_soft", soft);
-		F("gitd_lgrid_intensity", inten);
-		I("gitd_lgrid_color", color);
-		F("gitd_lgrid_scroll", scroll);
-		B("gitd_lgrid_follow_sweep", rideSweep);
+		F("gitd_ss_fill_air", strength);
+		I("gitd_ss_fill_u", int(spacing));
+		I("gitd_ss_fill_v", int(spacing));
+		F("gitd_ss_fill_width", width);
+		F("gitd_ss_fill_soft", soft);
+		I("gitd_ss_fill_color", color);
+		F("gitd_ss_fill_rotate", rotate);
+		F("gitd_ss_fill_gap", 0.0);
+		for (int i = 1; i <= 8; i++) I("gitd_ss_fill" .. i, 1);
 	}
 
 	clearscope static void NoGrid()
 	{
-		B("gitd_lgrid_enabled", false);
+		F("gitd_ss_fill_air", 0.0);
 	}
 
 	// ---- dispatch -------------------------------------------------------

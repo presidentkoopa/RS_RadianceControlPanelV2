@@ -141,6 +141,32 @@ class GITD_Flashlight : Thinker
 	//
 	// `out double` is fine, which is why GITD_Presets.Params gets away with it:
 	// one register, no MULTIREG tag.
+	//
+	// THE HAND POSES ARE NOT WORLD SPACE, AND THAT IS THE WHOLE BUG.
+	//
+	// AttackAngle and OffhandAngle are stored as world yaw MINUS 90 degrees,
+	// and AttackPitch/OffhandPitch are stored NEGATED. The engine says so in
+	// its own words (g_game.cpp:1237) and writes them that way in both the VR
+	// and the flatscreen path (hw_vrmodes.cpp:1170, :1192).
+	//
+	// Every other consumer converts on the way out -- hw_weapon.cpp:431 is the
+	// canonical two lines, and hw_vrwheel.cpp and p_actionfunctions.cpp each
+	// carry their own copy. This read them raw.
+	//
+	// So the cone was aimed ninety degrees to your RIGHT and flipped vertically
+	// -- pointing where you would be looking if you turned your head a quarter
+	// turn and then looked the other way up. It was never once pointed at what
+	// you were looking at, at any pitch, on any frame.
+	//
+	// That is why it looked radial rather than directional. It is a real cone,
+	// with a real 6-26 degree half-angle, aimed somewhere you never look: the
+	// only part of it you ever saw was the wash at the apex, which sits exactly
+	// at your eye with a thousand-unit reach. A lamp you are standing inside.
+	//
+	// Head and chest were always correct, because those two read pmo.angle and
+	// pmo.pitch, which ARE world space. That is the proof the vector maths at
+	// the bottom of this function was never the problem.
+	//
 	Vector3, Vector3 ResolveMount(PlayerPawn pmo)
 	{
 		Vector3 pos, dir;
@@ -150,8 +176,8 @@ class GITD_Flashlight : Thinker
 		if (mount == 1)          // offhand
 		{
 			pos = pmo.OffhandPos;
-			ang = pmo.OffhandAngle;
-			pit = pmo.OffhandPitch;
+			ang = pmo.OffhandAngle + 90;
+			pit = -pmo.OffhandPitch;
 			rol = pmo.OffhandRoll;
 		}
 		else if (mount == 2)     // head
@@ -168,11 +194,11 @@ class GITD_Flashlight : Thinker
 			pit = pmo.pitch;
 			rol = 0;
 		}
-		else                     // mainhand
-		{
+		else                     // mainhand -- and this is the DEFAULT mount,
+		{                        // so the misaim above was what everyone saw
 			pos = pmo.AttackPos;
-			ang = pmo.AttackAngle;
-			pit = pmo.AttackPitch;
+			ang = pmo.AttackAngle + 90;
+			pit = -pmo.AttackPitch;
 			rol = pmo.AttackRoll;
 		}
 
@@ -303,6 +329,19 @@ class GITD_FlashlightSpot : SpotLight
 	{
 		//$Title Flashlight beam light
 		Args 255, 255, 255, 512;
+
+		// ATTENUATE IS NOT OPTIONAL FOR A TORCH.
+		//
+		// Without it the shader skips the N.L term entirely, so every surface
+		// inside the cone comes back at the SAME brightness no matter which
+		// way it faces -- a wall you are square on to and a floor you are
+		// grazing light identically. That is exactly the flat, sourceless
+		// look of an ambient fill, which is the other half of why this read
+		// as a lamp rather than a beam.
+		//
+		// DarkDoomZ's flashlight, the one that visibly worked, had this flag.
+		// Ours was written without it.
+		+DYNAMICLIGHT.ATTENUATE
 	}
 }
 

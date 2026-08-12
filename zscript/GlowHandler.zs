@@ -708,6 +708,28 @@ class GITD_Handler : StaticEventHandler
 			if (w && w.alive && w.running) { anyWave = true; break; }
 		}
 
+		// THE RENDER SETTINGS ARE NOT PART OF THE LANE ARGUMENT.
+		//
+		// These used to live inside Apply(), which meant a live sweep with
+		// underlay off took the ClearAll() branch below and nothing pushed
+		// them that tic -- so the fog, the tornado, the darkness curve and
+		// the band fill all froze at whatever they last held, in exactly the
+		// configuration a sweep user reaches for. Turning gitd_enabled off did
+		// the same thing one line into Apply().
+		//
+		// Freezing is worse than clearing: the effect keeps costing its full
+		// per-fragment price while every slider that names it does nothing,
+		// which is the same fault that once left eight beams standing in a room
+		// after the grid was switched off.
+		//
+		// So they are hoisted above the argument entirely. Whether the LANES
+		// run under a sweep is a question about lanes; what the fragment shader
+		// is holding is not, and it needs an answer every single tic.
+		GITD_Render.PushAll();
+		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
+		PushFogWake();
+		PushTornadoAnchor();
+
 		if (anyWave)
 		{
 			// UNDERLAY. A live sweep used to CLEAR the lanes unconditionally,
@@ -1782,15 +1804,9 @@ class GITD_Handler : StaticEventHandler
 			return;
 		}
 
-		// The render settings, and the one part of them that needs the world.
-		// GITD_Render is also called from the menu's ticker, so everything it
-		// pushes is live while you drag a slider; the origin cannot be
-		// resolved from there and is pushed here, where the playsim is.
-		GITD_Render.PushAll();
-		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
-		PushFogWake();
-		PushTornadoAnchor();
-		PushLaserGrid();
+		// The render settings are pushed in WorldTick now, above the branch
+		// that decides whether the lanes run -- see the note there. They used
+		// to be here, which meant the early return above froze them.
 
 		int preset = CVar.FindCVar("gitd_preset").GetInt();
 
@@ -1985,103 +2001,18 @@ class GITD_Handler : StaticEventHandler
 			double(GITD_Render.GetI("gitd_fog_wake_size", 110)), strength);
 	}
 
-	// THE GRID, AND WHERE IT STANDS.
+	// THE LASER GRID MOVED INTO THE SWEEP, and this is what it left behind.
 	//
-	// Lives here rather than in GITD_Render because it needs the sweep's
-	// current position and the player's facing -- both playsim reads, and
-	// neither available from the menu tic that drives the render settings.
+	// It used to push eight real beam segments in a rectangle riding band 1.
+	// Eight is a fence, not a screen door; the rectangle was a small panel
+	// floating in a large room rather than a wall of light filling it; and
+	// raising the count would have cost another segment solve per pixel for
+	// every line added.
 	//
-	// Riding the sweep is the good mode: the lattice sits at band 1's current
-	// distance and travels with it, so it comes down the hall at you. The
-	// band already IS the clock; the grid just borrows where it has got to.
-	void PushLaserGrid()
-	{
-		// Disabled still has to be pushed -- see GITD_LaserGrid.Push. Falling
-		// out here without saying so is what left eight beams live after the
-		// grid was switched off.
-		if (!GITD_LaserGrid.B("gitd_lgrid_enabled", false))
-		{
-			GITD_LaserGrid.Push((0, 0, 0), 0);
-			return;
-		}
-
-		let pmo = players[consoleplayer].mo;
-		Vector3 centre;
-		double travel;
-
-		bool follow = GITD_LaserGrid.B("gitd_lgrid_follow_sweep", true);
-		if (follow && ambient && ambient.alive && ambient.running
-			&& ambient.bandPos.Size() > 0 && pmo)
-		{
-			// ON THE BAND'S OWN PLANE, not along the way you happen to be
-			// looking.
-			//
-			// The first version laid the grid out on the player's facing, so
-			// turning your head swung the lattice around and it only lined up
-			// with the band when you happened to be facing down the sweep's
-			// axis. That is not a grid in the band, it is a grid near it.
-			//
-			// A band is a surface of constant distance from its origin, and
-			// its SHAPE says which distance -- exactly the same five modes the
-			// shader measures with. So the grid is placed where that surface
-			// actually is, and oriented across the direction the surface is
-			// travelling, which is the one direction the lattice must not lie
-			// flat against.
-			double dist = ambient.bandPos[0];
-			Vector3 o = ambient.BandOrigin(0);
-			int shape = BandShape(ambient, 0);
-			double halfH = GITD_LaserGrid.F("gitd_lgrid_height", 128.0) * 0.5;
-
-			if (shape == 2)
-			{
-				// Bar east/west: a plane at x = origin.x +/- dist. Which side
-				// is decided by which side of it you are standing on, so the
-				// grid is always the one coming at you rather than the one
-				// that already went past.
-				double sx = (pmo.pos.x >= o.x) ? 1.0 : -1.0;
-				centre = (o.x + dist * sx, pmo.pos.y, pmo.pos.z + halfH);
-				travel = (sx > 0) ? 0.0 : 180.0;
-			}
-			else if (shape == 3)
-			{
-				// Bar north/south: the same, on the other axis.
-				double sy = (pmo.pos.y >= o.y) ? 1.0 : -1.0;
-				centre = (pmo.pos.x, o.y + dist * sy, pmo.pos.z + halfH);
-				travel = (sy > 0) ? 90.0 : 270.0;
-			}
-			else if (shape == 5)
-			{
-				// Rising: a horizontal sheet climbing. The lattice lies FLAT
-				// in it, so it is built on the floor plane and travel points
-				// straight along x -- the grid is the sheet, seen from below
-				// as it comes up past you.
-				centre = (pmo.pos.x, pmo.pos.y, o.z + dist);
-				travel = 0.0;
-			}
-			else
-			{
-				// Ring or shell: the band is a cylinder, so the piece of it
-				// nearest you is out along the line from the origin through
-				// you, and it faces back at you.
-				Vector2 rel = (pmo.pos.x - o.x, pmo.pos.y - o.y);
-				double a = (rel.Length() > 1.0) ? atan2(rel.y, rel.x) : (pmo ? pmo.angle : 0);
-				centre = (o.x + cos(a) * dist, o.y + sin(a) * dist, pmo.pos.z + halfH);
-				travel = a;
-			}
-		}
-		else if (pmo)
-		{
-			// Static: stands a fixed distance ahead of you, which is what a
-			// tripwire wants.
-			travel = pmo.angle;
-			double so = GITD_LaserGrid.F("gitd_lgrid_standoff", 320.0);
-			centre = pmo.pos + (cos(travel) * so, sin(travel) * so,
-				GITD_LaserGrid.F("gitd_lgrid_height", 128.0) * 0.5);
-		}
-		else return;
-
-		GITD_LaserGrid.Push(centre, travel);
-	}
+	// The sweep already draws a lattice where the view ray crosses its band,
+	// as a pattern rather than as objects, so density there is free. That is
+	// the grid now -- see gitd_ss_fill_air. Nothing in GITD pushes beams any
+	// more, which also means the beam budget belongs entirely to weapons.
 
 	void ClearAll()
 	{

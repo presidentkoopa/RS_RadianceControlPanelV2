@@ -99,6 +99,11 @@ class GITD_Render abstract
 			max(GetF("gitd_tornado_rad_top", 320.0), 1.0),
 			max(GetF("gitd_tornado_density", 1.0), 0.0));
 
+		int tpk = GetI("gitd_tornado_color", 0x8C99B3);
+		level.SetTornadoLook(
+			Color(255, (tpk >> 16) & 255, (tpk >> 8) & 255, tpk & 255),
+			max(GetF("gitd_tornado_scatter", 1.2), 0.0));
+
 		level.SetTornadoMotion(
 			clamp(GetF("gitd_tornado_swirl", 0.5), 0.0, 1.0),
 			GetF("gitd_tornado_spin", 2.0),
