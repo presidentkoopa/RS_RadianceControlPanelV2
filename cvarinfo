@@ -229,9 +229,18 @@ server float fl_intensity = 1.0;
 server float fl_inner = 10.0;     // half-angle, degrees: full brightness inside this
 server float fl_outer = 26.0;     // half-angle, degrees: faded out by here
 server float fl_falloff = 1.5;    // 1 linear along the beam, higher concentrates it near the lens
-server float fl_density = 1.8;    // the beam lights its own haze -- this is what makes
-                                  // it a visible SHAFT rather than a bright patch where it
-                                  // lands. Independent of sector fog and of floor fog.
+// The beam lights its own haze -- this is what makes it a visible SHAFT
+// rather than a bright patch where it lands. Independent of sector fog and of
+// floor fog.
+//
+// PER 1000 UNITS, the same convention gitd_fog_density uses.
+//
+// 1.8 was the old default and it was never a tuned number: the pass had never
+// drawn a lit pixel, so nobody had ever seen what any value did. The first
+// build where it worked put a white disc over the middle of the screen. What
+// the dial means is only now decided, so this starts low and is meant to be
+// turned up until the shaft reads.
+server float fl_density = 0.35;
 
 // Colour. Same idea as the glow lanes: up to eight slots, cycled with a
 // transition, or held on one. -1 in a slot means random.
