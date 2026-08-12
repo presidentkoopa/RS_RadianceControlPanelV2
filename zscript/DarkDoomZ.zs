@@ -609,6 +609,7 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 		// you the room you are adjusting, that is the right trade -- and a
 		// lighting page you have to keep leaving to see is not one.
 		DontPause = true;
+		lastEnginePreset = -1;
 	}
 
 	// [GITD] The menu's clock, which keeps running while the playsim is
@@ -627,10 +628,38 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 		super.Ticker();
 
 		let c = CVar.FindCVar("gitd_preset");
-		if (c) GITD_PresetProfile.Sync(c.GetInt());
+		int preset = c ? c.GetInt() : 0;
 
+		GITD_PresetProfile.Sync(preset);
 		GITD_Render.PushAll();
+
+		// [GITD] AND THE ENGINE HALF, LIVE, LIKE EVERYTHING ELSE.
+		//
+		// Bloom and exposure are gl_* -- engine cvars, which ZScript will only
+		// write from menu code. That used to mean they could only ride a
+		// keypress, so a preset chosen from the console arrived in two halves
+		// at two different moments and the page's live preview was a lie for
+		// the two settings that most decide how a scene reads.
+		//
+		// The fork now counts a menu's TICK as menu code (DMenu::CallTicker),
+		// which it always should have, so the engine half applies here with
+		// everything else.
+		//
+		// ON CHANGE, NOT EVERY TIC. These are the player's own settings when
+		// no preset is holding them -- reapplying a profile's bloom 35 times a
+		// second would make the Bloom page impossible to use while any GITD
+		// menu was open, because every edit would be overwritten before it
+		// could be seen.
+		if (preset != lastEnginePreset) {
+			lastEnginePreset = preset;
+			GITD_PresetProfile.ApplyEngine(preset);
+		}
 	}
+
+	// Which preset's engine half was last applied. Reset to -1 in Init, so the
+	// first tick after a page opens always applies -- which is what makes a
+	// console-set preset catch its bloom up the moment you open the menu.
+	private int lastEnginePreset;
 
 	// [GITD] THE ENGINE HALF OF A PROFILE, AND WHY IT LIVES HERE.
 	//

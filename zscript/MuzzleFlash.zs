@@ -175,6 +175,35 @@ class GITD_MonsterFlashHandler : EventHandler
 		live.Clear(); wasBright.Clear(); sawMarker = false;
 	}
 
+	// WHICH MONSTERS GET A FLASH.
+	//
+	// Scope 0 is everything that fires. Scope 1 -- the default -- is the
+	// common rank only: the rank-and-file shooters you meet in every room,
+	// not elites and not bosses.
+	//
+	// AND IT IS DELIBERATELY NOT BOUND TO A MOD'S TIER TAG. The obvious
+	// implementation is to ask a gameplay mod what rank a monster is, and it
+	// would be wrong here: that roster is being replaced, so a class list or a
+	// tier field written against today's monsters is a list of names that will
+	// not exist. Vanilla inheritance survives a roster swap -- a replacement
+	// zombieman is still a ZombieMan -- so the test is written against the
+	// four vanilla families every common shooter descends from, whoever
+	// happens to be standing in for them.
+	//
+	// The cap in Light() is the other half of this: scope keeps the flashes
+	// meaningful, the cap keeps a crowd from becoming a strobe.
+	static bool InScope(Actor mo, int scope)
+	{
+		if (!mo) return false;
+		if (scope <= 0) return true;
+
+		return mo is "ZombieMan"
+			|| mo is "ShotgunGuy"
+			|| mo is "ChaingunGuy"
+			|| mo is "DoomImp"
+			|| mo is "WolfensteinSS";
+	}
+
 	Color FlashColor(Actor mo)
 	{
 		if (CB("gitd_mmf_custom", false))
@@ -226,6 +255,7 @@ class GITD_MonsterFlashHandler : EventHandler
 		sawMarker = true;
 		let shooter = e.Thing.target;
 		if (!shooter || !shooter.bISMONSTER) return;
+		if (!InScope(shooter, CI("gitd_mmf_scope", 1))) return;
 
 		// The marker IS the muzzle. Pin the light there rather than riding
 		// the shooter -- the flash happened at that point in space.
@@ -242,12 +272,14 @@ class GITD_MonsterFlashHandler : EventHandler
 
 		Array<Actor> nowBright;
 		Array<Actor> toFlash;
+		int scope = CI("gitd_mmf_scope", 1);
 
 		ThinkerIterator it = ThinkerIterator.Create("Actor", Thinker.STAT_DEFAULT);
 		Actor a;
 		while (a = Actor(it.Next()))
 		{
 			if (!a.bISMONSTER || a.health <= 0) continue;
+			if (!InScope(a, scope)) continue;
 			if (!a.MissileState || !a.CurState) continue;
 			if (!Actor.InStateSequence(a.CurState, a.MissileState)) continue;
 			if (!a.CurState.bFullbright) continue;

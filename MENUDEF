@@ -1620,6 +1620,12 @@ OptionMenu "GITDFog"
 // at for an instant -- not the room you are standing in.
 // ---------------------------------------------------------------------------
 
+OptionValue "GITDMuzzleScope"
+{
+	0, "Everything that fires"
+	1, "The common rank only"
+}
+
 OptionMenu "GITDMuzzle"
 {
 	Class "DarkDoomZ_OptionMenu"
@@ -1643,6 +1649,28 @@ OptionMenu "GITDMuzzle"
 	StaticText "so it flickers rather than fading. Your own", darkgray
 	StaticText "weapons only -- an enemy chaingunner cannot", darkgray
 	StaticText "trigger it.", darkgray
+	StaticText ""
+
+	StaticText "Monsters", gold
+	Option "Monsters flash",		"gitd_mmf_lights", "OnOff"
+	Option "  Which ones",			"gitd_mmf_scope", "GITDMuzzleScope"
+	StaticText "The common rank is the rank-and-file shooters", darkgray
+	StaticText "-- zombiemen, sergeants, chaingunners, imps.", darkgray
+	StaticText "Elites and bosses stay dark, so a flash still", darkgray
+	StaticText "means someone is shooting at you rather than", darkgray
+	StaticText "being ambient light in a firefight.", darkgray
+	StaticText ""
+	Slider "  Reach",				"gitd_mmf_size", 16, 320, 8, 0
+	Slider "  How long (tics)",		"gitd_mmf_life", 1, 10, 1, 0
+	Slider "  At most this many",	"gitd_mmf_max", 1, 32, 1, 0
+	StaticText "A cap, so a room full of shooters is a", darkgray
+	StaticText "firefight rather than a strobe.", darkgray
+	StaticText ""
+	Option "  Custom colour",		"gitd_mmf_custom", "OnOff"
+	ColorPicker "    Colour",		"gitd_mmf_color"
+	StaticText "Off, each family gets its own -- plasma blue", darkgray
+	StaticText "for an arachnotron, fire green for an imp,", darkgray
+	StaticText "warm gunfire for everything with a rifle.", darkgray
 }
 
 // ---------------------------------------------------------------------------

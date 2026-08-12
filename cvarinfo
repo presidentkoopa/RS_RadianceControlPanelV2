@@ -971,3 +971,12 @@ server float gitd_lgrid_scroll_depth = 0.20;
 // stands this far ahead of the map centre instead, for a static tripwire.
 server bool  gitd_lgrid_follow_sweep = true;
 server float gitd_lgrid_standoff = 320.0;
+
+// Which monsters get a muzzle flash. 0 = everything that fires, 1 = the common
+// rank only -- the rank-and-file shooters, not elites and not bosses.
+//
+// Tested against the four vanilla families rather than a gameplay mod's tier
+// tag, ON PURPOSE. A class list written against today's roster is a list of
+// names that stops existing the moment that roster is replaced; a replacement
+// zombieman is still a ZombieMan.
+server int gitd_mmf_scope = 1;
