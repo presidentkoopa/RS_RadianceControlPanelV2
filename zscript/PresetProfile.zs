@@ -390,6 +390,39 @@ class GITD_PresetProfile abstract
 		}
 	}
 
+	// LEAVING A PRESET HAS TO PUT THE BLOOM BACK.
+	//
+	// This did not exist, and the reasoning for not having it was written when
+	// no preset shipped: bloom is not captured for recall, the Bloom page's
+	// own defaults are one click away, and a recall that is only usually
+	// correct is worse than none.
+	//
+	// OMGWTF is what made that indefensible. Its bloom is amount 3.2 at
+	// threshold 0.05 with the anamorphic streak and the chromatic fringe both
+	// on -- deliberately ruinous, and correct for that preset. Turning the
+	// preset off left every one of those set while the Preset row read Off,
+	// which is the same fault as a cvar that reads Off while the thing it
+	// names is still running, and it is the third time this project has
+	// shipped that fault.
+	//
+	// The engine's OWN defaults, not a GITD house style: 1.4 / 1.0 / 0.5,
+	// white, no streak, no fringe. Anyone who had tuned their own bloom loses
+	// it, which is the honest cost of not capturing -- but it only fires on
+	// the transition OUT of a preset, so someone who never touches presets is
+	// never touched by this. See the guard in DarkDoomZ_OptionMenu.
+	clearscope static void RestoreEngine()
+	{
+		EI("gl_bloom", 1);
+		EF("gl_bloom_amount", 1.4);
+		EF("gl_bloom_threshold", 1.0);
+		EF("gl_bloom_knee", 0.5);
+		EF("gl_bloom_tint_r", 1.0);
+		EF("gl_bloom_tint_g", 1.0);
+		EF("gl_bloom_tint_b", 1.0);
+		EF("gl_bloom_anamorphic", 0.0);
+		EF("gl_bloom_chromatic", 0.0);
+	}
+
 	// Raw setters for engine cvars. No Capture -- see above.
 	clearscope static void EF(string n, double v) { let c = CVar.FindCVar(n); if (c) c.SetFloat(v); }
 	clearscope static void EI(string n, int v)    { let c = CVar.FindCVar(n); if (c) c.SetInt(v); }

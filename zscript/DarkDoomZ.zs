@@ -650,10 +650,30 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 		// second would make the Bloom page impossible to use while any GITD
 		// menu was open, because every edit would be overwritten before it
 		// could be seen.
-		if (preset != lastEnginePreset) {
-			lastEnginePreset = preset;
-			GITD_PresetProfile.ApplyEngine(preset);
-		}
+		SyncEngine(preset);
+	}
+
+	// ONE PLACE THAT DECIDES, because the Ticker and MenuEvent both used to
+	// call ApplyEngine and only one of them had the change guard -- so moving
+	// the Preset row reapplied a profile's bloom on every keystroke.
+	//
+	// The transition OUT of a preset is the case that did not exist at all.
+	// ApplyEngine's default arm returns without doing anything, so turning
+	// OMGWTF off left amount 3.2 at threshold 0.05 with the streak and the
+	// fringe still on, while the row read Off.
+	//
+	// `prev > 0` is what makes this safe for everyone else. lastEnginePreset
+	// starts at -1, so the first tick after the page opens with no preset
+	// selected sees prev = -1 and does nothing -- somebody who has never
+	// touched a preset never has their own bloom written by this.
+	void SyncEngine(int preset) {
+		if (preset == lastEnginePreset) return;
+
+		int prev = lastEnginePreset;
+		lastEnginePreset = preset;
+
+		if (preset > 0) GITD_PresetProfile.ApplyEngine(preset);
+		else if (prev > 0) GITD_PresetProfile.RestoreEngine();
 	}
 
 	// Which preset's engine half was last applied. Reset to -1 in Init, so the
@@ -679,7 +699,7 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 	override bool MenuEvent(int mkey, bool fromcontroller) {
 		bool handled = super.MenuEvent(mkey, fromcontroller);
 		let c = CVar.FindCVar("gitd_preset");
-		if (c) GITD_PresetProfile.ApplyEngine(c.GetInt());
+		if (c) SyncEngine(c.GetInt());
 		return handled;
 	}
 
