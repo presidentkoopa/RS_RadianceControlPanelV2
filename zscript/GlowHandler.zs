@@ -2320,8 +2320,36 @@ class GITD_Handler : StaticEventHandler
 	}
 }
 
-// Restores every glow cvar to its default. Presets are left alone -- this
-// resets the player's own choices, which is what "defaults" means here.
+// ---------------------------------------------------------------------------
+// RESET: back to defaults, everything OFF except the four lanes.
+//
+// "Default" here does not mean "whatever each cvar's shipped value happens to
+// be". It means A CLEAN ROOM: the 4x8 running, and nothing else on top of it.
+// Somebody reaching for this button has a picture they cannot explain and
+// wants a floor to stand on, and handing them back a default that still has
+// three systems running is not a floor.
+//
+// So the values go back to their defaults AND every system is then explicitly
+// switched off -- which is not the same operation, because several systems
+// ship ON (the torch, the darkness curve, the numbers).
+//
+// THE ACTIVE PRESET SURVIVES, and is re-applied on top afterwards. A preset is
+// a deliberate choice about the whole room, not a stray setting, and wiping it
+// would make this button destroy work rather than clear it.
+//
+// WHY THE SWITCH LIST IS THE ONE THAT MATTERS. The value list below is long,
+// hand-written and has gone stale repeatedly -- the sweep's behaviour set was
+// missing from it for months, and before this change ELEVEN switches were
+// absent entirely: the heatmap, all five glow-texture terms, the fog's noise,
+// tendrils and bow wave, the desaturation keep, and the air lattice. A long
+// list nobody can audit will always rot.
+//
+// The switch list cannot rot the same way, because it is one line per system
+// and a system that is missing from it is visibly still running the moment the
+// button is pressed. A stale VALUE on a system that is switched off is
+// invisible and harmless; a missing SWITCH is the whole bug. Keep this list
+// complete and the long one can be as imperfect as it likes.
+// ---------------------------------------------------------------------------
 class GITD_ResetHandler : EventHandler
 {
 	static void Rst(string name)
@@ -2330,9 +2358,29 @@ class GITD_ResetHandler : EventHandler
 		if (c) c.ResetToDefault();
 	}
 
+	// A master switch, forced off rather than reset -- several of these ship
+	// ON, and this button means "off" and not "as it came".
+	static void Off(string name)
+	{
+		CVar c = CVar.FindCVar(name);
+		if (c) c.SetInt(0);
+	}
+
+	// The same, for the systems whose master is an amount rather than a bool.
+	static void Zero(string name)
+	{
+		CVar c = CVar.FindCVar(name);
+		if (c) c.SetFloat(0.0);
+	}
+
 	override void NetworkProcess(ConsoleEvent e)
 	{
 		if (e.name != "gitd_reset") return;
+
+		// Remembered across the wipe below, then put back and re-applied.
+		int keepPreset = 0;
+		let pc = CVar.FindCVar("gitd_preset");
+		if (pc) keepPreset = pc.GetInt();
 
 		static const string lanes[] = { "gitd_wb", "gitd_wt", "gitd_cg", "gitd_fg" };
 		for (int i = 0; i < 4; i++)
@@ -2384,7 +2432,11 @@ class GITD_ResetHandler : EventHandler
 
 		// Darkness, flashlight, numbers, pickup cones.
 		static const string rest[] = {
-			"gitd_enabled", "gitd_preset",
+			// gitd_preset is NOT here. It is captured before this list runs
+			// and put back after, because a preset is a deliberate choice
+			// about the whole room rather than a stray setting -- this button
+			// clears work, it does not destroy it.
+			"gitd_enabled",
 			// The sweep's behaviour set arrived after the sweeps[] list above
 			// and was never added to it -- so "Reset EVERYTHING" put the
 			// geometry back and left the conduct: a sweep still firing on
@@ -2451,7 +2503,69 @@ class GITD_ResetHandler : EventHandler
 		// legal. DarkDoomZ_OptionMenu (DarkDoomZ.zs:555) is the pattern: a
 		// ZScript OptionMenu subclass whose MenuEvent does the work. Until
 		// that exists, this says what is true rather than what was intended.
-		Console.Printf("\c[Gold]All Glow In The Dark settings reset to defaults.");
+		// ---- and now everything OFF, except the four lanes ----------------
+		//
+		// ONE LINE PER SYSTEM. If you add a system, add its switch here, and
+		// the test is trivial: press the button and look. A system missing
+		// from this list is still running on a screen that was supposed to be
+		// clear, which is the one failure a person can actually see.
+		//
+		// The four lanes are deliberately absent -- they are what is left.
+		static const string masters[] = {
+			"gitd_ss_enabled",        // sector sweep
+			"gitd_wave_enabled",      // glow waves
+			"gitd_fog_enabled",       // floor fog
+			"gitd_tornado_enabled",   // the funnel
+			"gitd_heat_enabled",      // the heatmap's display
+			"gitd_fog_react",         // disturbances
+			"gitd_neon_enabled",      // the numbers
+			"gitd_law_enabled",       // colours change the fight
+			"gitd_dd_perpixel",       // per-fragment darkness
+			"fl_enabled",             // the torch -- ships ON
+			"gitd_dd_enabled"         // the darkness curve -- ships ON
+		};
+		for (int i = 0; i < masters.Size(); i++) Off(masters[i]);
+
+		// The same, where the master is an amount and 0 is its off.
+		static const string zeros[] = {
+			"gitd_ss_fill_air",       // the laser grid
+			"gitd_fog_noise",         // mist banks
+			"gitd_fog_tendril",       // wisps
+			"gitd_fog_bow",           // the sweep shoulders the air
+			"gitd_fog_displace",      // monsters push the mist
+			"gitd_fog_color2_mix",    // the layer's second colour
+			"gitd_fog_wake_stretch",
+			"gitd_tornado_density",
+			"gitd_dd_keep",           // selective desaturation
+			"gitd_glowtex_noise",     // texture in the glow, all five
+			"gitd_glowtex_flow",
+			"gitd_glowtex_cell",
+			"gitd_glowtex_react",
+			"gitd_glowtex_alarm"
+		};
+		for (int i = 0; i < zeros.Size(); i++) Zero(zeros[i]);
+
+		// ---- and the preset comes back ------------------------------------
+		//
+		// Re-applied rather than merely re-selected. The backup record is
+		// cleared first so the profile re-captures against the FRESH defaults
+		// -- otherwise Disable Preset would later hand back the settings that
+		// were live before this button was pressed, which is the opposite of
+		// what pressing it meant.
+		if (keepPreset > 0)
+		{
+			let bk = CVar.FindCVar("gitd_preset_backup");
+			if (bk) bk.SetString("");
+			if (pc) pc.SetInt(keepPreset);
+			if (GITD_PresetProfile.HasProfile(keepPreset))
+				GITD_PresetProfile.Apply(keepPreset);
+		}
+
+		Console.Printf("\c[Gold]Glow In The Dark reset: the 4x8 lanes, and nothing else.");
+		if (keepPreset > 0)
+			Console.Printf("\c[DarkGray]Preset %d kept and re-applied on top. "
+				.. "Its bloom is an engine setting and did not come with it -- "
+				.. "reopen the menu to catch that up.", keepPreset);
 		Console.Printf("\c[DarkGray]Bloom and exposure are engine settings and were not "
 			.. "touched -- reset those from the Bloom page.");
 	}

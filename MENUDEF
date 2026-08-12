@@ -485,7 +485,19 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText ""
 
-	SafeCommand "Reset EVERYTHING to defaults","netevent gitd_reset"
+	SafeCommand "Back to a clean room",		"netevent gitd_reset"
+	StaticText "Every value back to its default, and every", darkgray
+	StaticText "system switched OFF except the four lanes --", darkgray
+	StaticText "including the ones that ship on, like the", darkgray
+	StaticText "torch and the darkness curve.", darkgray
+	StaticText ""
+	StaticText "An active preset survives and is re-applied", darkgray
+	StaticText "on top. This clears your work, it does not", darkgray
+	StaticText "destroy it.", darkgray
+	StaticText ""
+	StaticText "Bloom and exposure are engine settings and", darkgray
+	StaticText "are not touched -- reset those from the Bloom", darkgray
+	StaticText "page.", darkgray
 }
 
 // ---------------------------------------------------------------------------
