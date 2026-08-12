@@ -2,12 +2,24 @@
 
 Lighting for a fork of GZDoom built around darkness. Four independent glow
 lanes, travelling bands of light that wrap every surface, real beams, mist you
-stand in, and a darkness model that works per pixel instead of per room.
+stand in that reacts to what happens in it, tornadoes you can walk inside, and
+a darkness model that works per pixel instead of per room.
+
+One idea runs through all of it: **stop placing objects to represent an effect,
+and give the fragment shader the maths instead.** A sweep asks each pixel its
+distance from a point. A beam asks its distance from a segment. Fog asks how
+much of the ray from your eye lay below a plane. Darkness asks what a pixel's
+own light is rather than what its room's is.
+
+That is why a lattice can be four lines or four hundred for the same cost, why
+a laser is continuous at any length, and why mist has a surface you can look
+down at.
 
 **Requires the forked engine.** Floor and ceiling glow, two colours per glow,
 Sector Sweep, the volumetric beam, per-fragment darkness, glow waves, the fog
-slab, real beams, and the bloom threshold and knee are all engine features that
-do not exist in stock GZDoom. On stock this mod will not load.
+slab, reactive fog, tornadoes, the heatmap, real beams, selective desaturation,
+and the bloom threshold and knee are all engine features that do not exist in
+stock GZDoom. On stock this mod will not load.
 
 Everything lives under **Options → Glow In The Dark**.
 
@@ -16,16 +28,17 @@ Everything lives under **Options → Glow In The Dark**.
 | | |
 | --- | --- |
 | **Four glow lanes** | floor, ceiling, wall bottom, wall top — identical controls on each |
-| **Presets** | five finished environments, each carrying a whole room rather than a palette |
+| **Presets** | two finished environments, each carrying a whole room rather than a palette |
 | **Glow waves** | the *edge* of a glow rises and falls along a wall |
 | **Sector Sweep** | up to eight bands of light travelling through the map |
-| **Band fill** | a band can be a lattice or a slab instead of a wash |
-| **Laser grid** | real beams standing across a corridor |
+| **Laser grid** | a wall of lasers standing inside a sweep, floor to ceiling |
 | **Beams** | segment lasers, continuous, visible in the air, no dynamic lights |
 | **Darkness** | per room, or per pixel — with distance and height falloff |
-| **Floor fog** | mist with a *top*, that you stand in and leave a trail through |
+| **Selective colour** | a grey world that still has blood in it |
+| **Fog** | mist with a *top*, on the floor or the ceiling, that reacts to what happens in it |
+| **Tornado** | a funnel you can walk into and stand inside |
+| **Heatmap** | the floor remembers where the fighting happened |
 | **Flashlight** | volumetric beam with dust, four mount positions |
-| **Muzzle flash** | a brief attenuated light at chest height when anything fires |
 | **Bloom & exposure** | threshold, knee, anamorphic streak, tint, fringing, and an eye that adapts |
 
 ---
@@ -104,15 +117,18 @@ flashlight, bloom and exposure, and whatever is travelling through.
 **Choosing one replaces your settings. Disable Preset gives them all back** —
 every value a preset overwrites is recorded first, so nothing is lost.
 
-Five are finished. The others were removed rather than shipped half-built.
+**Two ship**, and they are the two ends of one range on purpose. A preset list
+with only the middle of it teaches nobody what this can do.
 
 | | |
 | --- | --- |
-| **Blackout** | The absence. Pure black, crushed as far as the mod goes, nothing travelling, no mist. Defined by what it does not do. |
-| **Low Power** | The grid is failing. Dying sodium, a slow brownout rolling along the corridor, dead air settled on the floor that holds your trail for seconds. Every few minutes the plant loses a round: it catches, it holds, it slips, it goes. The horror is that the dark is *scheduled*. |
-| **Red Alert** | Containment breach, on a five-minute procedure. Klaxon beats in lockstep with a beacon turning overhead, a red band that floods the corridor and then drops it below its own baseline. Your eye adapts fast, so the room pumps with the alarm. |
-| **Black and White** | Not a monochrome palette — a monochrome *world*. Colour drain takes the textures with it. Four surfaces on four clocks that never re-sync, hard cuts, an etched edge that has moved by the time you come back, and a neutral haze that refuses to be tinted by anything. |
-| **OMGWTF** | Every system at once, turned up. Eight bands doing four different things, chest-deep fog that is a different colour in every direction, a laser grid riding the sweep at you, and an eye that never settles. It is a stress test with a paint job. |
+| **Black and White** | Not a monochrome palette — a monochrome *world*. Colour drain takes the textures with it. Four surfaces on four clocks that never re-sync, hard cuts, an etched edge that has moved by the time you come back down the corridor, and a floor that quietly remembers who died on it. **Except the blood.** It refuses almost every system here — no sweep, no lattice, no wisps, no funnel — and what is left is composition. |
+| **OMGWTF** | Refuses nothing. Eight bands doing four different things, chest-deep fog banked and drifting, a forest of wisps, a tornado that follows the nearest live monster so it is always standing where the fight is, a laser lattice in the air inside every band, every monster dragging a hole through the mist, and an eye that never settles. Four systems arguing about the same cubic metre of air. It is not a look, it is a test. |
+
+The others — Blackout, Low Power, Red Alert — are written but switched off.
+They predate half the systems on this page, and a preset that does not *mention*
+a system does not skip it: it inherits whatever the last one left running. That
+makes a stale profile worse than no profile.
 
 ## Sector Sweep
 
@@ -160,7 +176,27 @@ structure in it. Negative inverts it: lit gaps, dark lines, a grid of shadow.
 
 Plus rotation, drift, per-line flicker, jitter, and every Nth line bolder.
 
-## Beams and the laser grid
+## The laser grid
+
+**The grid is what a sweep fires.** It is not its own toggle and not its own
+system — turn *Fire lasers into the air* up on the sweep page and the band stops
+being a wash and becomes a wall of laser light standing in the room, floor to
+ceiling and wall to wall, coming down the hall at you.
+
+`gitd_hallway` in the console sets the whole shot at once: dense diagonal cyan,
+dark room, haze to catch the light. Every value it writes is a slider you can
+find on the menu, so it is a starting point rather than a mode.
+
+**Density is free.** The lattice is a *pattern* evaluated where your view ray
+crosses the band, not a set of objects, so four lines by four and four hundred
+by four hundred cost exactly the same. Make it a screen door if you want one.
+
+That is why the grid became part of the sweep rather than competing with it.
+The old version placed eight real beam segments in a rectangle — which is a
+small panel floating in a large room, not a wall of light filling it, and every
+line you added cost another solve for every pixel on screen.
+
+## Beams
 
 A laser in Doom is usually a sprite, or a chain of puffs close enough together
 to read as a line. Both give themselves away: the sprite lights nothing, and
@@ -177,16 +213,11 @@ That one difference buys everything:
 - **It blooms by itself** — no dynamic light, no sprite, no quad
 - **Energy travels along it**, it tapers tight at the aperture and blooms
   toward what it hits, and it flares where it lands
+- **It lights fog** — a beam through mist is a shaft along its whole length,
+  not a bright dot on whatever it eventually hits
 
-The **Laser Grid** stands eight of these across a corridor. It can ride the
-sweep — the lattice sits on the travelling band and comes down the hall at you
-— or stand still ahead of you as a tripwire.
-
-> Band fill and the laser grid are meant to be used **together**. The fill
-> draws the lattice *on* every surface, continuous around corners and up walls,
-> which a straight beam cannot do. The beams put it *in* the air between those
-> surfaces, which a fill cannot do. Both on, and the grid is drawn on the room
-> and present in it.
+Nothing in this mod claims the beam slots any more. They belong entirely to
+weapons, which is what a weapon mod needs from a lighting mod.
 
 ## Darkness
 
@@ -207,6 +238,24 @@ that a per-sector multiplier can never express:
 The dials mean the same thing in both modes, but they will not *feel* the same,
 because they were tuned against the old one. Expect to re-taste the ladder.
 
+### What survives the colour drain
+
+Colour drain used to be all or nothing: a monochrome world made blood exactly
+as grey as the wall it was sprayed on.
+
+**Keep above saturation** weights the drain by each colour's *own* vividness.
+Turn it up and the drain skips colours that are already saturated, so the world
+goes grey and the blood stays red. Doom's palette is very saturated at the top
+end, so around 0.75 keeps blood and pickups while brown walls still drain.
+
+Nothing is tagged for this. No actor, sprite or texture knows it is exempt,
+because **the rule is about the colour, not about the thing wearing it** — which
+is why it reaches textures, sprites, glow, sweep bands and brightmaps at once.
+
+*Which hues* narrows it further. Any-hue keeps every vivid thing, which is its
+own look. **Red only** is the one that means blood and nothing else: a green
+nukage pool at full saturation drains away with the walls.
+
 ## Floor fog
 
 The fog on the Fog page is sector fog: a distance tint on surfaces, uniform
@@ -225,6 +274,84 @@ down, and see its surface around your knees.
 - **The wake** — walking clears a channel that closes behind you. The settling
   speed is the character: slow drags a long trail you can look back at, fast
   keeps the air moving.
+- **The surface moves** — two waves at an angle, so it rolls rather than
+  corrugating in one direction.
+
+### It also has a bottom
+
+That one number turns a half-space into a **layer**, and the same setting is
+four different effects depending on where the two edges sit:
+
+| bottom | top | what you get |
+| --- | --- | --- |
+| far below | at the knee | floor fog |
+| near the ceiling | above it | **ceiling fog** |
+| both mid-room | just above | a band floating at chest height |
+| walked toward the other | — | fog **draining** or **filling** |
+
+**Vertical hold** repeats the layer up the room and rolls the whole stack
+through, wrapping at the top — the old television fault. The stack costs
+exactly what one layer costs.
+
+### Reactive fog
+
+The mist is a substance standing in the room, not a filter over the picture,
+and a substance reacts to what happens in it.
+
+- **Uneven density** — the biggest one. Density used to be a single number for
+  the whole map, which is the main tell that fog is a filter. Now it banks:
+  thick in the corners, thin across the open, and drifting slowly on its own.
+- **Rings off your muzzle** — this is the one that sells it. A hard front
+  travelling outward proves the mist is *between* you and the wall rather than
+  painted over the picture. Bursts on monster death too, and **Ignite** lights
+  the mist instead of moving it, so an explosion works even in clear air.
+- **Monsters shoulder it aside** — a pack wading through knee-deep mist, each
+  with its own wake.
+- **Tendrils** — wisps drifting up off the surface, curling as they climb.
+  Hundreds of them cost what one costs, so the spacing slider is free in both
+  directions.
+- **The sweep moves the air** — mist piles against a band's leading face and is
+  scoured out behind it.
+- **A stretched wake** — at zero the disturbance is a disc, a hole you carry
+  around. Turn it up and it draws out behind into a corridor you carve and
+  leave.
+- **Two colours through the layer** — cold at the floor, warm at the top,
+  measured against the layer's own thickness.
+
+### Tornado
+
+The same mist gathered around a **vertical axis** instead of spread under a
+plane. A funnel you can walk into and stand inside — its centre is hollow, so
+from within you are looking out through the far wall of it with the room beyond
+still legible.
+
+It can stand at a fixed point, or follow the nearest live monster, in which
+case it walks the room on its own and is always where the fight is.
+
+Swirl, not spin, is what makes it look like it is rotating: with swirl at zero
+it is a smooth cone of haze and will not appear to turn at any speed, because
+there is nothing on it to watch go past. Turn swirl up first.
+
+Fully independent of the floor fog — run either, or both at once in different
+colours. This is the expensive one, and unlike a floor layer it does not stop
+costing anything when you look up. Off is free.
+
+## Heatmap
+
+Every monster death drops a mark on the floor and the marks **accumulate over
+the whole life of the map**. Walk back through somewhere you cleared and the
+ground shows you what happened there.
+
+Player damage can mark too, and it is a different map: one shows what you
+controlled, the other shows what controlled you. Run both and the pair is the
+actual shape of a fight.
+
+Marks are recorded whether the display is on or off, because a heatmap is a
+**record** — one that erased itself when you stopped looking at it would not be.
+Switch it on after a fight and you see the fight you just had.
+
+*Forgets* turns it into a live picture of the last minute instead. At zero it
+never forgets, which is what you want for reading a level after the fact.
 
 ## Flashlight
 
@@ -245,23 +372,6 @@ It softens a harsh cone, and it is also an omnidirectional light — the opposit
 of what a torch is — so it is opt-in rather than assumed.
 
 No battery, no melee, no pickup. You always have it.
-
-## Muzzle flash
-
-A brief light on whatever just fired, at **chest height**, with realistic
-falloff.
-
-Both of those are reactions to the same bug, seen twice in this project's
-history: a light placed at an actor's position sits at its *feet*, and an
-unattenuated point light is near-full brightness right out to its radius.
-Together that is a lamp switched on under you washing the floor in every
-direction, which is not a muzzle flash.
-
-Reach is deliberately small — this should light the wall you are pointing at
-for an instant, not the room you are standing in. It fires on the *bang* rather
-than the trigger, so it cannot light the room a tic before the gun goes off,
-and the chaingun strobes instead of fading because it is a string of separate
-bangs.
 
 ## Bloom and exposure
 
