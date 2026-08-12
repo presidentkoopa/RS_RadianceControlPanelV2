@@ -1789,6 +1789,7 @@ class GITD_Handler : StaticEventHandler
 		GITD_Render.PushAll();
 		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
 		PushFogWake();
+		PushLaserGrid();
 
 		int preset = CVar.FindCVar("gitd_preset").GetInt();
 
@@ -1960,6 +1961,50 @@ class GITD_Handler : StaticEventHandler
 
 		level.SetFogWake(wakePos,
 			double(GITD_Render.GetI("gitd_fog_wake_size", 110)), strength);
+	}
+
+	// THE GRID, AND WHERE IT STANDS.
+	//
+	// Lives here rather than in GITD_Render because it needs the sweep's
+	// current position and the player's facing -- both playsim reads, and
+	// neither available from the menu tic that drives the render settings.
+	//
+	// Riding the sweep is the good mode: the lattice sits at band 1's current
+	// distance and travels with it, so it comes down the hall at you. The
+	// band already IS the clock; the grid just borrows where it has got to.
+	void PushLaserGrid()
+	{
+		if (!GITD_LaserGrid.B("gitd_lgrid_enabled", false)) return;
+
+		let pmo = players[consoleplayer].mo;
+		Vector3 centre;
+		double travel;
+
+		bool follow = GITD_LaserGrid.B("gitd_lgrid_follow_sweep", true);
+		if (follow && ambient && ambient.alive && ambient.running
+			&& ambient.bandPos.Size() > 0)
+		{
+			// Band 1's distance from its own origin, laid out along the
+			// direction the player is facing. For a bar sweep down a corridor
+			// that puts the grid exactly on the band.
+			double dist = ambient.bandPos[0];
+			Vector3 o = ambient.BandOrigin(0);
+			travel = pmo ? pmo.angle : 0;
+			centre = (o.x + cos(travel) * dist, o.y + sin(travel) * dist,
+				o.z + GITD_LaserGrid.F("gitd_lgrid_height", 128.0) * 0.5);
+		}
+		else if (pmo)
+		{
+			// Static: stands a fixed distance ahead of you, which is what a
+			// tripwire wants.
+			travel = pmo.angle;
+			double so = GITD_LaserGrid.F("gitd_lgrid_standoff", 320.0);
+			centre = pmo.pos + (cos(travel) * so, sin(travel) * so,
+				GITD_LaserGrid.F("gitd_lgrid_height", 128.0) * 0.5);
+		}
+		else return;
+
+		GITD_LaserGrid.Push(centre, travel);
 	}
 
 	void ClearAll()

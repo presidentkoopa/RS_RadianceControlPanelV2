@@ -381,6 +381,18 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText ""
 
+	StaticText "Laser Grid", gold
+	Option "Laser grid",			"gitd_lgrid_enabled", "OnOff"
+	Submenu "  Laser grid options...","GITDLaserGrid"
+	StaticText "REAL beams standing across the corridor --", darkgray
+	StaticText "lines of light hanging in the air, not a", darkgray
+	StaticText "pattern painted on the walls. Pair it with", darkgray
+	StaticText "the band fill below: the fill draws the", darkgray
+	StaticText "lattice ON every surface, this puts it IN", darkgray
+	StaticText "the room between them.", darkgray
+	StaticText ""
+	StaticText ""
+
 	StaticText "Inside a Sweep Band", gold
 	Submenu "  Band fill options...","GITDSweepFill"
 	StaticText "A band can be a lattice, a field of points,", darkgray
@@ -463,6 +475,70 @@ OptionMenu "GITDDarkPixel"
 	StaticText "Colour drain stays per sector in both modes.", darkgray
 	StaticText "That is what makes it reach the textures and", darkgray
 	StaticText "not just the glow.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// Laser grid -- real beams, not a painted lattice.
+//
+// A sweep band FILL patterns the band where it touches a surface, so the lines
+// are on the walls and there is nothing in the air between them: walk into it
+// and you walk through a picture. Each line here is an actual segment of light
+// -- lit per pixel by distance from it, visible hanging in space, occluded
+// correctly by geometry, and blooming on its own.
+//
+// The two are meant to be used together. The fill goes around corners and up
+// walls, which a straight beam cannot. The beams have volume, which a fill
+// cannot. Both on, and the grid is drawn on the room and present in it.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDLaserGrid"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Laser Grid"
+	StaticText ""
+	Option "Laser grid",			"gitd_lgrid_enabled", "OnOff"
+	StaticText ""
+
+	StaticText "The lattice", gold
+	Slider "Rungs (horizontal)",	"gitd_lgrid_across", 0, 8, 1, 0
+	Slider "Uprights (vertical)",	"gitd_lgrid_up", 0, 8, 1, 0
+	StaticText "Eight lines total -- that is the beam budget.", darkgray
+	StaticText "Past four and four it starts to read as a", darkgray
+	StaticText "screen door rather than a grid. Uprights are", darkgray
+	StaticText "dropped first if the total goes over.", darkgray
+	Slider "Opening width",			"gitd_lgrid_width", 32, 640, 16, 0
+	Slider "Opening height",		"gitd_lgrid_height", 32, 512, 16, 0
+	StaticText ""
+
+	StaticText "The lines", gold
+	Slider "Core thickness",		"gitd_lgrid_thick", 0.2, 12.0, 0.2, 1
+	StaticText "Thin is what reads as a laser. Past about 4", darkgray
+	StaticText "it becomes a bar of light instead.", darkgray
+	Slider "Halo reach",			"gitd_lgrid_soft", 0.5, 24.0, 0.5, 1
+	Slider "Brightness",			"gitd_lgrid_intensity", 0.1, 6.0, 0.1, 1
+	Slider "Halo strength",			"gitd_lgrid_glow", 0.0, 2.0, 0.05, 2
+	ColorPicker "Colour",			"gitd_lgrid_color"
+	StaticText ""
+
+	StaticText "In the air", gold
+	Slider "Visible in air",		"gitd_lgrid_air", 0.0, 4.0, 0.1, 1
+	StaticText "At 0 the lines only light what they touch --", darkgray
+	StaticText "a grid of spotlights. Above 0 the beam itself", darkgray
+	StaticText "hangs in the room, occluded properly by walls", darkgray
+	StaticText "and feeding bloom on its own.", darkgray
+	Slider "Energy scroll",			"gitd_lgrid_scroll", 0.0, 30.0, 0.5, 1
+	Slider "  Depth",				"gitd_lgrid_scroll_depth", 0.0, 1.0, 0.05, 2
+	StaticText "Something travelling along each line. Without", darkgray
+	StaticText "it a held grid goes static in about a second.", darkgray
+	StaticText ""
+
+	StaticText "Where it stands", gold
+	Option "Ride the sweep",		"gitd_lgrid_follow_sweep", "OnOff"
+	StaticText "On, the grid sits at sweep band 1 and travels", darkgray
+	StaticText "with it -- the lattice comes down the hall at", darkgray
+	StaticText "you. Off, it stands still ahead of you, which", darkgray
+	StaticText "is what a tripwire wants.", darkgray
+	Slider "  Standoff",			"gitd_lgrid_standoff", 64, 1024, 16, 0
 }
 
 OptionValue "GITDSweepFillMode"

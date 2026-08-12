@@ -2,6 +2,7 @@ version "4.14"
 
 #include "zscript/SectorComposite.zs"
 #include "zscript/Render.zs"
+#include "zscript/LaserGrid.zs"
 #include "zscript/SweepEngine.zs"
 #include "zscript/GlowHandler.zs"
 #include "zscript/PresetProfile.zs"

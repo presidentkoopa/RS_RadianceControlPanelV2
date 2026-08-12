@@ -162,6 +162,54 @@ class GITD_PresetProfile abstract
 		F("gitd_dd_height_range", heightRange);
 	}
 
+	// Mist with a top. The one atmospheric system that has a SHAPE, so it is
+	// the one that changes what a room feels like to stand in rather than
+	// what it looks like from across the map.
+	clearscope static void Fog(int top, double density, int soft, int color,
+	                           double scatter, double pickup,
+	                           double wake, int wakeSize, double wakeLag)
+	{
+		B("gitd_fog_enabled", true);
+		I("gitd_fog_top", top);
+		F("gitd_fog_density", density);
+		I("gitd_fog_soft", soft);
+		I("gitd_fog_color", color);
+		F("gitd_fog_scatter", scatter);
+		F("gitd_fog_pickup", pickup);
+		F("gitd_fog_wake", wake);
+		I("gitd_fog_wake_size", wakeSize);
+		F("gitd_fog_wake_lag", wakeLag);
+	}
+
+	clearscope static void NoFog()
+	{
+		B("gitd_fog_enabled", false);
+	}
+
+	// Real beams standing across the corridor. Costs the whole beam budget,
+	// so a preset that turns this on is saying the grid IS the effect.
+	clearscope static void Grid(int across, int up, double width, double height,
+	                            double thick, double soft, double inten,
+	                            int color, double scroll, bool rideSweep)
+	{
+		B("gitd_lgrid_enabled", true);
+		I("gitd_lgrid_across", across);
+		I("gitd_lgrid_up", up);
+		F("gitd_lgrid_width", width);
+		F("gitd_lgrid_height", height);
+		F("gitd_lgrid_thick", thick);
+		F("gitd_lgrid_soft", soft);
+		F("gitd_lgrid_intensity", inten);
+		I("gitd_lgrid_color", color);
+		F("gitd_lgrid_scroll", scroll);
+		B("gitd_lgrid_follow_sweep", rideSweep);
+	}
+
+	clearscope static void NoGrid()
+	{
+		B("gitd_lgrid_enabled", false);
+	}
+
 	// ---- dispatch -------------------------------------------------------
 
 	clearscope static bool HasProfile(int preset)
@@ -458,6 +506,33 @@ class GITD_PresetProfile abstract
 		F("ddz_skymode", 1.0);
 		I("ddz_minlight", 0);   // no floor. Where it goes dark it goes dark.
 
+		// ---- AND IT HAS SETTLED ON THE FLOOR -----------------------------
+		//
+		// Sector fog fills a room evenly, which is weather. This is a LAYER,
+		// and a layer is what a building gets when its air handling has been
+		// off for a long time: cold, heavy, dead-still, lying in the bottom
+		// forty units of every corridor and going nowhere.
+		//
+		// Dead sodium grey-brown, not white -- it is the same dying light
+		// everything else here is made of, hanging in the air instead of
+		// clinging to a wall.
+		//
+		// PICKUP HIGH. The mist takes its colour from whatever is behind it,
+		// so the amber strip glow bleeds into the fog in front of it and the
+		// two stop being separate systems. Without that the layer reads as a
+		// filter laid over the room.
+		//
+		// AND THE WAKE IS SLOW. Lag 0.06 drags a long channel that takes
+		// several seconds to close, so you can look back and see where you
+		// walked. In a preset about a place nobody has been in for a while,
+		// leaving a mark is the whole point.
+		Fog(44, 1.5, 26, 0x3A2E1E,
+		    0.9,      // the torch lights it -- this is where the beam earns its keep
+		    0.75,     // and it picks up the failing amber from the walls
+		    0.7, 130, 0.06);
+
+		NoGrid();
+
 		// ---- the torch ---------------------------------------------------
 		//
 		// Halogen, because that is what a facility torch is, and warm against
@@ -704,6 +779,27 @@ class GITD_PresetProfile abstract
 		// soften anything. Grey haze is still grey.
 		I("ddz_fog", 40);
 
+		// A LOW, THIN, COLOURLESS LAYER, and PICKUP AT ZERO.
+		//
+		// Every other preset turns pickup up, because mist taking colour from
+		// what is behind it is what stops it reading as a filter. This one
+		// wants exactly that flatness: a neutral grey layer that refuses to
+		// be tinted by anything, because the moment it picks up a colour this
+		// preset has a colour in it and the whole argument collapses.
+		//
+		// Very shallow -- ankle rather than knee. It is not weather here, it
+		// is the floor of the frame: something for the bottom of a composition
+		// to sit in, the way a Bergman floor is never quite empty.
+		//
+		// Scatter high, though. The torch cutting a clean shaft through flat
+		// grey air is the most Bergman thing in the whole mod.
+		Fog(22, 0.7, 14, 0x9EA2A6,
+		    1.6,      // the beam carves
+		    0.0,      // and NOTHING tints it
+		    0.35, 90, 0.12);
+
+		NoGrid();
+
 		// The torch is hard and clean. NO DUST: motes are texture, and this
 		// preset has no texture in it anywhere. A cone with an edge.
 		B("fl_enabled", true);
@@ -860,6 +956,21 @@ class GITD_PresetProfile abstract
 		// colour arriving on a surface. Lighter than Low Power's: this is a
 		// lit room having an emergency, not a dead one.
 		I("ddz_fog", 112);
+
+		// A THIN RED LAYER, and thin on purpose. Low Power's fog is a dead
+		// building's settled air; this is not that. It is smoke from whatever
+		// went wrong -- shallower, lighter, and disturbed, because the room is
+		// having an emergency rather than sitting in one.
+		//
+		// The wake is FAST here (lag 0.35): the layer closes up almost as
+		// soon as you pass, so it reads as moving air rather than as
+		// something that has been undisturbed for months.
+		Fog(30, 0.85, 18, 0x4A0E08,
+		    1.1,      // and the klaxon's own bands light it as they cross
+		    0.85,     // taking red from every surface it stands in front of
+		    0.5, 100, 0.35);
+
+		NoGrid();
 
 		// The torch, wide and clean. Red Alert is not a preset about being
 		// unable to see -- the light is already on and already telling you
@@ -1104,6 +1215,30 @@ class GITD_PresetProfile abstract
 
 		I("ddz_fog", 190);
 
+		// FOG UP TO YOUR CHEST, AND A LASER GRID IN IT.
+		//
+		// Every other preset picks one atmospheric idea and commits. This
+		// runs the slab at head height with maximum pickup -- so the mist
+		// takes on all thirty-two rainbow colours from whatever surface is
+		// behind it and becomes a different colour in every direction you
+		// look -- and then stands eight real beams in it.
+		//
+		// The grid rides the sweep, so a lattice of lasers comes down the
+		// corridor through chest-deep multicoloured fog while eight bands do
+		// four different things to the light. Nowhere else would this be
+		// defensible. That is the preset.
+		Fog(72, 2.6, 30, 0xFF00E6,
+		    2.5,      // scatter cranked: the torch carves through it
+		    1.0,      // maximum pickup: the mist is whatever is behind it
+		    0.9, 200, 0.5);
+
+		Grid(4, 4, 200.0, 176.0,
+		     1.0,      // thin, so they read as lasers rather than bars
+		     3.0, 2.6,
+		     0x00FF66, // acid green against the magenta fog, on purpose
+		     14.0,     // energy tearing along them
+		     true);    // and the whole lattice rides the sweep at you
+
 		B("fl_enabled", true);
 		I("fl_range", 1800);
 		F("fl_intensity", 2.0);
@@ -1244,5 +1379,15 @@ class GITD_PresetProfile abstract
 		I("ddz_mode", 4);      // Crush
 		I("ddz_preset", 8);    // Pure
 		I("ddz_desat", 255);   // no colour survives here either
+
+		// AND NOTHING IN THE AIR EITHER.
+		//
+		// Fog and a laser grid both add something you can SEE, and this
+		// preset is defined by there being nothing to see. Switched off
+		// explicitly rather than left alone: a preset that inherits the
+		// previous one's knee-deep red mist is not Blackout, it is Low Power
+		// with the lights off.
+		NoFog();
+		NoGrid();
 	}
 }
