@@ -830,31 +830,7 @@ server float gitd_dd_height = 0.0;        // 0 = off
 server float gitd_dd_height_ref = 0.0;    // world Z the pooling starts from
 server float gitd_dd_height_range = 256.0;// how far below that to reach full
 
-// ---- Muzzle flash ----------------------------------------------------------
-// A brief attenuated light at CHEST height on the player who fired -- not at
-// their feet, which is what made the previous ones wash the floor in every
-// direction. Radius is deliberately modest: this should light the wall you are
-// pointing at for an instant, not the room you are standing in.
-server bool  gitd_muzzle_lights = true;
-server int   gitd_muzzle_size = 96;      // reach in map units
-server int   gitd_muzzle_life = 3;       // tics, fading out
-server bool  gitd_muzzle_custom = false;
-server color gitd_muzzle_color = "ff be 5a";
-// The chaingun is a string of separate bangs, so it flickers rather than
-// fading. Player's own weapons only -- an enemy chaingunner cannot reach it.
-server bool  gitd_muzzle_chaingun_strobe = true;
 
-// ---- Monster muzzle flash --------------------------------------------------
-// Lights the monster that just fired. Two sources: RS_Main's fired-marker when
-// it is loaded (exact muzzle position, volleys already collapsed), otherwise
-// the fullbright frame of the monster's own Missile sequence -- which is the
-// frame an artist paints a muzzle flash onto, so it needs no per-monster table.
-server bool  gitd_mmf_lights = true;
-server int   gitd_mmf_size = 120;
-server int   gitd_mmf_life = 4;
-server int   gitd_mmf_max = 12;        // ceiling on live flashes at once
-server bool  gitd_mmf_custom = false;
-server color gitd_mmf_color = "ff c8 6e";
 
 // ---- Floor fog -------------------------------------------------------------
 //
@@ -972,11 +948,3 @@ server float gitd_lgrid_scroll_depth = 0.20;
 server bool  gitd_lgrid_follow_sweep = true;
 server float gitd_lgrid_standoff = 320.0;
 
-// Which monsters get a muzzle flash. 0 = everything that fires, 1 = the common
-// rank only -- the rank-and-file shooters, not elites and not bosses.
-//
-// Tested against the four vanilla families rather than a gameplay mod's tier
-// tag, ON PURPOSE. A class list written against today's roster is a list of
-// names that stops existing the moment that roster is replaced; a replacement
-// zombieman is still a ZombieMan.
-server int gitd_mmf_scope = 1;
