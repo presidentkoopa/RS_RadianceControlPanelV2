@@ -381,6 +381,15 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText ""
 
+	StaticText "Inside a Sweep Band", gold
+	Submenu "  Band fill options...","GITDSweepFill"
+	StaticText "A band can be a lattice, a field of points,", darkgray
+	StaticText "or a solid slab of light instead of a wash --", darkgray
+	StaticText "a laser grid standing across a hallway and", darkgray
+	StaticText "coming down it at you.", darkgray
+	StaticText ""
+	StaticText ""
+
 	StaticText "Floor Fog", gold
 	Option "Floor fog",				"gitd_fog_enabled", "OnOff"
 	StaticText "Mist with a TOP, so you can stand in it and", darkgray
@@ -454,6 +463,101 @@ OptionMenu "GITDDarkPixel"
 	StaticText "Colour drain stays per sector in both modes.", darkgray
 	StaticText "That is what makes it reach the textures and", darkgray
 	StaticText "not just the glow.", darkgray
+}
+
+OptionValue "GITDSweepFillMode"
+{
+	0, "Nothing (a wash)"
+	1, "Grid"
+	2, "Dots (where lines cross)"
+	3, "Solid slab"
+}
+
+OptionValue "GITDFillGradAxis"
+{
+	0, "Up"
+	1, "Across"
+}
+
+// ---------------------------------------------------------------------------
+// What is drawn inside a sweep band.
+//
+// A band knows two things about every pixel it covers: how strongly it covers
+// it, and where that pixel IS. It used to discard the second, so a band could
+// only be a wash. Every shape that defines a distance also implies two tangent
+// coordinates -- in a corridor, height and across -- and a pattern is just a
+// function of those two.
+//
+// SPACING 0 IN AN AXIS MEANS NO LINES IN THAT AXIS. That is why there is no
+// separate mode for slats or for a single tripwire: they are a grid with one
+// spacing zeroed.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDSweepFill"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Inside a Sweep Band"
+	StaticText ""
+	StaticText "Which bands get a fill", gold
+	Option "Band 1",				"gitd_ss_fill1", "GITDSweepFillMode"
+	Option "Band 2",				"gitd_ss_fill2", "GITDSweepFillMode"
+	Option "Band 3",				"gitd_ss_fill3", "GITDSweepFillMode"
+	Option "Band 4",				"gitd_ss_fill4", "GITDSweepFillMode"
+	Option "Band 5",				"gitd_ss_fill5", "GITDSweepFillMode"
+	Option "Band 6",				"gitd_ss_fill6", "GITDSweepFillMode"
+	Option "Band 7",				"gitd_ss_fill7", "GITDSweepFillMode"
+	Option "Band 8",				"gitd_ss_fill8", "GITDSweepFillMode"
+	StaticText "Mode is per band; the style below is shared.", darkgray
+	StaticText ""
+
+	StaticText "The lattice", gold
+	Slider "Spacing across",		"gitd_ss_fill_u", 0, 512, 4, 0
+	Slider "Spacing up",			"gitd_ss_fill_v", 0, 512, 4, 0
+	StaticText "Set one to 0 for slats. Set both to 0 and", darkgray
+	StaticText "there are no lines at all.", darkgray
+	Slider "Line width",			"gitd_ss_fill_width", 0.5, 32.0, 0.5, 1
+	StaticText "World units, so a line stays the same real", darkgray
+	StaticText "size at any distance instead of shimmering.", darkgray
+	Slider "Line softness",		"gitd_ss_fill_soft", 0.0, 24.0, 0.5, 1
+	StaticText "0 is a hard-edged laser. High is a glowing", darkgray
+	StaticText "filament. This is the biggest single dial for", darkgray
+	StaticText "whether it reads as a beam or as a light.", darkgray
+	StaticText ""
+
+	StaticText "Colour", gold
+	ColorPicker "Line colour",		"gitd_ss_fill_color"
+	Slider "Field between lines",	"gitd_ss_fill_gap", -1.0, 1.0, 0.05, 2
+	StaticText "The band's OWN colour fills the gaps by this", darkgray
+	StaticText "much. At 0 only the lines are lit and you see", darkgray
+	StaticText "the room between them -- that is what reads as", darkgray
+	StaticText "real lasers. Turn it up and it becomes a lit", darkgray
+	StaticText "pane with structure in it. Negative inverts:", darkgray
+	StaticText "lit gaps, dark lines. A grid of shadow.", darkgray
+	Slider "Fade along",			"gitd_ss_fill_grad", 0.0, 1.0, 0.05, 2
+	Option "  Fading axis",			"gitd_ss_fill_grad_axis", "GITDFillGradAxis"
+	StaticText ""
+
+	StaticText "Structure", gold
+	Slider "Every Nth line bolder",	"gitd_ss_fill_major", 0, 16, 1, 0
+	Slider "  By how much",			"gitd_ss_fill_major_boost", 1.0, 8.0, 0.5, 1
+	StaticText "Graph-paper structure. 0 turns it off.", darkgray
+	Slider "Jitter",				"gitd_ss_fill_jitter", 0.0, 1.0, 0.05, 2
+	StaticText "Nudges each line off the lattice, so it reads", darkgray
+	StaticText "as a row of emitters rather than a texture.", darkgray
+	StaticText ""
+
+	StaticText "Motion", gold
+	Slider "Rotation",				"gitd_ss_fill_rotate", 0.0, 180.0, 5.0, 0
+	StaticText "Turns the lattice in the band's own plane.", darkgray
+	Slider "Drift",					"gitd_ss_fill_drift", -400.0, 400.0, 10.0, 0
+	StaticText "Slides the pattern within the band as it", darkgray
+	StaticText "travels, so it reads as projected rather than", darkgray
+	StaticText "painted onto the band.", darkgray
+	Slider "Line flicker",			"gitd_ss_fill_flicker", 0.0, 1.0, 0.05, 2
+	StaticText "Individual lines dropping out and returning.", darkgray
+	StaticText "Per line, not per band -- so it reads as", darkgray
+	StaticText "failing equipment rather than one blinking", darkgray
+	StaticText "light.", darkgray
 }
 
 // ---------------------------------------------------------------------------

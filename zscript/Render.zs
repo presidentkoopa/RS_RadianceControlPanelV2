@@ -53,6 +53,40 @@ class GITD_Render abstract
 		PushWave();
 		PushDarkness();
 		PushFog();
+		PushSweepFill();
+	}
+
+	// ---- what is drawn inside a sweep band -------------------------------
+	//
+	// Style is shared across all eight bands and only the MODE is per band --
+	// see the note in g_levellocals.h for why. In practice that is not much of
+	// a limit: a train can still be a solid wall, then a lattice, then a band
+	// of travelling darkness, because that is all mode.
+	clearscope static void PushSweepFill()
+	{
+		int pk = GetI("gitd_ss_fill_color", 0xFF2018);
+		Color col = Color(255, (pk >> 16) & 255, (pk >> 8) & 255, pk & 255);
+
+		level.SetSweepFill(
+			max(double(GetI("gitd_ss_fill_u", 64)), 0.0),
+			max(double(GetI("gitd_ss_fill_v", 64)), 0.0),
+			max(GetF("gitd_ss_fill_width", 3.0), 0.1),
+			max(GetF("gitd_ss_fill_soft", 1.5), 0.0),
+			col,
+			clamp(GetF("gitd_ss_fill_gap", 0.0), -1.0, 1.0));
+
+		level.SetSweepFillMotion(
+			GetF("gitd_ss_fill_rotate", 0.0),
+			GetF("gitd_ss_fill_drift", 0.0),
+			max(GetF("gitd_ss_fill_major", 0.0), 0.0),
+			max(GetF("gitd_ss_fill_major_boost", 2.0), 1.0),
+			clamp(GetF("gitd_ss_fill_jitter", 0.0), 0.0, 1.0),
+			clamp(GetF("gitd_ss_fill_flicker", 0.0), 0.0, 1.0),
+			clamp(GetF("gitd_ss_fill_grad", 0.0), 0.0, 1.0),
+			GetI("gitd_ss_fill_grad_axis", 0));
+
+		for (int i = 1; i <= 8; i++)
+			level.SetSweepBandFill(i - 1, clamp(GetI("gitd_ss_fill" .. i, 0), 0, 3));
 	}
 
 	// ---- the fog slab ----------------------------------------------------

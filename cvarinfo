@@ -897,3 +897,45 @@ server float gitd_fog_pickup = 0.55;
 server float gitd_fog_wake = 0.65;      // 0 = undisturbed, 1 = cleared
 server int   gitd_fog_wake_size = 110;  // radius of the disturbance
 server float gitd_fog_wake_lag = 0.10;  // 0.02 drags far behind, 0.5 near-instant
+
+// ---- What is drawn INSIDE a sweep band -------------------------------------
+//
+// A band used to be a wash: one flat colour, faded by how strongly the band
+// covered each pixel. But the band also knows WHERE each pixel is, and every
+// shape that defines a distance implies two tangent coordinates -- so a
+// pattern can be drawn in the band's own plane. In a corridor that is a
+// lattice standing across the hall and travelling toward you.
+//
+// SPACING 0 IN AN AXIS MEANS NO LINES IN THAT AXIS. That one rule is why there
+// is no separate mode for slats or for a single tripwire -- they are a grid
+// with one spacing set to zero.
+server int   gitd_ss_fill_u = 64;        // line spacing across, world units
+server int   gitd_ss_fill_v = 64;        // line spacing up
+server float gitd_ss_fill_width = 3.0;   // world units, so it does not shimmer
+server float gitd_ss_fill_soft = 1.5;    // hard laser vs glowing filament
+server color gitd_ss_fill_color = "ff 20 18";
+
+// THE FIELD BETWEEN THE LINES. The band's own colour fills the gaps by this
+// much. 0 = only the lines are lit and you see the room between them, which is
+// what reads as lasers. 1 = a lit pane with structure in it. Negative inverts:
+// lit gaps, dark lines -- a grid of shadow.
+server float gitd_ss_fill_gap = 0.0;
+
+server float gitd_ss_fill_rotate = 0.0;  // degrees, in the band's own plane
+server float gitd_ss_fill_drift = 0.0;   // pattern sliding as the band travels
+server float gitd_ss_fill_major = 0.0;   // every Nth line emphasised; 0 = off
+server float gitd_ss_fill_major_boost = 2.0;
+server float gitd_ss_fill_jitter = 0.0;  // emitters rather than a texture
+server float gitd_ss_fill_flicker = 0.0; // individual lines dropping out
+server float gitd_ss_fill_grad = 0.0;    // fade along one axis
+server int   gitd_ss_fill_grad_axis = 0; // 0 = up, 1 = across
+
+// Per band: 0 none (a wash, as before), 1 grid, 2 dots, 3 solid slab.
+server int gitd_ss_fill1 = 0;
+server int gitd_ss_fill2 = 0;
+server int gitd_ss_fill3 = 0;
+server int gitd_ss_fill4 = 0;
+server int gitd_ss_fill5 = 0;
+server int gitd_ss_fill6 = 0;
+server int gitd_ss_fill7 = 0;
+server int gitd_ss_fill8 = 0;
