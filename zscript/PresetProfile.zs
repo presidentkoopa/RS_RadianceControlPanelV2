@@ -214,8 +214,17 @@ class GITD_PresetProfile abstract
 
 	clearscope static bool HasProfile(int preset)
 	{
-		return preset == 1 || preset == 2 || preset == 3
-			|| preset == 11 || preset == 12;
+		// NO PRESETS SHIP RIGHT NOW.
+		//
+		// The profiles below are kept, and so is every helper they use -- the
+		// capture-and-recall machinery, the wave, fog, grid and darkness
+		// setters. What is switched off is only the claim that any of them is
+		// finished. The menu offers Off and nothing else, and this answering
+		// false is what stops a stale gitd_preset in someone's config quietly
+		// applying a profile nobody chose.
+		//
+		// Turning one back on is one number here and one line in MENUDEF.
+		return false;
 	}
 
 	clearscope static void Apply(int preset)
