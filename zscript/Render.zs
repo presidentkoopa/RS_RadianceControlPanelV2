@@ -155,7 +155,53 @@ class GITD_Render abstract
 	// and can be pushed from a menu tic, that one cannot.
 	clearscope static void PushFog()
 	{
-		if (!GetB("gitd_fog_enabled", false))
+		bool on = GetB("gitd_fog_enabled", false);
+
+		// EVERY ONE OF THESE IS PUSHED WHETHER THE FOG IS ON OR OFF, and that
+		// is not tidiness. A value that stops being pushed does not stop being
+		// used -- it holds whatever it last had, so the tendrils keep rising
+		// and the sweep keeps shouldering air that is not there, at full
+		// per-fragment price, while the switch that names them reads Off.
+		//
+		// The same fault has now cost this project three separate days: eight
+		// beams standing in an empty room, a tornado whose density uniform was
+		// only written when floor fog happened to be on, and the whole render
+		// push freezing under a sweep. Turning something off is a thing you
+		// DO, not a thing you skip.
+		level.SetFogNoise(
+			max(GetF("gitd_fog_noise_scale", 0.004), 0.00001),
+			on ? clamp(GetF("gitd_fog_noise", 0.0), 0.0, 1.0) : 0.0,
+			GetF("gitd_fog_noise_drift", 6.0),
+			GetF("gitd_fog_noise_drift", 6.0) * 0.6);   // not parallel: two
+			                                            // axes at one rate
+			                                            // reads as a slide
+
+		level.SetFogTendrils(
+			max(GetF("gitd_fog_tendril_spacing", 96.0), 8.0),
+			max(GetF("gitd_fog_tendril_radius", 10.0), 1.0),
+			max(GetF("gitd_fog_tendril_height", 96.0), 1.0),
+			on ? max(GetF("gitd_fog_tendril", 0.0), 0.0) : 0.0,
+			GetF("gitd_fog_tendril_rise", 0.6),
+			1.0,
+			max(GetF("gitd_fog_tendril_lean", 6.0), 0.0),
+			max(GetF("gitd_fog_tendril_taper", 1.6), 0.0));
+
+		level.SetFogBow(
+			on ? max(GetF("gitd_fog_bow", 0.0), 0.0) : 0.0,
+			max(GetF("gitd_fog_bow_width", 64.0), 1.0),
+			clamp(GetF("gitd_fog_bow_thin", 0.6), 0.0, 1.0));
+
+		int g2 = GetI("gitd_fog_color2", 0xB38059);
+		level.SetFogGradient(
+			Color(255, (g2 >> 16) & 255, (g2 >> 8) & 255, g2 & 255),
+			on ? clamp(GetF("gitd_fog_color2_mix", 0.0), 0.0, 1.0) : 0.0);
+
+		// Disturbances are NOT cleared here. They expire on their own clock,
+		// and Ignite deliberately works in clear air -- an explosion lighting
+		// mist that is not there is still a burning cloud, and wiping the
+		// slots every tic because the floor layer is off would delete it one
+		// frame after it was asked for.
+		if (!on)
 		{
 			level.ClearFogSlab();
 			return;

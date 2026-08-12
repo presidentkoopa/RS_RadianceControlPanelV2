@@ -430,6 +430,11 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText "This is the expensive one. Off costs nothing.", darkgray
 	Submenu "  Tornado options...",	"GITDTornado"
+	Submenu "  Reactive fog...",	"GITDFogReact"
+	StaticText "The mist responds to what happens in it --", darkgray
+	StaticText "rings off your muzzle, mist that banks and", darkgray
+	StaticText "drifts, wisps rising off the surface, and", darkgray
+	StaticText "monsters shouldering it aside.", darkgray
 	StaticText ""
 	StaticText ""
 
@@ -1715,3 +1720,146 @@ OptionMenu "GITDFog"
 }
 
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// REACTIVE FOG.
+//
+// Everything on this page is one idea: the mist is a substance standing in the
+// room, not a filter over the picture. A substance banks up unevenly, moves
+// when something moves through it, and reacts when something happens in it.
+//
+// The engine side is ONE primitive. A wake, a ripple, an ignition, mist
+// draining from a point and a monster pushing it aside are the same function
+// -- a point, a radius, an age, a strength and a sign -- so there are eight
+// slots shared between all of them rather than five separate systems. What
+// arrives ninth recycles the oldest, because refusing it would make the ninth
+// shot of a firefight do nothing, and that is the moment the effect is for.
+// ---------------------------------------------------------------------------
+
+OptionValue "GITDFogReactMode"
+{
+	0, "Push it aside (a hole)"
+	1, "Ring (a wave travelling out)"
+	2, "Ignite (light, not mist)"
+	3, "Gout (mist billowing out)"
+}
+
+OptionMenu "GITDFogReact"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Reactive Fog"
+	StaticText ""
+	StaticText "Needs Floor Fog on. See the Floor Fog page.", darkgray
+	StaticText ""
+
+	StaticText "Mist banks up", gold
+	Slider "Uneven density",		"gitd_fog_noise", 0.0, 1.0, 0.05, 2
+	StaticText "Density used to be ONE NUMBER for the whole", darkgray
+	StaticText "map, and that is the single biggest tell that", darkgray
+	StaticText "fog is a filter rather than a substance. Real", darkgray
+	StaticText "mist is thick in the corners and thin across", darkgray
+	StaticText "the open floor.", darkgray
+	StaticText ""
+	StaticText "If you change one thing on this page, this is", darkgray
+	StaticText "the one.", darkgray
+	Slider "  Bank size",			"gitd_fog_noise_scale", 0.0005, 0.02, 0.0005, 4
+	StaticText "Smaller makes larger, slower banks. Far left", darkgray
+	StaticText "is weather; far right is turbulence.", darkgray
+	Slider "  Drift",				"gitd_fog_noise_drift", 0.0, 40.0, 1.0, 0
+	StaticText "The whole field moving through the room, so", darkgray
+	StaticText "the banks travel without anything animating.", darkgray
+	StaticText ""
+
+	StaticText "Walking through it", gold
+	Slider "Wake stretch",			"gitd_fog_wake_stretch", 0.0, 6.0, 0.25, 2
+	StaticText "At 0 the disturbance is a disc -- a hole you", darkgray
+	StaticText "carry around with you. Turn it up and it draws", darkgray
+	StaticText "out behind into a corridor you carve and", darkgray
+	StaticText "leave. Only the trailing half stretches; doing", darkgray
+	StaticText "both ends would be a bubble, not a wake.", darkgray
+	StaticText ""
+	StaticText "Trail strength and size are on the Floor Fog", darkgray
+	StaticText "page -- this only changes its shape.", darkgray
+	StaticText ""
+
+	StaticText "Things that happen in it", gold
+	Option "React to events",		"gitd_fog_react", "OnOff"
+	Option "  What it does",		"gitd_fog_react_mode", "GITDFogReactMode"
+	StaticText "A RING off your own muzzle is the one that", darkgray
+	StaticText "sells the whole idea: it proves the mist is", darkgray
+	StaticText "BETWEEN you and the wall rather than painted", darkgray
+	StaticText "over the picture.", darkgray
+	StaticText ""
+	StaticText "Ignite adds LIGHT instead of mist, so it works", darkgray
+	StaticText "in clear air and blooms on its own.", darkgray
+	StaticText ""
+	Slider "  From your gunfire",	"gitd_fog_react_shot", 0.0, 2.0, 0.05, 2
+	Slider "    Size",				"gitd_fog_react_shot_size", 16, 512, 8, 0
+	StaticText "Fired on the trigger's rising edge, not per", darkgray
+	StaticText "shot -- a chaingun would spend all eight slots", darkgray
+	StaticText "in a third of a second.", darkgray
+	Slider "  From a monster dying","gitd_fog_react_death", 0.0, 2.0, 0.05, 2
+	Slider "    Size",				"gitd_fog_react_death_size", 16, 512, 8, 0
+	StaticText "Still legible with six other things going on,", darkgray
+	StaticText "which a sound is not.", darkgray
+	Slider "  Travel speed",		"gitd_fog_react_speed", 0.0, 1200.0, 20.0, 0
+	Slider "  Lasts",				"gitd_fog_react_life", 0.1, 8.0, 0.1, 1
+	StaticText "Eight at once, oldest recycled, each fading", darkgray
+	StaticText "over its own life.", darkgray
+	StaticText ""
+
+	StaticText "Monsters in the mist", gold
+	Slider "Shoulder it aside",		"gitd_fog_displace", 0.0, 1.0, 0.05, 2
+	Slider "  Size",				"gitd_fog_displace_size", 16, 256, 8, 0
+	Slider "  How many",			"gitd_fog_displace_count", 1, 6, 1, 0
+	StaticText "The NEAREST few only. There are eight slots", darkgray
+	StaticText "and a busy room has forty actors, so they go", darkgray
+	StaticText "to the ones close enough for you to see it", darkgray
+	StaticText "happen. A pack wading through knee-deep mist,", darkgray
+	StaticText "each one with its own wake.", darkgray
+	StaticText ""
+
+	StaticText "Wisps off the surface", gold
+	Slider "Tendrils",				"gitd_fog_tendril", 0.0, 2.0, 0.05, 2
+	StaticText "Columns drifting up out of the mist. A LATTICE", darkgray
+	StaticText "rather than a set of objects -- one per cell of", darkgray
+	StaticText "a grid -- so four hundred cost what one costs.", darkgray
+	StaticText "Same trick as the laser grid.", darkgray
+	Slider "  Spacing",				"gitd_fog_tendril_spacing", 16, 512, 8, 0
+	StaticText "How far apart. This is the density dial, and", darkgray
+	StaticText "it is free in both directions.", darkgray
+	Slider "  Thickness",			"gitd_fog_tendril_radius", 1, 64, 1, 0
+	Slider "  Height",				"gitd_fog_tendril_height", 8, 512, 8, 0
+	Slider "  Rise speed",			"gitd_fog_tendril_rise", 0.0, 4.0, 0.1, 1
+	Slider "  Curl",				"gitd_fog_tendril_lean", 0.0, 64.0, 1.0, 0
+	StaticText "Leans further the higher it goes, each its own", darkgray
+	StaticText "way, so they curl instead of standing to", darkgray
+	StaticText "attention.", darkgray
+	Slider "  Taper",				"gitd_fog_tendril_taper", 0.0, 6.0, 0.1, 1
+	StaticText "Narrowing as it climbs. At 0 it is a pipe.", darkgray
+	StaticText ""
+
+	StaticText "The sweep moves the air", gold
+	Slider "Bow wave",				"gitd_fog_bow", 0.0, 4.0, 0.1, 1
+	StaticText "A wall of light travelling through a room", darkgray
+	StaticText "ought to move the room. Mist piles against the", darkgray
+	StaticText "leading face and is scoured out behind, which", darkgray
+	StaticText "costs one evaluation of a distance the band", darkgray
+	StaticText "already computes. Needs the sweep on.", darkgray
+	Slider "  Width",				"gitd_fog_bow_width", 8, 512, 8, 0
+	Slider "  Scoured behind",		"gitd_fog_bow_thin", 0.0, 1.0, 0.05, 2
+	StaticText ""
+
+	StaticText "Two colours through it", gold
+	ColorPicker "Colour at the top","gitd_fog_color2"
+	Slider "  Blend",				"gitd_fog_color2_mix", 0.0, 1.0, 0.05, 2
+	StaticText "Measured against the LAYER's own thickness,", darkgray
+	StaticText "not the world, so it means the same thing in a", darkgray
+	StaticText "chest-high band as in knee-deep ground mist and", darkgray
+	StaticText "it follows the top as the surface swells.", darkgray
+	StaticText ""
+	StaticText "Cold at the floor and warm above is most of", darkgray
+	StaticText "what makes a still frame look composed.", darkgray
+	StaticText ""
+	StaticText "This is also the colour Ignite burns.", darkgray
+}

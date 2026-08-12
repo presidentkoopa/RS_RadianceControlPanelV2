@@ -1065,3 +1065,92 @@ server float gitd_tornado_lean_period = 6.0;
 // clear air needs the torch to pick it out of the dark.
 server color gitd_tornado_color = "8c 99 b3";
 server float gitd_tornado_scatter = 1.2;
+
+// ===========================================================================
+// REACTIVE FOG
+//
+// Everything below is one idea: the mist is a substance in the room, not a
+// filter over the picture, and a substance responds to what happens in it.
+// ===========================================================================
+
+// ---- Density is not one number --------------------------------------------
+//
+// Uniform density is the single biggest tell that fog is a filter. Real mist
+// banks: thick in the corners, thin across the open floor. One noise sample
+// scaling the density fixes that, and drifting the field slowly makes the
+// banks move through the room on their own with nothing animated.
+//
+// Sampled at the midpoint of the eye-to-pixel line rather than at the pixel,
+// because the fog for a pixel is an integral along that whole line. Sample at
+// the far end and the banks appear pinned to the walls.
+//
+// Depth 0 restores exactly the old uniform behaviour.
+server float gitd_fog_noise = 0.0;        // 0 = uniform, 1 = strongly banked
+server float gitd_fog_noise_scale = 0.004; // smaller = larger, slower banks
+server float gitd_fog_noise_drift = 6.0;   // units per second the field moves
+
+// ---- The wake, stretched --------------------------------------------------
+//
+// A disc is a hole you carry around with you. An ellipse drawn out behind is
+// a corridor you carve and leave. Only the trailing half stretches -- doing
+// both ends would clear as much air in front of you as behind, which is a
+// bubble and not a wake.
+server float gitd_fog_wake_stretch = 0.0;
+
+// ---- Disturbances ---------------------------------------------------------
+//
+// A gunshot ring, an explosion igniting the mist, a monster shouldering
+// through it. All the same primitive: a point, a radius, an age, a strength
+// and a sign. Eight at once, oldest recycled, each decaying over its life.
+//
+// A ring recoiling from your muzzle is the one that sells fog as a physical
+// medium, because it proves the mist is BETWEEN you and the wall rather than
+// painted on it.
+server bool  gitd_fog_react = false;
+server float gitd_fog_react_shot = 0.55;   // ring from your own gunfire
+server float gitd_fog_react_shot_size = 88;
+server float gitd_fog_react_death = 0.8;   // burst where a monster dies
+server float gitd_fog_react_death_size = 130;
+server float gitd_fog_react_ignite = 1.4;  // explosions LIGHT the mist
+server int   gitd_fog_react_mode = 1;      // 0 disc, 1 ripple, 2 ignite, 3 gout
+server float gitd_fog_react_speed = 320.0; // how fast a ring travels outward
+server float gitd_fog_react_life = 1.6;    // seconds before it has faded out
+
+// ---- Displacers -----------------------------------------------------------
+//
+// Monsters shoulder the mist aside. Uses the same eight slots, so a busy
+// firefight spends them on whatever happened most recently -- which is the
+// right answer, since that is also what you are looking at.
+server float gitd_fog_displace = 0.0;      // 0 = actors do not touch the mist
+server float gitd_fog_displace_size = 64;
+server int   gitd_fog_displace_count = 4;  // how many of the nearest to track
+
+// ---- Tendrils -------------------------------------------------------------
+//
+// Wisps rising off the surface. A lattice rather than a set of objects: one
+// per cell of a fract() grid, so four hundred of them cost what one costs.
+// The tornado's own maths at small scale.
+server float gitd_fog_tendril = 0.0;       // 0 = off
+server float gitd_fog_tendril_spacing = 96.0;
+server float gitd_fog_tendril_radius = 10.0;
+server float gitd_fog_tendril_height = 96.0;
+server float gitd_fog_tendril_rise = 0.6;
+server float gitd_fog_tendril_lean = 6.0;
+server float gitd_fog_tendril_taper = 1.6;
+
+// ---- The sweep moves the air ----------------------------------------------
+//
+// A wall of light travelling through a room ought to move the room. Mist
+// piles against the leading face and is scoured out behind, which costs one
+// evaluation of a distance function the band already computes.
+server float gitd_fog_bow = 0.0;
+server float gitd_fog_bow_width = 64.0;
+server float gitd_fog_bow_thin = 0.6;      // how much is scoured out behind
+
+// ---- Two colours through the layer ----------------------------------------
+//
+// Cold at the floor, warm at the top. Measured against the layer's own
+// thickness, so it means the same thing in a chest-high band as in knee-deep
+// ground mist, and it follows the top as the surface swells.
+server color gitd_fog_color2 = "b3 80 59";
+server float gitd_fog_color2_mix = 0.0;

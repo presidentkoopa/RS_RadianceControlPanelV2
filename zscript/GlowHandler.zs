@@ -597,6 +597,7 @@ class GITD_Handler : StaticEventHandler
 
 	// What the world last did, remembered so an origin can point at it.
 	Vector3 lastShotPos, lastKillPos;
+	bool lastFogShotDown;   // rising edge for the muzzle ripple
 	bool haveShot, haveKill;
 	bool lastAttackDown;
 	int lastSecrets;
@@ -729,6 +730,8 @@ class GITD_Handler : StaticEventHandler
 		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
 		PushFogWake();
 		PushTornadoAnchor();
+		PushFogShot();
+		PushFogDisplacers();
 
 		if (anyWave)
 		{
@@ -1786,6 +1789,109 @@ class GITD_Handler : StaticEventHandler
 		lastKillPos = e.Thing.pos;
 		haveKill = true;
 		if (CVar.FindCVar("gitd_ss_trigger").GetInt() == 1) SSStartPass();
+
+		// The mist notices. A burst where something died is the cheapest
+		// possible read on "that happened over there", and unlike a sound it
+		// is still legible with six other things happening at once.
+		FogEvent(e.Thing.pos,
+			GITD_Render.GetF("gitd_fog_react_death", 0.8),
+			GITD_Render.GetF("gitd_fog_react_death_size", 130.0));
+	}
+
+	// ---- WHAT MAKES THE MIST REACT ---------------------------------------
+	//
+	// One call, because there is one primitive. Everything the fog does in
+	// response to the world goes through here, and what varies is a mode and
+	// a strength -- not a system.
+	//
+	// Gated on gitd_fog_react rather than on the fog being on, because the
+	// slots are cheap to leave empty and a mapper may well want the mist to
+	// react while a script is fading the layer in.
+	void FogEvent(Vector3 pos, double strength, double size)
+	{
+		if (strength <= 0.0) return;
+		if (!GITD_Render.GetB("gitd_fog_react", false)) return;
+
+		level.FogDisturb(pos.x, pos.y, pos.z, size, strength,
+			GITD_Render.GetF("gitd_fog_react_speed", 320.0),
+			max(GITD_Render.GetF("gitd_fog_react_life", 1.6), 0.05),
+			clamp(GITD_Render.GetI("gitd_fog_react_mode", 1), 0, 3));
+	}
+
+	// A ring recoiling from your own muzzle, and this is the one that sells
+	// the whole idea -- it proves the mist is BETWEEN you and the wall rather
+	// than painted over the picture. Fired on the rising edge of the trigger
+	// for the same reason the sweep is: a chaingun would otherwise spend all
+	// eight slots in a third of a second.
+	void PushFogShot()
+	{
+		if (!GITD_Render.GetB("gitd_fog_react", false)) return;
+
+		let pmo = players[consoleplayer].mo;
+		if (!pmo || !pmo.player) return;
+
+		bool down = (pmo.player.cmd.buttons & BT_ATTACK) != 0;
+		if (down && !lastFogShotDown)
+			FogEvent(pmo.pos + (0, 0, 32),
+				GITD_Render.GetF("gitd_fog_react_shot", 0.55),
+				GITD_Render.GetF("gitd_fog_react_shot_size", 88.0));
+		lastFogShotDown = down;
+	}
+
+	// MONSTERS SHOULDER THE MIST ASIDE. The nearest few only -- there are
+	// eight slots and a busy room has forty actors, so the ones worth spending
+	// them on are the ones close enough to see it happen.
+	//
+	// These are pushed as DISCS with a short life, refreshed every tic, so
+	// they follow their owner without any slot ever being owned by anything.
+	void PushFogDisplacers()
+	{
+		double amt = GITD_Render.GetF("gitd_fog_displace", 0.0);
+		if (amt <= 0.0 || !GITD_Render.GetB("gitd_fog_enabled", false)) return;
+
+		let pmo = players[consoleplayer].mo;
+		if (!pmo) return;
+
+		int want = clamp(GITD_Render.GetI("gitd_fog_displace_count", 4), 1, 6);
+		double size = max(GITD_Render.GetF("gitd_fog_displace_size", 64.0), 8.0);
+
+		// A single pass keeping the closest `want`, rather than sorting the
+		// whole room. Insertion into a tiny list beats a sort when the list is
+		// four long and the input is a hundred.
+		Actor best[6];
+		double bestd[6];
+		for (int i = 0; i < 6; i++) bestd[i] = 1e9;
+
+		ThinkerIterator it = ThinkerIterator.Create("Actor", Thinker.STAT_DEFAULT);
+		Actor a;
+		while (a = Actor(it.Next()))
+		{
+			if (!a.bISMONSTER || a.health <= 0) continue;
+			double d = (a.pos.xy - pmo.pos.xy).Length();
+			if (d > 1024) continue;
+			for (int s = 0; s < want; s++)
+			{
+				if (d < bestd[s])
+				{
+					for (int k = want - 1; k > s; k--)
+					{
+						bestd[k] = bestd[k - 1];
+						best[k] = best[k - 1];
+					}
+					bestd[s] = d; best[s] = a;
+					break;
+				}
+			}
+		}
+
+		for (int s = 0; s < want; s++)
+		{
+			if (!best[s]) continue;
+			// Life of two tics: long enough to survive a frame, short enough
+			// that a monster which dies or teleports leaves nothing behind.
+			level.FogDisturb(best[s].pos.x, best[s].pos.y, best[s].pos.z,
+				size * (best[s].radius / 20.0), amt, 0.0, 0.06, 0);
+		}
 	}
 
 	override void WorldThingDamaged(WorldEvent e)
@@ -1981,12 +2087,18 @@ class GITD_Handler : StaticEventHandler
 
 	void PushFogWake()
 	{
-		if (!GITD_Render.GetB("gitd_fog_enabled", false)) return;
+		if (!GITD_Render.GetB("gitd_fog_enabled", false))
+		{
+			level.SetFogWake((0, 0, 0), 0, 0);
+			level.SetFogWakeMotion(0, 0, 0);
+			return;
+		}
 
 		double strength = clamp(GITD_Render.GetF("gitd_fog_wake", 0.65), 0.0, 1.0);
 		if (strength <= 0.0)
 		{
 			level.SetFogWake((0, 0, 0), 0, 0);
+			level.SetFogWakeMotion(0, 0, 0);
 			return;
 		}
 
@@ -1999,6 +2111,17 @@ class GITD_Handler : StaticEventHandler
 
 		level.SetFogWake(wakePos,
 			double(GITD_Render.GetI("gitd_fog_wake_size", 110)), strength);
+
+		// STRETCHED ALONG THE WAY YOU ARE GOING.
+		//
+		// Taken from the lag vector rather than from pmo.Vel, deliberately.
+		// Vel is the velocity for THIS tic and jitters hard against walls and
+		// on stairs; the gap between you and the point already chasing you is
+		// the same direction, smoothed by the spring that is already there.
+		// One number reused instead of a second one that has to be filtered.
+		Vector2 drift = (pmo.pos.xy - wakePos.xy);
+		level.SetFogWakeMotion(drift.x, drift.y,
+			max(GITD_Render.GetF("gitd_fog_wake_stretch", 0.0), 0.0));
 	}
 
 	// THE LASER GRID MOVED INTO THE SWEEP, and this is what it left behind.
