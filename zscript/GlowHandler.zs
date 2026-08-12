@@ -583,6 +583,12 @@ class GITD_Handler : StaticEventHandler
 	Array<int> overridden;
 	Vector2 mapCentre;
 
+	// The fog wake's lagging point -- see PushFogWake. haveWake exists so the
+	// first tic of a map snaps it to the player instead of springing it in
+	// from the origin, which would drag a channel across the whole level.
+	Vector3 wakePos;
+	bool haveWake;
+
 	// Every live wave. The cvar-driven sweep is waves[0] and is rebuilt from
 	// the cvars each tic; everything a script fires joins the same list. See
 	// the Waves section below for why the eight-band shader limit does not
@@ -650,6 +656,7 @@ class GITD_Handler : StaticEventHandler
 		ambient = null;
 		nextWaveId = 0;
 		haveShot = false; haveKill = false; lastAttackDown = false;
+		haveWake = false;   // snap to the player on the first tic of the map
 		lastSecrets = level.found_secrets;
 		sonarGlow.Clear();
 		for (int i = 0; i < level.Sectors.Size(); i++) sonarGlow.Push(0.0);
@@ -1781,6 +1788,7 @@ class GITD_Handler : StaticEventHandler
 		// resolved from there and is pushed here, where the playsim is.
 		GITD_Render.PushAll();
 		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
+		PushFogWake();
 
 		int preset = CVar.FindCVar("gitd_preset").GetInt();
 
@@ -1916,6 +1924,42 @@ class GITD_Handler : StaticEventHandler
 				cgOn, cgCol, cgFar, scgCov, scgFall, scgI,
 				fgOn, fgCol, fgFar, sfgCov, sfgFall, sfgI);
 		}
+	}
+
+	// THE TRAIL YOU KICK UP.
+	//
+	// One point that CHASES the player rather than sitting on them. That lag
+	// is the entire effect: the disturbance is where you were a moment ago,
+	// so walking drags a thinned channel through the mist behind you and it
+	// closes up as the point catches back up. A wake pinned to the player
+	// would just be a hole you carry around, which is not a wake at all.
+	//
+	// A spring rather than a history buffer, because a trail that settles IS
+	// a point that follows you slowly, and one Vector3 costs nothing where a
+	// ring buffer of positions would need a uniform array.
+	//
+	// Lives here and not in GITD_Render because it reads the player, and the
+	// menu tic that drives everything else cannot.
+	void PushFogWake()
+	{
+		if (!GITD_Render.GetB("gitd_fog_enabled", false)) return;
+
+		double strength = clamp(GITD_Render.GetF("gitd_fog_wake", 0.65), 0.0, 1.0);
+		if (strength <= 0.0)
+		{
+			level.SetFogWake((0, 0, 0), 0, 0);
+			return;
+		}
+
+		let pmo = players[consoleplayer].mo;
+		if (!pmo) return;
+
+		double lag = clamp(GITD_Render.GetF("gitd_fog_wake_lag", 0.10), 0.01, 1.0);
+		if (!haveWake) { wakePos = pmo.pos; haveWake = true; }
+		wakePos += (pmo.pos - wakePos) * lag;
+
+		level.SetFogWake(wakePos,
+			double(GITD_Render.GetI("gitd_fog_wake_size", 110)), strength);
 	}
 
 	void ClearAll()

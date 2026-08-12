@@ -216,7 +216,10 @@ server bool gitd_ss_pingpong = true;    // sweep back and forth instead of resta
 server bool fl_enabled = true;
 server int fl_mount = 0;          // 0 mainhand, 1 offhand, 2 head, 3 chest
 server bool fl_allowflip = true;  // flip the beam when the wrist rolls past upside-down
-server bool fl_bounce = true;     // a soft fill light so the cone is not the only illumination
+server bool fl_bounce = false;    // OFF by default. It is a PointLight at the lens --
+                                  // omnidirectional fill, which is the opposite of what a
+                                  // torch is. It softens a harsh cone in a black room, and
+                                  // it also makes the beam read as "just a light". Opt in.
 server bool fl_agitate = false;   // pointing the light at monsters wakes them
 server bool fl_model = false;     // show the flashlight model -- requires the offhand mount
 
@@ -226,7 +229,9 @@ server float fl_intensity = 1.0;
 server float fl_inner = 10.0;     // half-angle, degrees: full brightness inside this
 server float fl_outer = 26.0;     // half-angle, degrees: faded out by here
 server float fl_falloff = 1.5;    // 1 linear along the beam, higher concentrates it near the lens
-server float fl_density = 1.0;    // how much haze the beam lights up
+server float fl_density = 1.8;    // the beam lights its own haze -- this is what makes
+                                  // it a visible SHAFT rather than a bright patch where it
+                                  // lands. Independent of sector fog and of floor fog.
 
 // Colour. Same idea as the glow lanes: up to eight slots, cycled with a
 // transition, or held on one. -1 in a slot means random.
@@ -245,9 +250,11 @@ server float fl_speed = 0.004;
 
 // Dust in the beam. Sampled in world space, so motes stay put in the room
 // as you sweep rather than sliding along with the light.
-server float fl_dust = 0.0;         // 0 = clean beam, 1 = heavily mottled
+server float fl_dust = 0.30;        // motes in the beam. At 0 the cone is a clean wedge,
+                                    // which reads as a shader effect; a little grain reads
+                                    // as air.
 server float fl_dust_scale = 0.04;  // higher = finer motes
-server float fl_dust_drift = 0.0;   // how fast it settles
+server float fl_dust_drift = 0.10;  // and they settle slowly, so the air is alive
 
 // ---- Preset customisation -------------------------------------------------
 // A preset is a hue range plus swings in saturation and brightness -- see
@@ -836,3 +843,57 @@ server color gitd_muzzle_color = "ff be 5a";
 // The chaingun is a string of separate bangs, so it flickers rather than
 // fading. Player's own weapons only -- an enemy chaingunner cannot reach it.
 server bool  gitd_muzzle_chaingun_strobe = true;
+
+// ---- Monster muzzle flash --------------------------------------------------
+// Lights the monster that just fired. Two sources: RS_Main's fired-marker when
+// it is loaded (exact muzzle position, volleys already collapsed), otherwise
+// the fullbright frame of the monster's own Missile sequence -- which is the
+// frame an artist paints a muzzle flash onto, so it needs no per-monster table.
+server bool  gitd_mmf_lights = true;
+server int   gitd_mmf_size = 120;
+server int   gitd_mmf_life = 4;
+server int   gitd_mmf_max = 12;        // ceiling on live flashes at once
+server bool  gitd_mmf_custom = false;
+server color gitd_mmf_color = "ff c8 6e";
+
+// ---- Floor fog -------------------------------------------------------------
+//
+// FOG WITH A TOP. ddz_fog is sector fog: a distance tint on surfaces, uniform
+// floor to ceiling, simulating nothing in the air. It cannot have a ceiling, a
+// thickness you stand in, or a bright patch where a torch sweeps it -- you
+// cannot be knee deep in it, because it has no knees.
+//
+// This is a horizontal slab of mist with a world-space top, solved
+// analytically in the fragment shader: how much of the eye-to-pixel ray lay
+// below the ceiling, fogged by that length. No raymarch.
+server bool  gitd_fog_enabled = false;
+
+// World Z of the mist's surface. Doom's player is 56 units tall and the view
+// sits around 41, so 40 is roughly knee deep on a flat floor.
+server int   gitd_fog_top = 40;
+
+// Per 1000 units of travel through the slab. Low is haze, high is soup.
+server float gitd_fog_density = 1.2;
+
+// How many units the top edge fades over. A hard cut reads as a plane of
+// coloured glass lying across the room; this is what turns it into a surface.
+server int   gitd_fog_soft = 20;
+
+server color gitd_fog_color = "b4 18 10";
+
+// SCATTER -- the flashlight cone lights the mist it passes through. This is
+// the difference between standing in fog and standing in fog WITH A TORCH.
+server float gitd_fog_scatter = 0.7;
+
+// PICKUP -- how much of whatever is behind it the mist takes on. Without this
+// the slab is a flat colour over the scene and reads as a filter; mist in
+// front of a red glowing wall should be red. This is what makes glow bleed
+// into the fog in front of it.
+server float gitd_fog_pickup = 0.55;
+
+// THE WAKE -- the trail you kick up walking through it. One point that lags
+// behind you on a spring, thinning the mist inside its radius. A trail that
+// settles IS a point that follows you slowly, so the lag is the effect.
+server float gitd_fog_wake = 0.65;      // 0 = undisturbed, 1 = cleared
+server int   gitd_fog_wake_size = 110;  // radius of the disturbance
+server float gitd_fog_wake_lag = 0.10;  // 0.02 drags far behind, 0.5 near-instant

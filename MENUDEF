@@ -381,6 +381,16 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText ""
 
+	StaticText "Floor Fog", gold
+	Option "Floor fog",				"gitd_fog_enabled", "OnOff"
+	StaticText "Mist with a TOP, so you can stand in it and", darkgray
+	StaticText "look down at its surface. The fog on the Fog", darkgray
+	StaticText "page is a distance tint on walls and fills a", darkgray
+	StaticText "room floor to ceiling; this is a slab of air.", darkgray
+	Submenu "  Floor fog options...","GITDFloorFog"
+	StaticText ""
+	StaticText ""
+
 	StaticText "Glow Waves", gold
 	Option "Waves",					"gitd_wave_enabled", "OnOff"
 	StaticText "A glow fades smoothly UP a wall and was", darkgray
@@ -444,6 +454,66 @@ OptionMenu "GITDDarkPixel"
 	StaticText "Colour drain stays per sector in both modes.", darkgray
 	StaticText "That is what makes it reach the textures and", darkgray
 	StaticText "not just the glow.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// Floor fog -- mist with a top.
+//
+// The Fog page's ddz_fog is SECTOR fog: a distance tint applied to surfaces,
+// uniform from floor to ceiling, simulating nothing in the air. It cannot have
+// a ceiling, a thickness, or a bright patch where a torch sweeps it.
+//
+// This is a horizontal slab of participating medium with a world-space top,
+// solved analytically rather than raymarched -- how much of the ray from your
+// eye to each pixel lay below the ceiling, fogged by that length.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDFloorFog"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Floor Fog"
+	StaticText ""
+	Option "Floor fog",				"gitd_fog_enabled", "OnOff"
+	StaticText ""
+
+	StaticText "The slab", gold
+	Slider "Top height",			"gitd_fog_top", -256, 512, 4, 0
+	StaticText "World Z of the mist's surface. The player is", darkgray
+	StaticText "56 tall and the view sits near 41, so about", darkgray
+	StaticText "40 is knee deep on a flat floor.", darkgray
+	Slider "Density",				"gitd_fog_density", 0.0, 8.0, 0.1, 1
+	StaticText "Per 1000 units travelled through it. Low is", darkgray
+	StaticText "haze, high is soup.", darkgray
+	Slider "Surface softness",		"gitd_fog_soft", 1, 128, 1, 0
+	StaticText "How far the top edge fades over. Too hard", darkgray
+	StaticText "and it reads as a sheet of coloured glass", darkgray
+	StaticText "lying across the room.", darkgray
+	ColorPicker "Colour",			"gitd_fog_color"
+	StaticText ""
+
+	StaticText "What lights it", gold
+	Slider "Torch scatter",			"gitd_fog_scatter", 0.0, 4.0, 0.1, 1
+	StaticText "The flashlight cone lights the mist it", darkgray
+	StaticText "passes through -- the difference between", darkgray
+	StaticText "standing in fog and standing in fog with a", darkgray
+	StaticText "torch. Needs the flashlight on.", darkgray
+	Slider "Picks up glow",			"gitd_fog_pickup", 0.0, 1.0, 0.05, 2
+	StaticText "How much of whatever is behind it the mist", darkgray
+	StaticText "takes on. At 0 it is a flat colour laid over", darkgray
+	StaticText "the scene and reads as a filter. Turn it up", darkgray
+	StaticText "and a red wall glow bleeds into the mist in", darkgray
+	StaticText "front of it.", darkgray
+	StaticText ""
+
+	StaticText "The wake", gold
+	Slider "Trail strength",		"gitd_fog_wake", 0.0, 1.0, 0.05, 2
+	StaticText "How much walking through it clears a path.", darkgray
+	Slider "  Trail size",			"gitd_fog_wake_size", 16, 400, 8, 0
+	Slider "  Settles",				"gitd_fog_wake_lag", 0.01, 1.0, 0.01, 2
+	StaticText "Low values drag a long trail that closes up", darkgray
+	StaticText "slowly behind you. High values keep the", darkgray
+	StaticText "disturbance on top of you, which is a hole", darkgray
+	StaticText "you carry rather than a wake.", darkgray
 }
 
 // ---------------------------------------------------------------------------

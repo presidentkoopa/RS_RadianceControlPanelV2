@@ -78,6 +78,200 @@ class GITD_MuzzleLight : Actor
 	}
 }
 
+// ===========================================================================
+// The monster half, and why it is not a frame table.
+//
+// The obvious way to light a firing monster is to watch for the sprite frame
+// its muzzle flash is painted on. GITD 3.2 did exactly that, with a
+// hand-verified table -- ZombieMan frame 5, DoomImp 6, Revenant 10 -- and it
+// is correct on the vanilla roster and quietly wrong on any other.
+//
+// RS_Main is the proof. Its RS_CommonZombie really does inherit ZombieMan, so
+// an "is ZombieMan" test passes -- but it animates on SGAR, where frame 5 is
+// the WIND-UP, one frame before the shot. Other variants use CYNT and never
+// match at all. The result is a flash that fires early on some monsters and
+// never on others, silently, with the guard clause ("modded monsters are
+// skipped") failing to catch it because these ARE vanilla subclasses. 143
+// variants, each with its own frame layout. A table cannot survive that.
+//
+// So: two sources, in order of how much they actually know.
+//
+// 1. RS_MonsterFiredMarker, when RS_Main is loaded. A one-tic inert actor
+//    spawned at the MUZZLE at the moment the round leaves, carrying the
+//    shooter as its target. Not a guess at where the barrel is -- the point
+//    the projectile physically departed from. RS collapses volleys to one
+//    marker, so a mancubus throwing three does not strobe.
+//
+//    Consumed BY STRING so there is no hard dependency: with RS_Main absent
+//    the class lookup returns null and the branch never runs.
+//
+// 2. Otherwise, the fullbright frame of the monster's own Missile sequence.
+//    A muzzle flash painted into a sprite is exactly the frame an artist
+//    marks fullbright -- that is what the flag is FOR -- so reading it gets
+//    all thirteen vanilla monsters with no table and gets a right answer on
+//    mods too. Coarser than the marker, and it is the fallback for a reason.
+//
+// The moment a marker is seen, the fallback shuts off for the rest of the
+// map. Both running would double-flash every monster RS converts.
+// ===========================================================================
+class GITD_MonsterFlash : Actor
+{
+	Actor host;
+	Color mcol;
+	int   mrad, mlife, mage;
+	Vector3 anchor;     // used when there is no host to ride
+	bool  pinned;
+
+	Default { +NOINTERACTION; +NOGRAVITY; +NOBLOCKMAP; +DONTSPLASH; RenderStyle "None"; }
+	States { Spawn: TNT1 A 1; Loop; }
+
+	void Arm(Color c, int rad, int life)
+	{
+		mcol = c; mrad = rad; mlife = max(1, life); mage = 0;
+	}
+
+	override void Tick()
+	{
+		Super.Tick();
+
+		// PINNED lights stay where the round left. A marker gives a real
+		// muzzle position, and a muzzle does not follow the monster around
+		// for the four tics the flash lasts -- the flash happened THERE.
+		if (!pinned)
+		{
+			if (!host || host.health <= 0) { A_RemoveLight("gitd_mmflash"); Destroy(); return; }
+			SetOrigin(host.pos + (0, 0, host.height * 0.6), true);
+		}
+
+		mage++;
+		if (mage > mlife) { A_RemoveLight("gitd_mmflash"); Destroy(); return; }
+
+		double fade = 1.0 - double(mage) / double(mlife + 1);
+		fade = clamp(fade, 0.0, 1.0);
+
+		// A little flicker so it reads as a flare rather than a lamp on a
+		// timer. Seeded off position so two monsters firing together are not
+		// in lockstep.
+		int t = level.maptime + int(pos.x) + int(pos.y);
+		double n = double((t * 1103515245 + 12345) & 0x7fffffff) / double(0x7fffffff);
+		fade *= 0.70 + 0.30 * n;
+
+		int finalRad = max(1, int(double(mrad) * fade));
+		A_AttachLight("gitd_mmflash", 0, mcol, finalRad, 0, 8);   // 8 = attenuate
+	}
+}
+
+class GITD_MonsterFlashHandler : EventHandler
+{
+	private Array<GITD_MonsterFlash> live;
+	private Array<Actor> wasBright;
+	private bool sawMarker;      // RS_Main is feeding us; stop guessing
+
+	static int  CI(string n, int def)  { let c = CVar.FindCVar(n); return c ? c.GetInt()  : def; }
+	static bool CB(string n, bool def) { let c = CVar.FindCVar(n); return c ? c.GetBool() : def; }
+
+	override void WorldLoaded(WorldEvent e)
+	{
+		live.Clear(); wasBright.Clear(); sawMarker = false;
+	}
+
+	Color FlashColor(Actor mo)
+	{
+		if (CB("gitd_mmf_custom", false))
+		{
+			let cc = CVar.FindCVar("gitd_mmf_color");
+			if (cc)
+			{
+				int pk = cc.GetInt();
+				return Color(255, (pk >> 16) & 255, (pk >> 8) & 255, pk & 255);
+			}
+		}
+		if (!mo) return Color(255, 255, 200, 110);
+		// Per-family, so a plasma volley does not look like buckshot.
+		if (mo is "Arachnotron")                    return Color(255, 120, 170, 255);
+		if (mo is "DoomImp" || mo is "BaronOfHell") return Color(255, 140, 220, 130);
+		if (mo is "Cacodemon" || mo is "Revenant")  return Color(255, 180, 210, 255);
+		if (mo is "Fatso")                          return Color(255, 255, 150,  70);
+		return Color(255, 255, 200, 110);           // warm gunfire
+	}
+
+	void Light(Actor host, Vector3 at, bool pin)
+	{
+		int cap = CI("gitd_mmf_max", 12);
+		for (int i = live.Size() - 1; i >= 0; i--) if (!live[i]) live.Delete(i);
+		if (live.Size() >= cap) return;
+
+		int rad  = CI("gitd_mmf_size", 120);
+		int life = CI("gitd_mmf_life", 4);
+
+		let nl = GITD_MonsterFlash(Actor.Spawn("GITD_MonsterFlash", at));
+		if (!nl) return;
+		nl.host = host;
+		nl.pinned = pin;
+		nl.Arm(FlashColor(host), rad, life);
+		live.Push(nl);
+	}
+
+	// SOURCE 1 -- RS_Main's marker. Looked up by string every time rather
+	// than cached, because a cached null from a load where RS_Main was absent
+	// would be wrong for the rest of the session.
+	override void WorldThingSpawned(WorldEvent e)
+	{
+		if (!CB("gitd_mmf_lights", true)) return;
+		if (!e.Thing) return;
+
+		Class<Actor> mk = "RS_MonsterFiredMarker";
+		if (!mk || !(e.Thing is mk)) return;
+
+		sawMarker = true;
+		let shooter = e.Thing.target;
+		if (!shooter || !shooter.bISMONSTER) return;
+
+		// The marker IS the muzzle. Pin the light there rather than riding
+		// the shooter -- the flash happened at that point in space.
+		Light(shooter, e.Thing.pos, true);
+	}
+
+	// SOURCE 2 -- the fullbright frame, for when nothing better is feeding us.
+	override void WorldTick()
+	{
+		for (int i = live.Size() - 1; i >= 0; i--) if (!live[i]) live.Delete(i);
+
+		if (!CB("gitd_mmf_lights", true)) { wasBright.Clear(); return; }
+		if (sawMarker) { wasBright.Clear(); return; }   // RS_Main has it covered
+
+		Array<Actor> nowBright;
+		Array<Actor> toFlash;
+
+		ThinkerIterator it = ThinkerIterator.Create("Actor", Thinker.STAT_DEFAULT);
+		Actor a;
+		while (a = Actor(it.Next()))
+		{
+			if (!a.bISMONSTER || a.health <= 0) continue;
+			if (!a.MissileState || !a.CurState) continue;
+			if (!Actor.InStateSequence(a.CurState, a.MissileState)) continue;
+			if (!a.CurState.bFullbright) continue;
+
+			nowBright.Push(a);
+			// ENTRY to the frame, not presence in it -- otherwise a
+			// three-tic flash frame fires three times.
+			if (wasBright.Find(a) == wasBright.Size()) toFlash.Push(a);
+		}
+
+		// SPAWN AFTER THE ITERATION, NEVER INSIDE IT. Spawning an actor while
+		// walking the thinker list re-enters the thinker and psprite system,
+		// and with a VR offhand weapon mid-fire that crashes. The prototype
+		// this descends from documented the same crash and the same fix.
+		for (int i = 0; i < toFlash.Size(); i++)
+		{
+			let m = toFlash[i];
+			if (m) Light(m, m.pos + (0, 0, m.height * 0.6), false);
+		}
+
+		wasBright.Copy(nowBright);
+	}
+}
+
 class GITD_MuzzleHandler : EventHandler
 {
 	private Array<GITD_MuzzleLight> mlights;

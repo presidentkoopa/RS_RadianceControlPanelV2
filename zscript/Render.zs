@@ -52,6 +52,37 @@ class GITD_Render abstract
 	{
 		PushWave();
 		PushDarkness();
+		PushFog();
+	}
+
+	// ---- the fog slab ----------------------------------------------------
+	//
+	// Everything except the WAKE, which needs the player's position and so
+	// lives in GITD_Handler where the playsim is. Same split as the glow
+	// wave's origin, and for the same reason: these are numbers off sliders
+	// and can be pushed from a menu tic, that one cannot.
+	clearscope static void PushFog()
+	{
+		if (!GetB("gitd_fog_enabled", false))
+		{
+			level.ClearFogSlab();
+			return;
+		}
+
+		// Color(int) does NOT convert on this engine -- it compiles and then
+		// fails at load with "Return type Color mismatch with SInt4". Build
+		// it from bytes, the same way GITD_Lane.SlotColor has to.
+		int pk = GetI("gitd_fog_color", 0xB41810);
+		Color col = Color(255, (pk >> 16) & 255, (pk >> 8) & 255, pk & 255);
+
+		level.SetFogSlab(
+			double(GetI("gitd_fog_top", 40)),
+			max(GetF("gitd_fog_density", 1.2), 0.0),
+			max(double(GetI("gitd_fog_soft", 20)), 1.0),
+			clamp(GetF("gitd_fog_scatter", 0.7), 0.0, 4.0),
+			col);
+
+		level.SetFogPickup(clamp(GetF("gitd_fog_pickup", 0.55), 0.0, 1.0));
 	}
 
 	// ---- the glow wave --------------------------------------------------

@@ -478,7 +478,7 @@ class GITD_PresetProfile abstract
 		F("fl_dust", 0.80);      // heavy. Nobody has swept this place since.
 		F("fl_dust_scale", 0.06);
 		F("fl_dust_drift", 0.07); // slow settle -- motes hanging, barely falling
-		B("fl_bounce", true);
+		B("fl_bounce", false);   // no omnidirectional fill. A torch is a cone.
 		I("fl_slots", 1);
 		I("fl_pattern", 0);
 
@@ -875,7 +875,7 @@ class GITD_PresetProfile abstract
 		F("fl_dust", 0.38);
 		F("fl_dust_scale", 0.05);
 		F("fl_dust_drift", 0.20);   // stirred air, not settled dust
-		B("fl_bounce", true);
+		B("fl_bounce", false);   // no omnidirectional fill. A torch is a cone.
 
 		// ---- the weather ------------------------------------------------
 		//
@@ -1111,7 +1111,7 @@ class GITD_PresetProfile abstract
 		F("fl_dust", 1.0);
 		F("fl_dust_scale", 0.12);
 		F("fl_dust_drift", 1.0);
-		B("fl_bounce", true);
+		B("fl_bounce", true);    // OMGWTF gets it precisely because it is wrong
 		// The torch cycles colour too, because why would it not.
 		I("fl_slots", 8);
 		I("fl_pattern", 4);          // ping-pong through all eight
