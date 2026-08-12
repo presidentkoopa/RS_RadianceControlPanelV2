@@ -581,6 +581,18 @@ OptionMenu "GITDSweepFill"
 	StaticText "Mode is per band; the style below is shared.", darkgray
 	StaticText ""
 
+	StaticText "Start from a look", gold
+	Command "  The Hallway",		"gitd_hallway"
+	Command "  Turn it off",		"gitd_hallway_off"
+	StaticText "Sets the whole corridor at once -- dense", darkgray
+	StaticText "diagonal cyan lattice, dark room, haze to", darkgray
+	StaticText "catch the light. It WRITES these settings", darkgray
+	StaticText "rather than borrowing them, so it is a", darkgray
+	StaticText "starting point, not a mode. Everything it", darkgray
+	StaticText "touches is a slider on this page or the", darkgray
+	StaticText "Floor Fog and Bloom pages.", darkgray
+	StaticText ""
+
 	StaticText "In the air", gold
 	Slider "Lattice in the air",	"gitd_ss_fill_air", 0.0, 4.0, 0.1, 1
 	StaticText "At 0 the grid is painted on whatever the band", darkgray

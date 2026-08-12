@@ -2,3 +2,27 @@ addkeysection "Glow In The Dark" "glowinthedark"
 addmenukey "Toggle Flashlight" ddz_toggleflashlight
 alias ddz_toggleflashlight "toggle fl_enabled"
 defaultbind "f" ddz_toggleflashlight
+
+// ---------------------------------------------------------------------------
+// THE HALLWAY.
+//
+// One command that sets the whole Resident Evil laser corridor: a dense
+// diagonal lattice hanging in the air, cyan, hard-edged, in a dark room with
+// enough haze to see the light scatter.
+//
+// It is an alias rather than a preset because a preset REPLACES your settings
+// and hands them back on Disable. This just writes them, so it is a starting
+// point you tune from -- every value below is a slider you can find on the
+// menu pages, and nothing here is doing anything the menu cannot.
+//
+// Three things make the shot, and they are worth knowing so you can push them:
+//   ROTATE 45   diamonds rather than squares. More of the look than density.
+//   GAP 0       only the lines are lit, so you see the room between them.
+//               Turn it up and it becomes a lit pane instead of lasers.
+//   THIN + HARD a narrow, sharp line with bloom carrying the glow, rather
+//               than a fat soft one that carries its own.
+// ---------------------------------------------------------------------------
+alias gitd_hallway "gitd_enabled 1; gitd_ss_enabled 1; gitd_ss_shape 2; gitd_ss_count 1; gitd_ss_origin 0; gitd_ss_direction 2; gitd_ss_trigger 0; gitd_ss_range 2048; gitd_ss_speed1 90; gitd_ss_thickness 72; gitd_ss_thick1 72; gitd_ss_softness 1.0; gitd_ss_intensity 1.4; gitd_ss_trail 0; gitd_ss_underlay 1; gitd_ss_light 0; gitd_ss_draw1 1; gitd_ss_c1 \"00 e5 ff\"; gitd_ss_fill1 1; gitd_ss_fill_air 2.6; gitd_ss_fill_u 28; gitd_ss_fill_v 28; gitd_ss_fill_width 1.2; gitd_ss_fill_soft 0.8; gitd_ss_fill_rotate 45; gitd_ss_fill_gap 0; gitd_ss_fill_color \"00 e5 ff\"; gitd_ss_fill_drift 0; gitd_ss_fill_flicker 0; gitd_ss_fill_jitter 0; gitd_ss_fill_major 0; gitd_lgrid_enabled 0; gitd_wave_enabled 0; gitd_dd_enabled 1; gitd_dd_perpixel 1; ddz_mode 2; ddz_preset 6; ddz_desat 40; gitd_dd_dist 0.55; gitd_dd_dist_range 2400; gitd_dd_height 0; gitd_fog_enabled 1; gitd_fog_top 200; gitd_fog_density 0.55; gitd_fog_soft 48; gitd_fog_color \"0a 2a 33\"; gitd_fog_scatter 1.4; gitd_fog_pickup 0.85; gitd_fog_surf 0; gitd_fog_wake 0.4; gitd_fog_wake_size 110; gitd_fog_wake_lag 0.2; gl_bloom 1; gl_bloom_amount 2.2; gl_bloom_threshold 0.25; gl_bloom_knee 0.5; gl_bloom_tint_r 0.55; gl_bloom_tint_g 0.95; gl_bloom_tint_b 1.0; gl_bloom_anamorphic 0; gl_bloom_chromatic 0.15; echo \"GITD: hallway set. Tune it from Options -> Glow In The Dark.\""
+
+// And back out of it, since the alias above overwrites rather than borrows.
+alias gitd_hallway_off "gitd_ss_enabled 0; gitd_ss_fill1 0; gitd_ss_fill_air 0; gitd_fog_enabled 0; gitd_dd_perpixel 0; echo \"GITD: hallway off.\""
