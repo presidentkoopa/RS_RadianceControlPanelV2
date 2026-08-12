@@ -37,8 +37,21 @@ class GITD_LaserGrid abstract
 	// map's geometry to know where to stand.
 	static void Push(Vector3 centre, double travelAngle)
 	{
+		// OFF HAS TO TELL THE ENGINE IT IS OFF.
+		//
+		// Returning early here left whatever beam count was last pushed still
+		// set, so eight beams kept being evaluated for every fragment of every
+		// draw, at stale positions, forever -- drawing garbage AND costing the
+		// full per-pixel price of a feature that was switched off.
+		//
+		// A cvar that reads Off while the thing it names is still running is
+		// the same fault as one that reads On while nothing happens, and this
+		// one costs frames as well as trust.
 		if (!B("gitd_lgrid_enabled", false))
+		{
+			level.SetBeamCount(0, 0.0, 0.0);
 			return;
+		}
 
 		int across = clamp(I("gitd_lgrid_across", 4), 0, 8);
 		int up     = clamp(I("gitd_lgrid_up", 4), 0, 8);

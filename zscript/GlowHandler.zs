@@ -1974,7 +1974,14 @@ class GITD_Handler : StaticEventHandler
 	// band already IS the clock; the grid just borrows where it has got to.
 	void PushLaserGrid()
 	{
-		if (!GITD_LaserGrid.B("gitd_lgrid_enabled", false)) return;
+		// Disabled still has to be pushed -- see GITD_LaserGrid.Push. Falling
+		// out here without saying so is what left eight beams live after the
+		// grid was switched off.
+		if (!GITD_LaserGrid.B("gitd_lgrid_enabled", false))
+		{
+			GITD_LaserGrid.Push((0, 0, 0), 0);
+			return;
+		}
 
 		let pmo = players[consoleplayer].mo;
 		Vector3 centre;
