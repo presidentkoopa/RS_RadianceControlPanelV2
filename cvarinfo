@@ -1293,6 +1293,15 @@ server float gitd_gpulse_level = 0.0;    // the manual level, for source 0
 // ===========================================================================
 server bool  gitd_shape_enabled = false;
 
+// 128 slots, and the shader loops only to the highest one in use -- so the cap
+// costs nothing until it is spent. The per-fragment reject is a squared-radius
+// compare, which is what makes a large number of small marks affordable: a
+// pixel is near almost none of them.
+//
+// If you want HUNDREDS of similar shapes rather than hundreds of distinct
+// ones, slots are the wrong tool -- a repeated pattern is one slot and free at
+// any density, the same trick the laser lattice and the tendrils use.
+
 // 1 disc, 2 ring, 3 square, 4 square outline, 5 cross, 6 hexagon, 7 triangle
 server int   gitd_shape_kind = 2;
 server int   gitd_shape_orient = 0;      // 0 floors, 1 walls, 2 any surface
