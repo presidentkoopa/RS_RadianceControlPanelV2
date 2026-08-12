@@ -2068,8 +2068,10 @@ class GITD_ResetHandler : EventHandler
 			"gitd_dd_dist_range", "gitd_dd_height", "gitd_dd_height_ref",
 			"gitd_dd_height_range" };
 		for (int i = 0; i < wave.Size(); i++) Rst(wave[i]);
-		// The muzzle flash and its twelve cvars are gone -- see the removal
-		// commit. Nothing here resets what no longer exists.
+		static const string mf[] = { "gitd_muzzle_lights", "gitd_muzzle_size",
+			"gitd_muzzle_life", "gitd_muzzle_custom", "gitd_muzzle_color",
+			"gitd_muzzle_chaingun_strobe" };
+		for (int i = 0; i < mf.Size(); i++) Rst(mf[i]);
 		Rst("gitd_ss_light");
 		for (int g = 1; g <= 7; g++) CVar.FindCVar("gitd_ss_gap" .. g).ResetToDefault();
 

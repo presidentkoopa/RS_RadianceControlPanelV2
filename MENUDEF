@@ -1352,6 +1352,47 @@ OptionMenu "GITDFog"
 	StaticText "Vanilla brightens the whole view while a", darkgray
 	StaticText "weapon fires. Unnoticeable when lit,", darkgray
 	StaticText "ruinous in the dark.", darkgray
+	StaticText ""
+	Submenu "Muzzle Flash Options...","GITDMuzzle"
+}
+
+// ---------------------------------------------------------------------------
+// Muzzle flash.
+//
+// The light goes at CHEST height with realistic falloff. Both of those are
+// reactions to the same bug, seen twice: a light spawned at an actor's
+// position sits at its FEET, and an unattenuated point light is near-full
+// brightness right out to its radius. Together that is a lamp under you
+// washing the floor in every direction, which is what "the floor lights up
+// all around me" was.
+//
+// Reach is deliberately small. This should light the wall you are pointing
+// at for an instant -- not the room you are standing in.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDMuzzle"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Muzzle Flash"
+	StaticText ""
+	Option "Muzzle flash",			"gitd_muzzle_lights", "OnOff"
+	StaticText ""
+	Slider "Reach",					"gitd_muzzle_size", 16, 320, 8, 0
+	StaticText "Small on purpose. Past about 160 it stops", darkgray
+	StaticText "reading as a flash and starts lighting the", darkgray
+	StaticText "whole room again.", darkgray
+	Slider "How long (tics)",		"gitd_muzzle_life", 1, 10, 1, 0
+	StaticText "3 is one frame of a bang. Longer smears it.", darkgray
+	StaticText ""
+	Option "Custom colour",			"gitd_muzzle_custom", "OnOff"
+	ColorPicker "  Colour",			"gitd_muzzle_color"
+	StaticText "Off, it is the golden-orange of gunfire.", darkgray
+	StaticText ""
+	Option "Chaingun strobes",		"gitd_muzzle_chaingun_strobe", "OnOff"
+	StaticText "A chaingun is a string of separate bangs,", darkgray
+	StaticText "so it flickers rather than fading. Your own", darkgray
+	StaticText "weapons only -- an enemy chaingunner cannot", darkgray
+	StaticText "trigger it.", darkgray
 }
 
 // ---------------------------------------------------------------------------

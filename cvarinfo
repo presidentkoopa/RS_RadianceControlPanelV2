@@ -822,3 +822,17 @@ server float gitd_dd_dist_range = 2048.0; // world units to reach full depth
 server float gitd_dd_height = 0.0;        // 0 = off
 server float gitd_dd_height_ref = 0.0;    // world Z the pooling starts from
 server float gitd_dd_height_range = 256.0;// how far below that to reach full
+
+// ---- Muzzle flash ----------------------------------------------------------
+// A brief attenuated light at CHEST height on the player who fired -- not at
+// their feet, which is what made the previous ones wash the floor in every
+// direction. Radius is deliberately modest: this should light the wall you are
+// pointing at for an instant, not the room you are standing in.
+server bool  gitd_muzzle_lights = true;
+server int   gitd_muzzle_size = 96;      // reach in map units
+server int   gitd_muzzle_life = 3;       // tics, fading out
+server bool  gitd_muzzle_custom = false;
+server color gitd_muzzle_color = "ff be 5a";
+// The chaingun is a string of separate bangs, so it flickers rather than
+// fading. Player's own weapons only -- an enemy chaingunner cannot reach it.
+server bool  gitd_muzzle_chaingun_strobe = true;
