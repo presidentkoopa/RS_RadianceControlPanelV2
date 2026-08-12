@@ -108,6 +108,38 @@ independently — same wave, three completely different looks.
 - **Per-room scatter** — without it the whole map undulates as one organism,
   which reads as a filter over the game rather than as lighting in it
 
+## Texture in the glow
+
+A wave varies a glow's **edge**. That stops helping the moment your coverage is
+high enough that the edge is off screen — a maxed lane is a solid card of
+colour, and the wave is moving a boundary nobody can see.
+
+These five happen **inside** the lit area instead. None of them can change a
+band's shape; the wave owns shape, these own substance. All off by default.
+
+- **Noise** — a lit wall was one flat brightness across its whole face. This
+  gives it veining and unevenness, drifting slowly so it is not a decal.
+  Contrast takes it from marble to plasma. *If you turn on one thing here, this
+  is the one.*
+- **Flow** — current running *along* the surface, rather than a wave arriving
+  *from* somewhere. Vertical on a wall, horizontal on a floor, taken from the
+  surface's own facing.
+- **Veins** — an irregular cell network with light crawling its edges, each
+  cell on its own clock so it never blinks as one. Free at any density, exactly
+  like the laser lattice, because it is a pattern and not a set of objects.
+- **Walls react** — the same eight disturbance slots the fog uses. A shot or a
+  death sends a ring travelling across every lit surface in the room, not just
+  through the air. Needs *React to events* on the Reactive Fog page.
+- **Alarm pulse** — every glow in the level pulsing together, driven by nearby
+  monsters, your health, or a scripted number. The rate rises with the level as
+  well as the depth, because faster is what reads as urgency — brighter alone
+  just reads as brighter. This is the one that makes the light carry
+  information rather than only look good.
+
+All of it is sampled in **world space**, so a pattern crossing a wall/floor
+join carries on through the corner instead of restarting at it. That is what
+makes it read as something the room is made of rather than paint on each face.
+
 ## Presets
 
 A preset is not a palette. It carries the whole room: 32 colours *and* their
