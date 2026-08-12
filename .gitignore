@@ -1,1 +1,4 @@
 *.zip
+
+# Claude Code session settings -- local tooling permissions, not mod source.
+.claude/
