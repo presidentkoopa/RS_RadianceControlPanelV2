@@ -2342,8 +2342,15 @@ class GITD_ResetHandler : EventHandler
 		for (int i = 0; i < rest.Size(); i++) Rst(rest[i]);
 		for (int c = 1; c <= 8; c++) Rst("fl_c" .. c);
 
-		// Colour holds, the colour law, and the ambushes -- newer systems,
-		// same promise: EVERYTHING means everything.
+		// Colour holds and the colour law -- newer systems, same promise:
+		// EVERYTHING means everything.
+		//
+		// Ambush was here too, and is gone -- the system was removed, not
+		// just disabled, so there is nothing left to reset. Rst is
+		// null-guarded and would have no-op'd forever on cvars that no
+		// longer exist, but a reset list naming a removed feature is the
+		// kind of thing that outlives its reason and confuses the next
+		// person who reads it wondering what "ambush" is.
 		static const string holdpre[] = { "gitd_wb", "gitd_wt", "gitd_cg", "gitd_fg", "fl" };
 		for (int p = 0; p < holdpre.Size(); p++)
 			for (int c = 1; c <= 8; c++) Rst(holdpre[p] .. "_hold" .. c);
@@ -2355,14 +2362,6 @@ class GITD_ResetHandler : EventHandler
 			"gitd_law_rain_every", "gitd_law_rain_life" };
 		for (int i = 0; i < law.Size(); i++) Rst(law[i]);
 		for (int c = 1; c <= 8; c++) Rst("gitd_law_fx" .. c);
-		static const string amb[] = { "gitd_ambush_enabled", "gitd_ambush_ambient",
-			"gitd_ambush_period", "gitd_ambush_chance", "gitd_ambush_spacing",
-			"gitd_ambush_radius", "gitd_ambush_budget", "gitd_ambush_tierup",
-			"gitd_ambush_tier", "gitd_ambush_timer", "gitd_ambush_color",
-			"gitd_ambush_tint", "gitd_ambush_light", "gitd_ambush_desat",
-			"gitd_ambush_speed", "gitd_ambush_badge", "gitd_ambush_class",
-			"gitd_ambush_wall", "gitd_ambush_gap", "gitd_ambush_gap_drift" };
-		for (int i = 0; i < amb.Size(); i++) Rst(amb[i]);
 		for (int b = 1; b <= 8; b++) { Rst("gitd_ss_fx" .. b); Rst("gitd_ss_script" .. b); }
 
 		// BLOOM AND EXPOSURE ARE NOT RESET HERE, AND CANNOT BE. Fixed

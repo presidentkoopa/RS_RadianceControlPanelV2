@@ -1282,7 +1282,6 @@ OptionMenu "GITDSweepPlay"
 	StaticText "of every monster each tic, so it is off", darkgray
 	StaticText "until something asks for it.", darkgray
 	StaticText ""
-	Submenu "Ambush Setpieces...",	"GITDAmbush"
 	Submenu "Colours Change the Fight...","GITDColorLaw"
 }
 
@@ -1578,75 +1577,6 @@ OptionValue "GITDSweepFx"
 	5, "Wake monsters"
 	6, "Mark monsters"
 	7, "Slow monsters"
-}
-
-// ---------------------------------------------------------------------------
-// AMBUSH SETPIECES
-//
-// A wave sweeps a lockdown over wherever you are standing; the room darkens,
-// a fight sized to that room appears inside it, and clearing it sweeps the
-// level back to what it was. Everything is journalled and reverted -- a
-// change you cannot undo is not a setpiece, it is damage.
-// ---------------------------------------------------------------------------
-
-OptionMenu "GITDAmbush"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Ambush Setpieces"
-	StaticText ""
-	Option "Ambushes",				"gitd_ambush_enabled", "OnOff"
-	StaticText "A wave locks down the room you are in,", darkgray
-	StaticText "fills it, and clearing it puts it back.", darkgray
-	StaticText "Manual start: netevent gitd_ambush", darkgray
-	StaticText "(again while running = walk away from it).", darkgray
-	StaticText ""
-	StaticText "When", gold
-	StaticText ""
-	Option "Random ambushes",		"gitd_ambush_ambient", "OnOff"
-	Slider "Roll every (seconds)",	"gitd_ambush_period", 5, 120, 5, 0
-	Slider "Chance per roll (%)",	"gitd_ambush_chance", 1, 100, 1, 0
-	Slider "Quiet time after (s)",	"gitd_ambush_spacing", 0, 600, 15, 0
-	StaticText "The quiet time also holds at map start,", darkgray
-	StaticText "so a level never opens with one.", darkgray
-	StaticText ""
-	StaticText "The room", gold
-	StaticText ""
-	Slider "Reach (map units)",		"gitd_ambush_radius", 256, 3072, 64, 0
-	Slider "Spawn budget scale",	"gitd_ambush_budget", 0.0, 4.0, 0.25, 2
-	StaticText "What spawns is sized to the room --", darkgray
-	StaticText "a closet gets two imps, an arena a wave.", darkgray
-	Option "Promote the locals",	"gitd_ambush_tierup", "OnOff"
-	Slider "Promotion factor",		"gitd_ambush_tier", 1.0, 3.0, 0.05, 2
-	StaticText "Monsters already in the room get faster", darkgray
-	StaticText "and tougher as the wave crosses them.", darkgray
-	Slider "Gives up after (s)",	"gitd_ambush_timer", 0, 300, 10, 0
-	StaticText "0 = it never gives up. Otherwise", darkgray
-	StaticText "outlasting it also lifts the lockdown.", darkgray
-	StaticText ""
-	StaticText "The break", gold
-	StaticText ""
-	Option "Show the lockdown ring",	"gitd_ambush_wall", "OnOff"
-	Slider "Break in the ring (deg)",	"gitd_ambush_gap", 0, 180, 5, 0
-	StaticText "0 = sealed. Otherwise the standing ring", darkgray
-	StaticText "has one gap, marked by two pillars. Slip", darkgray
-	StaticText "out through it and the ambush lets you go", darkgray
-	StaticText "cleanly, on the spot. Leave any other way", darkgray
-	StaticText "and it leashes after you as usual.", darkgray
-	Slider "The break drifts (deg/s)",	"gitd_ambush_gap_drift", 0, 90, 5, 0
-	StaticText "The door moves. Escaping means chasing it.", darkgray
-	StaticText ""
-	StaticText "The look", gold
-	StaticText ""
-	ColorPicker "Sweep colour",		"gitd_ambush_color"
-	ColorPicker "Lockdown tint",	"gitd_ambush_tint"
-	StaticText "Authored ambushes may override the", darkgray
-	StaticText "tint -- the Blackout goes near-black.", darkgray
-	Slider "Lockdown light",		"gitd_ambush_light", -255, 64, 5, 0
-	Slider "Colour drain",			"gitd_ambush_desat", 0, 255, 15, 0
-	Slider "Wave speed",			"gitd_ambush_speed", 200, 2000, 50, 0
-	Option "Victory badge",			"gitd_ambush_badge", "OnOff"
-	StaticText "Pops your cleared-ambush count through", darkgray
-	StaticText "the Numeric Violence Engine.", darkgray
 }
 
 // ---------------------------------------------------------------------------

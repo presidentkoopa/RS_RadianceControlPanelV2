@@ -527,33 +527,6 @@ server int    gitd_sw_amount = 48;
 server string gitd_sw_script = "";
 
 
-// ---- Ambush setpieces ------------------------------------------------------
-// A wave sweeps a lockdown over the room you are in, spawns a fight sized to
-// that room, and clearing it sweeps the level back to what it was. Everything
-// journalled, everything reverted. All triggers ship OFF.
-server bool  gitd_ambush_enabled = false;   // master switch for the triggers
-server bool  gitd_ambush_ambient = false;   // random ambushes while you play
-server float gitd_ambush_period  = 30.0;    // seconds between ambient rolls
-server int   gitd_ambush_chance  = 15;      // percent chance per roll
-server float gitd_ambush_spacing = 120.0;   // quiet seconds between ambushes
-                                            // (also the grace at map start)
-server int   gitd_ambush_radius  = 1024;    // room flood / lockdown reach
-server float gitd_ambush_budget  = 1.0;     // spawn budget scale, 0-4
-server bool  gitd_ambush_tierup  = false;   // promote what already lives there
-server float gitd_ambush_tier    = 1.35;    // promotion factor when on
-server float gitd_ambush_timer   = 0.0;     // seconds before the ambush gives
-                                            // up; 0 = it never does
-server color gitd_ambush_color   = "ff 20 10";  // the sweep band
-server color gitd_ambush_tint    = "6e 28 28";  // lockdown tint (multiplies
-                                                // sector colour; authored
-                                                // ambushes may override)
-server int   gitd_ambush_light   = -70;     // lockdown light delta
-server int   gitd_ambush_desat   = 100;     // lockdown colour drain
-server float gitd_ambush_speed   = 700.0;   // wave speed, map units/second
-server bool  gitd_ambush_badge   = true;    // victory count via the Neon engine
-server string gitd_ambush_class  = "GITD_Ambush_Blackout";  // which ambush the
-                                            // triggers fire
-
 // ---- Per-colour hold times -------------------------------------------------
 // Each colour slot may linger before its transition begins, in seconds.
 // 0 = the old behaviour exactly: continuous cycling at the lane's speed.
@@ -620,11 +593,6 @@ server int   gitd_law_rain_x = 4;        // pickup rain grid, columns
 server int   gitd_law_rain_y = 4;        // rows
 server float gitd_law_rain_every = 6.0;  // seconds between rains while active
 server float gitd_law_rain_life = 10.0;  // seconds a dropped pickup survives
-
-// The standing lockdown ring and its break.
-server bool  gitd_ambush_wall = true;      // show the ring while the HOLD lasts
-server float gitd_ambush_gap = 0.0;        // break width in degrees; 0 = sealed
-server float gitd_ambush_gap_drift = 10.0; // degrees/second the break orbits
 
 // ---- Global randomise, across all four lanes -------------------------------
 // The per-lane _random switches still exist and still work; these sit ON TOP
