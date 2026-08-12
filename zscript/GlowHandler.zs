@@ -1796,6 +1796,15 @@ class GITD_Handler : StaticEventHandler
 		FogEvent(e.Thing.pos,
 			GITD_Render.GetF("gitd_fog_react_death", 0.8),
 			GITD_Render.GetF("gitd_fog_react_death_size", 130.0));
+
+		// And the ground remembers. Stamped whether or not the heatmap is
+		// currently being DRAWN, because it is a record rather than an effect
+		// -- switching the display on after a fight has to show you the fight
+		// you just had, not an empty floor.
+		if (GITD_Render.GetF("gitd_heat_amount", 1.0) > 0.0)
+			level.HeatmapAdd(e.Thing.pos.x, e.Thing.pos.y, e.Thing.pos.z,
+				max(GITD_Render.GetF("gitd_heat_size", 96.0), 1.0),
+				GITD_Render.GetF("gitd_heat_amount", 1.0));
 	}
 
 	// ---- WHAT MAKES THE MIST REACT ---------------------------------------
@@ -1896,9 +1905,22 @@ class GITD_Handler : StaticEventHandler
 
 	override void WorldThingDamaged(WorldEvent e)
 	{
+		if (!e.Thing || e.Damage <= 0) return;
+
+		// WHERE YOU WERE HURT is a different map from where things died, and
+		// the two together are the actual shape of a fight -- one shows what
+		// you controlled and the other shows what controlled you.
+		if (e.Thing.player)
+		{
+			double hurt = GITD_Render.GetF("gitd_heat_hurt", 0.0);
+			if (hurt > 0.0)
+				level.HeatmapAdd(e.Thing.pos.x, e.Thing.pos.y, e.Thing.pos.z,
+					max(GITD_Render.GetF("gitd_heat_size", 96.0), 1.0),
+					hurt * clamp(e.Damage / 20.0, 0.15, 4.0));
+		}
+
 		if (CVar.FindCVar("gitd_ss_trigger").GetInt() != 2) return;
-		if (!e.Thing || !e.Thing.player) return;
-		if (e.Damage <= 0) return;
+		if (!e.Thing.player) return;
 		SSStartPass();
 	}
 

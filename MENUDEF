@@ -431,6 +431,9 @@ OptionMenu "GITDOptions"
 	StaticText "This is the expensive one. Off costs nothing.", darkgray
 	Submenu "  Tornado options...",	"GITDTornado"
 	Submenu "  Reactive fog...",	"GITDFogReact"
+	Submenu "  Heatmap...",			"GITDHeatmap"
+	StaticText "Where the fighting happened, drawn on the", darkgray
+	StaticText "floor and accumulated over the whole map.", darkgray
 	StaticText "The mist responds to what happens in it --", darkgray
 	StaticText "rings off your muzzle, mist that banks and", darkgray
 	StaticText "drifts, wisps rising off the surface, and", darkgray
@@ -1862,4 +1865,70 @@ OptionMenu "GITDFogReact"
 	StaticText "what makes a still frame look composed.", darkgray
 	StaticText ""
 	StaticText "This is also the colour Ignite burns.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// THE HEATMAP.
+//
+// Every death drops a mark on the floor and the marks accumulate over the
+// whole life of the map, so walking back through somewhere you cleared shows
+// you what happened there.
+//
+// It is NOT the disturbance array that drives reactive fog. That is eight
+// short-lived events held in uniforms; this is hundreds of permanent deposits
+// that have to be summed, and a sum wants a bucket rather than a list. So it
+// is a grid over the map's own bounding box, which is why the thousandth
+// death costs exactly what the first one cost.
+//
+// The accumulation is kept even while the display is off, because a heatmap
+// is a RECORD and a record that erases itself when you stop looking at it is
+// not a record. Toggle it on after a fight and you see the fight you had.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDHeatmap"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Heatmap"
+	StaticText ""
+	Option "Show the heatmap",		"gitd_heat_enabled", "OnOff"
+	StaticText "Marks are recorded whether this is on or", darkgray
+	StaticText "off, so switching it on after a fight shows", darkgray
+	StaticText "you that fight rather than an empty floor.", darkgray
+	StaticText ""
+
+	StaticText "How it looks", gold
+	Slider "Strength",				"gitd_heat_scale", 0.0, 3.0, 0.05, 2
+	ColorPicker "One death",		"gitd_heat_low"
+	ColorPicker "A massacre",		"gitd_heat_high"
+	Slider "  Massacre at",			"gitd_heat_ceiling", 1.0, 40.0, 1.0, 0
+	StaticText "How much has to pile up in one place before", darkgray
+	StaticText "it reaches the high colour. Low values make", darkgray
+	StaticText "the whole floor saturate quickly; high ones", darkgray
+	StaticText "keep the gradient meaningful across a level.", darkgray
+	StaticText ""
+
+	StaticText "What gets recorded", gold
+	Slider "Per monster death",		"gitd_heat_amount", 0.0, 4.0, 0.05, 2
+	Slider "  Spread",				"gitd_heat_size", 8, 512, 8, 0
+	StaticText "World units, so it means the same thing on a", darkgray
+	StaticText "cramped map as on an open one.", darkgray
+	Slider "Where you were hurt",	"gitd_heat_hurt", 0.0, 4.0, 0.05, 2
+	StaticText "A different map from where things died. One", darkgray
+	StaticText "shows what you controlled and the other shows", darkgray
+	StaticText "what controlled you -- run both and the pair", darkgray
+	StaticText "is the actual shape of a fight.", darkgray
+	StaticText "Scaled by how hard you were hit.", darkgray
+	StaticText ""
+
+	StaticText "Memory", gold
+	Slider "Forgets",				"gitd_heat_decay", 0.0, 2.0, 0.05, 2
+	StaticText "Intensity lost per second. At 0 it never", darkgray
+	StaticText "forgets, which is what you want for reading a", darkgray
+	StaticText "level after the fact. Turn it up and it", darkgray
+	StaticText "becomes a live picture of the last minute.", darkgray
+	Slider "Same-floor tolerance",	"gitd_heat_tolerance", 8, 512, 8, 0
+	StaticText "How far apart in height two surfaces have to", darkgray
+	StaticText "be before they count as different storeys. The", darkgray
+	StaticText "grid is flat, so without this a death on a", darkgray
+	StaticText "balcony would also mark the ground under it.", darkgray
 }

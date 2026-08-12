@@ -1154,3 +1154,35 @@ server float gitd_fog_bow_thin = 0.6;      // how much is scoured out behind
 // ground mist, and it follows the top as the surface swells.
 server color gitd_fog_color2 = "b3 80 59";
 server float gitd_fog_color2_mix = 0.0;
+
+// ===========================================================================
+// THE HEATMAP -- where the fighting happened.
+//
+// Every death drops a mark on the floor and the marks accumulate over the
+// whole life of the map. Walk back through somewhere you cleared and the
+// ground remembers it.
+//
+// Not the disturbance array: that is eight short-lived events, and this is
+// hundreds of permanent deposits that have to be SUMMED. A sum wants a bucket,
+// not a list, so it is a grid over the map's own bounding box -- which is why
+// the thousandth death costs exactly what the first one cost.
+//
+// It is also readable from script, so a spawn director can weight against
+// ground that has already been fought over. That is the part that makes it a
+// design tool rather than only a picture.
+// ===========================================================================
+server bool  gitd_heat_enabled = false;
+server float gitd_heat_scale = 0.8;      // how strongly it tints the floor
+server float gitd_heat_size = 96.0;      // world radius of one deposit
+server float gitd_heat_amount = 1.0;     // how much one death contributes
+server float gitd_heat_ceiling = 8.0;    // total that reaches the high colour
+server color gitd_heat_low = "20 40 ff"; // one death
+server color gitd_heat_high = "ff 20 00";// a massacre
+server float gitd_heat_decay = 0.0;      // per second; 0 = it never forgets
+server float gitd_heat_tolerance = 96.0; // Z difference that counts as another
+                                         // storey rather than the same floor
+
+// Deposits from things other than deaths. Player damage marks where YOU were
+// hurt, which is a different map from where things died -- and the pair of
+// them together is the actual shape of a fight.
+server float gitd_heat_hurt = 0.0;

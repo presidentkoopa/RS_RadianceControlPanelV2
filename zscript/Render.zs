@@ -54,7 +54,33 @@ class GITD_Render abstract
 		PushDarkness();
 		PushFog();
 		PushTornado();
+		PushHeatmap();
 		PushSweepFill();
+	}
+
+	// ---- the heatmap -----------------------------------------------------
+	//
+	// Only how it is DRAWN. What is in it is stamped by GITD_Handler when
+	// something dies, and it survives being switched off -- scale 0 stops
+	// drawing without discarding the accumulation, so you can toggle it on
+	// after a fight to see the shape of one you have already had.
+	//
+	// That asymmetry is deliberate. Everything else in GITD is stateless and
+	// can be cleared by pushing zero; a heatmap is a RECORD, and a record that
+	// erases itself when you stop looking at it is not a record.
+	clearscope static void PushHeatmap()
+	{
+		int lo = GetI("gitd_heat_low", 0x2040FF);
+		int hi = GetI("gitd_heat_high", 0xFF2000);
+
+		level.SetHeatmap(
+			GetB("gitd_heat_enabled", false)
+				? max(GetF("gitd_heat_scale", 0.8), 0.0) : 0.0,
+			Color(255, (lo >> 16) & 255, (lo >> 8) & 255, lo & 255),
+			Color(255, (hi >> 16) & 255, (hi >> 8) & 255, hi & 255),
+			max(GetF("gitd_heat_ceiling", 8.0), 0.01),
+			max(GetF("gitd_heat_decay", 0.0), 0.0),
+			max(GetF("gitd_heat_tolerance", 96.0), 1.0));
 	}
 
 	// ---- the tornado -----------------------------------------------------
