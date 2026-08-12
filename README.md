@@ -399,6 +399,21 @@ one light nudged sideways.
 Dust is sampled in **world space**, so motes stay put in the room as you sweep
 rather than sliding along with the light.
 
+**A cone seen end-on is a disc**, and that is worth knowing before you go
+looking for the beam. Point the torch where you are already looking and the
+cross-section you look *through* is the whole cone — it fills the middle of the
+screen as a soft circle that tells you nothing, because it marks the place your
+eye is already on. On a flat screen the main-hand mount tracks your view, so
+end-on is the *only* way you would ever see it.
+
+So the beam fades as your view lines up with it (`vol_beam_axisfade`, on by
+default). A torch held off to one side — an off-hand mount, or a tracked
+controller in VR — keeps its full strength, and that is the shot worth having.
+Set it to 0 if you want the old behaviour back.
+
+`fl_density` is **per 1000 units**, the same convention the floor fog uses. It
+starts low deliberately: turn it up until the shaft reads.
+
 **Bounce light** is a dim wide fill at the lens, and it is **off by default**.
 It softens a harsh cone, and it is also an omnidirectional light — the opposite
 of what a torch is — so it is opt-in rather than assumed.

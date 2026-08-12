@@ -1,6 +1,6 @@
 # Handoff — 2026-08-12
 
-Both repos clean, built, pushed. Engine at `106459a5ca`, mod at `e502bff`.
+Both repos clean, built, pushed. Engine head at `ffa5d93a84` when this was written; check `git log` for current.
 `GlowInTheDark.zip` is current.
 
 ---
@@ -33,6 +33,8 @@ first question is *what question does a pixel ask*, not *what do I spawn*.
 | **Selective desaturation** | drain weighted by each colour's own saturation — grey world, red blood |
 | **Laser grid** | folded into the sweep; it is what a band *fires*, not its own toggle |
 | **Presets** | Black and White + OMGWTF ship; the other three stay off |
+| **Texture in the glow** | five terms *inside* a lit area, for when coverage is too high for the wave to help |
+| **Ambush removed** | the whole system, not the switch — file, include, handler, cvars, menu page, reset list |
 
 ### Bugs fixed, all of them silent
 
@@ -42,6 +44,22 @@ first question is *what question does a pixel ask*, not *what do I spawn*.
   `+DYNAMICLIGHT.ATTENUATE`, so every surface in the cone lit identically.
 - **The volumetric cone had never drawn a lit pixel.** A general ray/cone solve
   is degenerate when the apex is at the eye, which is the normal case.
+- **…and fixing it made the beam 1000× too bright.** The pass multiplies by the
+  marched length to turn a mean into an integral, and the length had been
+  capped at 1.0 by the broken depth clamp — so the density scale was
+  *accidentally* sane. Now per 1000 units. **When two faults cancel, repairing
+  the first looks exactly like causing the second.**
+- **A padding comment that was wrong about itself.** The std140 repair added
+  two pad floats where the row needed one, pushing `ViewToWorld` off its
+  16-byte boundary *while its own text claimed to be fixing that alignment*.
+  Only caught when a later field forced a recount.
+- **A preset's bloom survived turning the preset off.** `ApplyEngine`'s default
+  arm did nothing, so OMGWTF's amount 3.2 / threshold 0.05 stayed on screen
+  with the Preset row reading Off.
+- **Changing a default in `cvarinfo` does not change an existing config.**
+  `server` cvars are archived, so a saved `fl_density=1.8` silently overrode
+  the new default and the "fix" never reached the player. Check the ini before
+  concluding a value change did nothing.
 - **GITD was erasing RS_Main's laser gun beams every tic** via an absolute
   `SetBeamCount(0)` on a shared global, after psprites had written theirs.
   Nothing in GITD touches beams now.
@@ -78,10 +96,24 @@ it costs draw batching every frame forever.
 - ZScript rejects a trailing comma in a `static const` array initialiser, and
   the error points at the closing brace.
 - `Color(int)` does not convert on this engine — build it from bytes.
-- Deleting a handler's file is half the job; it must leave `mapinfo.txt` too.
+- Deleting a handler's file is half the job. Removing a system means the file,
+  its `#include` in `zscript.txt`, its handler in `mapinfo.txt`, its cvars, its
+  menu page **and the submenu line pointing at it**, and any reset list naming
+  it. Five or six places, and the ones that abort the load are the include and
+  the handler.
+- A call-site sweep that greps `.Method(` finds external callers and misses
+  every internal one, because inside a class they are written bare. That is how
+  a signature change shipped and aborted the load.
+- Grepping for a live feature is not enough. If two call sites write the same
+  setting, the later one silently wins and the earlier one is dead code that
+  looks live — tune the wrong one and nothing happens, twice.
 - The build cannot link while `doomxr.exe` is running. Compilation still
   succeeds, so a lone `LNK1104` means the code is fine and the game is open.
 - Repack with `Compress-Archive`, excluding `.git .claude .gitignore design *.md`.
+- **Read the player's ini before diagnosing.** More than one session was spent
+  fixing features that were switched off in their config. `fl_enabled`,
+  `gitd_fog_enabled` and the rest live in
+  `Documents/My Games/DoomXR/doomxr.ini`.
 
 ---
 
