@@ -56,7 +56,29 @@ class GITD_Render abstract
 		PushTornado();
 		PushHeatmap();
 		PushGlowTexture();
+		PushShapeLook();
 		PushSweepFill();
+	}
+
+	// ---- how shapes are drawn --------------------------------------------
+	//
+	// Only the shared look. WHICH shapes exist is decided by whatever placed
+	// them -- GITD_Handler on a kill, a script, eventually an actor -- and a
+	// placed shape carries its own kind, size and colour with it.
+	//
+	// Softness doubles as the master switch, because it is the one number the
+	// evaluator tests before doing anything at all: at 0 the whole loop is
+	// skipped rather than run sixteen times over empty slots.
+	clearscope static void PushShapeLook()
+	{
+		bool on = GetB("gitd_shape_enabled", false);
+		int u = GetI("gitd_shape_under", 0xFF2610);
+
+		level.SetShapeLook(
+			on ? max(GetF("gitd_shape_soft", 2.0), 0.01) : 0.0,
+			max(GetF("gitd_shape_height", 24.0), 1.0),
+			max(GetF("gitd_shape_reach", 0.0), 0.0),
+			Color(255, (u >> 16) & 255, (u >> 8) & 255, u & 255));
 	}
 
 	// ---- texture inside the glow -----------------------------------------

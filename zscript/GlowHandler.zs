@@ -1807,6 +1807,45 @@ class GITD_Handler : StaticEventHandler
 			level.HeatmapAdd(e.Thing.pos.x, e.Thing.pos.y, e.Thing.pos.z,
 				max(GITD_Render.GetF("gitd_heat_size", 96.0), 1.0),
 				GITD_Render.GetF("gitd_heat_amount", 1.0));
+
+		DropShape(e.Thing.pos, "gitd_shape_on_death");
+	}
+
+	// ---- a mark on the floor ---------------------------------------------
+	//
+	// Placed at the thing's FEET rather than its centre, because a shape is a
+	// flat decal and its height fade decides whether it lands on the floor or
+	// hangs at chest height over it.
+	//
+	// The angle is randomised per mark. Sixteen identical squares all facing
+	// the same way reads as a texture someone stamped; the same sixteen at
+	// different angles reads as sixteen separate events, which is what they
+	// are. Cheap, and it is most of the difference.
+	void DropShape(Vector3 at, string gate)
+	{
+		if (!GITD_Render.GetB("gitd_shape_enabled", false)) return;
+		if (!GITD_Render.GetB(gate, true)) return;
+
+		int pk = GITD_Render.GetI("gitd_shape_color", 0xFF4010);
+
+		int slot = level.AddShape(
+			clamp(GITD_Render.GetI("gitd_shape_kind", 2), 1, 7),
+			clamp(GITD_Render.GetI("gitd_shape_orient", 0), 0, 2),
+			at.x, at.y, at.z,
+			max(GITD_Render.GetF("gitd_shape_size", 64.0), 1.0),
+			GITD_Render.GetF("gitd_shape_angle", 0.0) + random(0, 359),
+			max(GITD_Render.GetF("gitd_shape_thick", 6.0), 0.1),
+			Color(255, (pk >> 16) & 255, (pk >> 8) & 255, pk & 255),
+			max(GITD_Render.GetF("gitd_shape_intensity", 1.6), 0.0),
+			max(GITD_Render.GetF("gitd_shape_life", 4.0), 0.0));
+
+		// The split is set separately because it is the ANIMATED half, and a
+		// caller usually wants a mark and only sometimes wants it to open.
+		if (slot >= 0)
+			level.SetShapeMotion(slot,
+				clamp(GITD_Render.GetF("gitd_shape_seam", 0.0), 0.0, 1.0),
+				GITD_Render.GetF("gitd_shape_seam_rate", 0.35),
+				GITD_Render.GetF("gitd_shape_grow", 0.0));
 	}
 
 	// ---- WHAT MAKES THE MIST REACT ---------------------------------------
@@ -1836,17 +1875,24 @@ class GITD_Handler : StaticEventHandler
 	// eight slots in a third of a second.
 	void PushFogShot()
 	{
-		if (!GITD_Render.GetB("gitd_fog_react", false)) return;
-
 		let pmo = players[consoleplayer].mo;
 		if (!pmo || !pmo.player) return;
 
+		// ONE EDGE, TWO CONSUMERS. The rising edge is read here and only here,
+		// because two separate readers would each keep their own `was it down`
+		// and drift apart the first time one of them was gated off -- so the
+		// fog ring and the floor mark would stop agreeing about what a shot is.
 		bool down = (pmo.player.cmd.buttons & BT_ATTACK) != 0;
-		if (down && !lastFogShotDown)
+		bool fired = down && !lastFogShotDown;
+		lastFogShotDown = down;
+		if (!fired) return;
+
+		if (GITD_Render.GetB("gitd_fog_react", false))
 			FogEvent(pmo.pos + (0, 0, 32),
 				GITD_Render.GetF("gitd_fog_react_shot", 0.55),
 				GITD_Render.GetF("gitd_fog_react_shot_size", 88.0));
-		lastFogShotDown = down;
+
+		DropShape(pmo.pos, "gitd_shape_on_shot");
 	}
 
 	// MONSTERS SHOULDER THE MIST ASIDE. The nearest few only -- there are

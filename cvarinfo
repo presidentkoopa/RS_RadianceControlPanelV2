@@ -1276,3 +1276,47 @@ server int   gitd_gpulse_src = 1;        // 0 manual, 1 monsters near you,
 server float gitd_gpulse_range = 768.0;  // how near counts, for source 1
 server int   gitd_gpulse_count = 6;      // monsters that means "fully alarmed"
 server float gitd_gpulse_level = 0.0;    // the manual level, for source 0
+
+// ===========================================================================
+// SHAPES ON THE FLOOR
+//
+// Signed distance fields drawn onto surfaces. A shape is maths rather than
+// geometry -- no model, no actor, no sprite -- so it is pin-sharp at any
+// distance, wraps a step without seams, and costs a couple of instructions
+// behind an early reject.
+//
+// Sixteen at once, oldest recycled.
+//
+// THE SEAM IS THE ONE TO SEE. A shape splits down its middle and a second
+// colour shows through the widening gap -- subtraction, masked by the shape it
+// came out of, so the reveal never bleeds past the edge that split.
+// ===========================================================================
+server bool  gitd_shape_enabled = false;
+
+// 1 disc, 2 ring, 3 square, 4 square outline, 5 cross, 6 hexagon, 7 triangle
+server int   gitd_shape_kind = 2;
+server int   gitd_shape_orient = 0;      // 0 floors, 1 walls, 2 any surface
+server float gitd_shape_size = 64.0;
+server float gitd_shape_thick = 6.0;     // ring width / outline width / arm width
+server float gitd_shape_angle = 0.0;
+server color gitd_shape_color = "ff 40 10";
+server float gitd_shape_intensity = 1.6;
+server float gitd_shape_life = 4.0;      // seconds; 0 = it never fades
+
+// The split, and the colour underneath it.
+server float gitd_shape_seam = 0.0;      // how far open it starts
+server float gitd_shape_seam_rate = 0.35;// how fast it opens, per second
+server float gitd_shape_grow = 0.0;      // size added per second
+server color gitd_shape_under = "ff 26 10";
+
+// Shared by all sixteen.
+server float gitd_shape_soft = 2.0;      // edge softness. 0 is a hard cut,
+                                         // which is what reads as projected
+server float gitd_shape_height = 24.0;   // how far off its own plane a shape
+                                         // still draws -- this is what keeps
+                                         // it lying ON the floor
+server float gitd_shape_reach = 0.0;     // a little glow past the edge
+
+// What drops one.
+server bool  gitd_shape_on_death = true; // a mark where a monster died
+server bool  gitd_shape_on_shot = false; // and where you fired

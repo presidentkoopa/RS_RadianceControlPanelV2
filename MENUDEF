@@ -474,6 +474,19 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText ""
 
+	StaticText "Shapes on the Floor", gold
+	Option "Shapes",				"gitd_shape_enabled", "OnOff"
+	Submenu "  Shape options...",	"GITDShapes"
+	StaticText "Marks drawn where things happen -- a ring", darkgray
+	StaticText "where something died, splitting open to show", darkgray
+	StaticText "another colour underneath.", darkgray
+	StaticText ""
+	StaticText "Maths, not geometry. No model and no actor,", darkgray
+	StaticText "so it stays sharp at any distance and wraps a", darkgray
+	StaticText "step without a seam.", darkgray
+	StaticText ""
+	StaticText ""
+
 	StaticText "Glow Waves", gold
 	Option "Waves",					"gitd_wave_enabled", "OnOff"
 	StaticText "A glow fades smoothly UP a wall and was", darkgray
@@ -2052,4 +2065,104 @@ OptionMenu "GITDGlowTex"
 	StaticText "The level eases toward its target rather than", darkgray
 	StaticText "snapping, so the room settles instead of", darkgray
 	StaticText "flickering when the last monster dies.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// SHAPES ON THE FLOOR
+//
+// A signed distance field: a function that answers "how far is this point from
+// the edge of the shape". Negative inside, zero on the edge, positive outside.
+// That is the whole idea, and most of this mod already worked that way without
+// saying so -- a beam asks its distance from a segment, the tornado from an
+// axis, the fog from a plane.
+//
+// Because a shape is MATHS rather than geometry there is no model, no sprite
+// and no actor: it stays pin-sharp walked right up to, wraps a step without a
+// seam, and costs a couple of instructions behind an early reject.
+//
+// Every shape past the first two is one of the first two with an operator
+// applied. A ring is a disc through abs(). An outline is a square through the
+// same. Which is why the list is short and what you can make from it is not.
+// ---------------------------------------------------------------------------
+
+OptionValue "GITDShapeKind"
+{
+	1, "Disc"
+	2, "Ring"
+	3, "Square"
+	4, "Square outline"
+	5, "Cross"
+	6, "Hexagon"
+	7, "Triangle"
+}
+
+OptionValue "GITDShapeOrient"
+{
+	0, "Floors"
+	1, "Walls"
+	2, "Any surface"
+}
+
+OptionMenu "GITDShapes"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Shapes on the Floor"
+	StaticText ""
+	Option "Shapes",				"gitd_shape_enabled", "OnOff"
+	StaticText "Sixteen at once, oldest recycled.", darkgray
+	StaticText ""
+
+	StaticText "The shape", gold
+	Option "Kind",					"gitd_shape_kind", "GITDShapeKind"
+	Option "Drawn on",				"gitd_shape_orient", "GITDShapeOrient"
+	Slider "Size",					"gitd_shape_size", 8, 512, 8, 0
+	Slider "Line width",			"gitd_shape_thick", 0.5, 64.0, 0.5, 1
+	StaticText "Ring width, outline width, or the width of", darkgray
+	StaticText "a cross's arms. Ignored by the filled kinds.", darkgray
+	Slider "Rotation",				"gitd_shape_angle", 0, 359, 5, 0
+	StaticText "Added to a random angle per mark. Sixteen", darkgray
+	StaticText "identical squares all facing the same way", darkgray
+	StaticText "read as a stamped texture; the same sixteen", darkgray
+	StaticText "at different angles read as sixteen events.", darkgray
+	StaticText ""
+
+	StaticText "The look", gold
+	ColorPicker "Colour",			"gitd_shape_color"
+	Slider "Brightness",			"gitd_shape_intensity", 0.0, 6.0, 0.1, 1
+	Slider "Edge softness",			"gitd_shape_soft", 0.0, 24.0, 0.5, 1
+	StaticText "Near 0 is a hard cut, which is what reads as", darkgray
+	StaticText "projected rather than painted.", darkgray
+	Slider "Glow past the edge",	"gitd_shape_reach", 0.0, 64.0, 1.0, 0
+	Slider "Sticks to its plane",	"gitd_shape_height", 1, 256, 4, 0
+	StaticText "How far off its own height a shape still", darkgray
+	StaticText "draws. This is what keeps it lying ON the", darkgray
+	StaticText "floor instead of hanging in the air over it.", darkgray
+	Slider "Lasts (seconds)",		"gitd_shape_life", 0.0, 60.0, 0.5, 1
+	StaticText "0 = it never fades. Permanent marks still", darkgray
+	StaticText "share the sixteen slots, so a level's worth", darkgray
+	StaticText "of them will start recycling.", darkgray
+	StaticText ""
+
+	StaticText "The split", gold
+	Slider "Opens by",				"gitd_shape_seam_rate", 0.0, 2.0, 0.05, 2
+	Slider "  Starts open",			"gitd_shape_seam", 0.0, 1.0, 0.05, 2
+	ColorPicker "Underneath",		"gitd_shape_under"
+	StaticText "THE ONE TO SEE. The shape splits down its", darkgray
+	StaticText "middle and this colour shows through the gap.", darkgray
+	StaticText ""
+	StaticText "It is a subtraction, masked by the shape it", darkgray
+	StaticText "came out of -- so the reveal is bounded by the", darkgray
+	StaticText "thing that split rather than bleeding past it.", darkgray
+	StaticText ""
+	Slider "Grows by",				"gitd_shape_grow", -128.0, 256.0, 4.0, 0
+	StaticText "Size added per second. Negative shrinks it,", darkgray
+	StaticText "which is a mark closing rather than opening.", darkgray
+	StaticText ""
+
+	StaticText "What drops one", gold
+	Option "Where something died",	"gitd_shape_on_death", "OnOff"
+	Option "Where you fired",		"gitd_shape_on_shot", "OnOff"
+	StaticText "Fired on the trigger's rising edge, not per", darkgray
+	StaticText "shot -- a chaingun would spend all sixteen", darkgray
+	StaticText "slots in half a second.", darkgray
 }
