@@ -1989,16 +1989,63 @@ class GITD_Handler : StaticEventHandler
 
 		bool follow = GITD_LaserGrid.B("gitd_lgrid_follow_sweep", true);
 		if (follow && ambient && ambient.alive && ambient.running
-			&& ambient.bandPos.Size() > 0)
+			&& ambient.bandPos.Size() > 0 && pmo)
 		{
-			// Band 1's distance from its own origin, laid out along the
-			// direction the player is facing. For a bar sweep down a corridor
-			// that puts the grid exactly on the band.
+			// ON THE BAND'S OWN PLANE, not along the way you happen to be
+			// looking.
+			//
+			// The first version laid the grid out on the player's facing, so
+			// turning your head swung the lattice around and it only lined up
+			// with the band when you happened to be facing down the sweep's
+			// axis. That is not a grid in the band, it is a grid near it.
+			//
+			// A band is a surface of constant distance from its origin, and
+			// its SHAPE says which distance -- exactly the same five modes the
+			// shader measures with. So the grid is placed where that surface
+			// actually is, and oriented across the direction the surface is
+			// travelling, which is the one direction the lattice must not lie
+			// flat against.
 			double dist = ambient.bandPos[0];
 			Vector3 o = ambient.BandOrigin(0);
-			travel = pmo ? pmo.angle : 0;
-			centre = (o.x + cos(travel) * dist, o.y + sin(travel) * dist,
-				o.z + GITD_LaserGrid.F("gitd_lgrid_height", 128.0) * 0.5);
+			int shape = BandShape(ambient, 0);
+			double halfH = GITD_LaserGrid.F("gitd_lgrid_height", 128.0) * 0.5;
+
+			if (shape == 2)
+			{
+				// Bar east/west: a plane at x = origin.x +/- dist. Which side
+				// is decided by which side of it you are standing on, so the
+				// grid is always the one coming at you rather than the one
+				// that already went past.
+				double sx = (pmo.pos.x >= o.x) ? 1.0 : -1.0;
+				centre = (o.x + dist * sx, pmo.pos.y, pmo.pos.z + halfH);
+				travel = (sx > 0) ? 0.0 : 180.0;
+			}
+			else if (shape == 3)
+			{
+				// Bar north/south: the same, on the other axis.
+				double sy = (pmo.pos.y >= o.y) ? 1.0 : -1.0;
+				centre = (pmo.pos.x, o.y + dist * sy, pmo.pos.z + halfH);
+				travel = (sy > 0) ? 90.0 : 270.0;
+			}
+			else if (shape == 5)
+			{
+				// Rising: a horizontal sheet climbing. The lattice lies FLAT
+				// in it, so it is built on the floor plane and travel points
+				// straight along x -- the grid is the sheet, seen from below
+				// as it comes up past you.
+				centre = (pmo.pos.x, pmo.pos.y, o.z + dist);
+				travel = 0.0;
+			}
+			else
+			{
+				// Ring or shell: the band is a cylinder, so the piece of it
+				// nearest you is out along the line from the origin through
+				// you, and it faces back at you.
+				Vector2 rel = (pmo.pos.x - o.x, pmo.pos.y - o.y);
+				double a = (rel.Length() > 1.0) ? atan2(rel.y, rel.x) : (pmo ? pmo.angle : 0);
+				centre = (o.x + cos(a) * dist, o.y + sin(a) * dist, pmo.pos.z + halfH);
+				travel = a;
+			}
 		}
 		else if (pmo)
 		{

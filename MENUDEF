@@ -581,6 +581,21 @@ OptionMenu "GITDSweepFill"
 	StaticText "Mode is per band; the style below is shared.", darkgray
 	StaticText ""
 
+	StaticText "In the air", gold
+	Slider "Lattice in the air",	"gitd_ss_fill_air", 0.0, 4.0, 0.1, 1
+	StaticText "At 0 the grid is painted on whatever the band", darkgray
+	StaticText "lands on -- it wraps corners, and there is", darkgray
+	StaticText "nothing between the surfaces. Turn it up and", darkgray
+	StaticText "the same lattice hangs in the air inside the", darkgray
+	StaticText "band, so you can walk into it.", darkgray
+	StaticText ""
+	StaticText "DENSITY IS FREE. It is a pattern, not a set of", darkgray
+	StaticText "lines -- 4x4 and 400x400 cost the same. Make it", darkgray
+	StaticText "a screen door if you want one.", darkgray
+	StaticText ""
+	StaticText "Bar sweeps only. A ring falls back to painted.", darkgray
+	StaticText ""
+
 	StaticText "The lattice", gold
 	Slider "Spacing across",		"gitd_ss_fill_u", 0, 512, 4, 0
 	Slider "Spacing up",			"gitd_ss_fill_v", 0, 512, 4, 0

@@ -961,3 +961,23 @@ server float gitd_fog_surf = 0.0;        // units the top rises and falls; 0 = f
 server float gitd_fog_surf_len = 256.0;  // wavelength
 server float gitd_fog_surf_speed = 1.0;
 server float gitd_fog_surf_cross = 0.6;  // strength of the second, angled wave
+
+// THE LATTICE, IN THE AIR.
+//
+// The fill above patterns the band where it lands on a SURFACE -- a grid
+// painted on the walls, which wraps corners and has nothing between them.
+// This draws the same lattice hanging in the air inside the band, so you can
+// walk into it.
+//
+// It is a PATTERN, not a set of lines: the view ray crosses the band's plane
+// at one point and the grid is evaluated there. So 4x4 and 400x400 cost
+// exactly the same, and density is free -- which is the whole reason this
+// exists rather than more beams.
+//
+// Everything else about it comes from the fill controls above: colour,
+// spacing, width, softness, rotation, drift, flicker, jitter, major lines.
+// One set of controls, both versions, so they cannot drift apart.
+//
+// 0 = painted only, as before. Bars only -- ring and shell fall back to the
+// painted version, because a ray meets a cylinder in two places.
+server float gitd_ss_fill_air = 0.0;

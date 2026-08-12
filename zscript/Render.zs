@@ -87,6 +87,8 @@ class GITD_Render abstract
 
 		for (int i = 1; i <= 8; i++)
 			level.SetSweepBandFill(i - 1, clamp(GetI("gitd_ss_fill" .. i, 0), 0, 3));
+
+		level.SetSweepFillAir(max(GetF("gitd_ss_fill_air", 0.0), 0.0));
 	}
 
 	// ---- the fog slab ----------------------------------------------------
