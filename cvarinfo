@@ -1186,3 +1186,33 @@ server float gitd_heat_tolerance = 96.0; // Z difference that counts as another
 // hurt, which is a different map from where things died -- and the pair of
 // them together is the actual shape of a fight.
 server float gitd_heat_hurt = 0.0;
+
+// ---- What survives the colour drain ---------------------------------------
+//
+// Colour drain (ddz_desat) used to be all or nothing: a monochrome world made
+// blood exactly as grey as the wall it was sprayed on.
+//
+// This weights the drain by each colour's OWN saturation, so the vivid things
+// keep their colour and everything else goes grey -- Sin City rather than
+// Ingmar Bergman. Nothing is tagged: no actor, sprite or texture has to know
+// it is exempt, because the rule is about the colour and not about the thing.
+//
+// It reaches everything for the same reason. There is exactly one desaturate
+// function in the fragment shader and every path goes through it -- textures,
+// sprites, glow, sweep bands, brightmaps -- so a rule added there cannot
+// disagree with itself.
+//
+// 0 is off and restores the old behaviour exactly.
+//
+// Doom's palette is very saturated at the top end, so 0.75 keeps blood and
+// pickups while brown walls (around 0.55) still drain. Lower it and more
+// survives; raise it and only the purest colours do.
+server float gitd_dd_keep = 0.0;
+server float gitd_dd_keep_soft = 0.15;
+
+// 0 any hue, 1 red only, 2 green only, 3 blue only.
+//
+// Any-hue keeps every vivid thing, which is its own look. Red-only is the one
+// that means "blood, and nothing else" -- a green nukage pool at full
+// saturation drains with the walls.
+server int gitd_dd_keep_hue = 0;

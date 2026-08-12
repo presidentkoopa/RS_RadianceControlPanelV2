@@ -309,6 +309,16 @@ class GITD_PresetProfile abstract
 
 	clearscope static void NoHeat() { B("gitd_heat_enabled", false); }
 
+	// What survives a colour drain. Hue: 0 any, 1 red, 2 green, 3 blue.
+	clearscope static void KeepColor(double threshold, double soft, int hue)
+	{
+		F("gitd_dd_keep", threshold);
+		F("gitd_dd_keep_soft", soft);
+		I("gitd_dd_keep_hue", hue);
+	}
+
+	clearscope static void NoKeepColor() { F("gitd_dd_keep", 0.0); }
+
 	// A second colour through the layer's own thickness.
 	clearscope static void FogGradient(int color, double mix)
 	{
@@ -802,6 +812,23 @@ class GITD_PresetProfile abstract
 		// palette. Everything else here is composition.
 		B("gitd_dd_enabled", true);
 		I("ddz_desat", 255);
+
+		// ---- EXCEPT THE BLOOD -------------------------------------------
+		//
+		// 255 above drains every colour in the world. This puts one back, and
+		// it is the only colour in the preset.
+		//
+		// RED ONLY, and high. Any-hue would keep green nukage and blue
+		// keycards too, and a monochrome film with three colours in it is not
+		// monochrome, it is badly graded. 0.82 is above Doom's brown and
+		// grey-brown wall textures and below its blood, its gore, its
+		// pickup reds and the kill badges the Numeric Violence Engine draws --
+		// so what survives is blood and score, which is an honest summary of
+		// what this game is about.
+		//
+		// The edge is narrow at 0.08. A wide one leaves half-drained pinks
+		// lying around, and a colour that is nearly grey is worse than either.
+		KeepColor(0.82, 0.08, 1);
 
 		// Crush, and deep -- but not Pure. Blackout is Pure; this one needs a
 		// floor for the whites to have something to be brighter THAN. The
@@ -1315,6 +1342,12 @@ class GITD_PresetProfile abstract
 	// =====================================================================
 	clearscope static void OmgWtf()
 	{
+		// Nothing is drained here, so nothing needs saving from the drain --
+		// but it is said out loud, because a preset that does not mention a
+		// setting inherits it, and arriving here from Black and White with a
+		// red-only colour gate still live would be baffling.
+		NoKeepColor();
+
 		// PING-PONG on fast holds, so the palette walks its eight slots
 		// forwards and back instead of cycling -- the same thirty-two colours
 		// arriving in an order that keeps changing.

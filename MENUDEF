@@ -150,6 +150,14 @@ OptionValue "GITDPreset"
 // per-mode maths went missing; the maths is back, so the names are back.
 //
 // The four dial modes read How dark. The three fixed modes ignore it.
+OptionValue "GITDKeepHue"
+{
+	0, "Any vivid colour"
+	1, "Red only (blood)"
+	2, "Green only"
+	3, "Blue only"
+}
+
 OptionValue "GITDDarkMode"
 {
 	0,  "Disable"
@@ -1725,6 +1733,32 @@ OptionMenu "GITDFog"
 	Slider "Colour drain",			"ddz_desat", 0, 255, 15, 0
 	StaticText "Colour vision fails in low light --", darkgray
 	StaticText "draining it reads as dark, not just dim.", darkgray
+	StaticText ""
+
+	StaticText "What survives the drain", gold
+	Slider "Keep above saturation",	"gitd_dd_keep", 0.0, 1.0, 0.05, 2
+	StaticText "At 0 the drain takes everything, so blood is", darkgray
+	StaticText "exactly as grey as the wall behind it.", darkgray
+	StaticText ""
+	StaticText "Turn it up and the drain skips colours that", darkgray
+	StaticText "are already vivid. Doom's palette is very", darkgray
+	StaticText "saturated at the top end, so around 0.75 keeps", darkgray
+	StaticText "blood and pickups while brown walls still go", darkgray
+	StaticText "grey. Lower it and more survives.", darkgray
+	StaticText ""
+	StaticText "Nothing is tagged for this. The rule is about", darkgray
+	StaticText "the COLOUR, not the thing wearing it, which is", darkgray
+	StaticText "why it reaches textures, sprites, glow and", darkgray
+	StaticText "sweep bands all at once.", darkgray
+	Slider "  Edge",				"gitd_dd_keep_soft", 0.01, 0.6, 0.01, 2
+	StaticText "How abruptly colour gives out. Narrow is a", darkgray
+	StaticText "hard cut between grey and vivid; wide is a", darkgray
+	StaticText "range of half-drained colour in between.", darkgray
+	Option "  Which hues",			"gitd_dd_keep_hue", "GITDKeepHue"
+	StaticText "Any hue keeps every vivid thing, which is its", darkgray
+	StaticText "own look. RED ONLY is the one that means blood", darkgray
+	StaticText "and nothing else -- a green nukage pool at full", darkgray
+	StaticText "saturation drains away with the walls.", darkgray
 	StaticText ""
 	Option "Sector effects",		"ddz_lighting", "OnOff"
 	StaticText "Doom's own blinking and flickering lights.", darkgray

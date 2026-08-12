@@ -329,6 +329,18 @@ class GITD_Render abstract
 	// version used, and doing it once a tic instead of once a pixel is free.
 	clearscope static void PushDarkness()
 	{
+		// WHAT SURVIVES THE COLOUR DRAIN.
+		//
+		// Pushed before the early returns below, because it is not part of the
+		// darkness curve -- it modifies the sector DESATURATION, which runs in
+		// both the per-sector and per-pixel modes and is switched off by
+		// neither. Putting it under one of those returns would make blood stop
+		// being red the moment somebody changed an unrelated mode.
+		level.SetDesatKeep(
+			clamp(GetF("gitd_dd_keep", 0.0), 0.0, 1.0),
+			max(GetF("gitd_dd_keep_soft", 0.15), 0.001),
+			clamp(GetI("gitd_dd_keep_hue", 0), 0, 3));
+
 		if (!GetB("gitd_dd_enabled", true) || !GetB("gitd_dd_perpixel", false))
 		{
 			level.ClearDarkness();
