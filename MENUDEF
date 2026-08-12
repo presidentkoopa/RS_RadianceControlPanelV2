@@ -84,6 +84,20 @@ OptionValue "GITDSweepOrigin"
 	5, "The nearest monster"
 }
 
+// Mode 0 differs from the sweep's: a sweep with no anchor falls back to the
+// centre of the map, but a tornado at the centre of the map is almost never
+// where you want one, so 0 here means the two position sliders are read as
+// absolute world coordinates. Every other mode makes them an offset.
+OptionValue "GITDTornadoOrigin"
+{
+	0, "A fixed point (set below)"
+	1, "Where you started"
+	2, "Follows you"
+	3, "Your last shot"
+	4, "The last monster that died"
+	5, "The nearest monster"
+}
+
 OptionValue "GITDSweepCount"
 {
 	1, "1"
@@ -407,6 +421,19 @@ OptionMenu "GITDOptions"
 	StaticText ""
 	StaticText ""
 
+	StaticText "Tornado", gold
+	Option "Tornado",				"gitd_tornado_enabled", "OnOff"
+	StaticText "The same fog gathered around a vertical axis", darkgray
+	StaticText "instead of spread under a plane -- a funnel", darkgray
+	StaticText "you can walk into and stand inside. Its centre", darkgray
+	StaticText "is hollow, so from within you are looking out", darkgray
+	StaticText "through the far wall of it.", darkgray
+	StaticText ""
+	StaticText "This is the expensive one. Off costs nothing.", darkgray
+	Submenu "  Tornado options...",	"GITDTornado"
+	StaticText ""
+	StaticText ""
+
 	StaticText "Glow Waves", gold
 	Option "Waves",					"gitd_wave_enabled", "OnOff"
 	StaticText "A glow fades smoothly UP a wall and was", darkgray
@@ -683,6 +710,30 @@ OptionMenu "GITDFloorFog"
 	StaticText "World Z of the mist's surface. The player is", darkgray
 	StaticText "56 tall and the view sits near 41, so about", darkgray
 	StaticText "40 is knee deep on a flat floor.", darkgray
+	Slider "Bottom height",			"gitd_fog_bottom", -512, 512, 4, 0
+	StaticText "Where the layer STOPS going down. Leave it at", darkgray
+	StaticText "the far left and there is no bottom -- fog on", darkgray
+	StaticText "the floor, as before.", darkgray
+	StaticText ""
+	StaticText "Raise it above the top and you get CEILING", darkgray
+	StaticText "FOG. Put both in the middle and the layer", darkgray
+	StaticText "floats at chest height. Walk the bottom up to", darkgray
+	StaticText "meet the top and the fog drains away.", darkgray
+	StaticText ""
+	Slider "Repeat every",			"gitd_fog_period", 0, 512, 8, 0
+	StaticText "VERTICAL HOLD. Above 0 the layer repeats up", darkgray
+	StaticText "the room -- a stack of them at this spacing,", darkgray
+	StaticText "floor to ceiling. Set it near the layer's own", darkgray
+	StaticText "thickness and they close into solid fog; set", darkgray
+	StaticText "it wide and they are separate floating decks.", darkgray
+	Slider "  Roll",				"gitd_fog_roll", -256, 256, 4, 0
+	StaticText "Slides the whole stack through that spacing,", darkgray
+	StaticText "wrapping at the top -- the picture on an old", darkgray
+	StaticText "television that will not hold still. Negative", darkgray
+	StaticText "rolls the other way.", darkgray
+	StaticText ""
+	StaticText "The stack costs exactly what one layer costs.", darkgray
+	StaticText ""
 	Slider "Density",				"gitd_fog_density", 0.0, 8.0, 0.1, 1
 	StaticText "Per 1000 units travelled through it. Low is", darkgray
 	StaticText "haze, high is soup.", darkgray
@@ -730,6 +781,79 @@ OptionMenu "GITDFloorFog"
 	StaticText "slowly behind you. High values keep the", darkgray
 	StaticText "disturbance on top of you, which is a hole", darkgray
 	StaticText "you carry rather than a wake.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// THE TORNADO.
+//
+// Same volumetric, different question. The floor layer asks each pixel how
+// much of the ray from your eye to it lay BELOW A HEIGHT; this asks how much
+// of it lay NEAR A LINE. Everything downstream -- the colour, the scatter from
+// your torch, the glow it picks up off the walls -- is the fog system's, and
+// is not duplicated here.
+//
+// The reason it is on its own page rather than three more rows on the fog one:
+// eleven settings, and none of them mean anything with the layer off.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDTornado"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Tornado"
+	StaticText ""
+	Option "Tornado",				"gitd_tornado_enabled", "OnOff"
+	StaticText "Density near a vertical axis. Costs nothing", darkgray
+	StaticText "while it is off -- the shader tests that first", darkgray
+	StaticText "and skips the rest.", darkgray
+	StaticText ""
+
+	StaticText "Where it stands", gold
+	Option "Anchor",				"gitd_tornado_origin", "GITDTornadoOrigin"
+	StaticText "Anchored to you it is a thing you carry, which", darkgray
+	StaticText "is a screen effect and not a tornado. Anchored", darkgray
+	StaticText "to the nearest monster it walks the room.", darkgray
+	Slider "Position X",			"gitd_tornado_x", -4096, 4096, 32, 0
+	Slider "Position Y",			"gitd_tornado_y", -4096, 4096, 32, 0
+	StaticText "World coordinates, or an offset from the", darkgray
+	StaticText "anchor if one is set above.", darkgray
+	StaticText ""
+
+	StaticText "The funnel", gold
+	Slider "Base height",			"gitd_tornado_base", -512, 512, 8, 0
+	Slider "Top height",			"gitd_tornado_top", 0, 2048, 16, 0
+	StaticText "World Z of each end. The top wants to be well", darkgray
+	StaticText "above the ceiling -- a funnel that stops in", darkgray
+	StaticText "mid-air reads as a cone, and one that goes", darkgray
+	StaticText "through the roof reads as weather.", darkgray
+	Slider "Base radius",			"gitd_tornado_rad_base", 4, 512, 4, 0
+	Slider "Top radius",			"gitd_tornado_rad_top", 8, 2048, 16, 0
+	StaticText "Wide at the top, pinched at the bottom. The", darkgray
+	StaticText "flare between them runs on a curve, not a", darkgray
+	StaticText "straight taper, because the pinch near the", darkgray
+	StaticText "ground is most of the silhouette.", darkgray
+	Slider "Density",				"gitd_tornado_density", 0.0, 4.0, 0.05, 2
+	StaticText "How thick the wall of it is. The centre stays", darkgray
+	StaticText "hollow at any value, so standing inside always", darkgray
+	StaticText "leaves you able to see out.", darkgray
+	StaticText ""
+
+	StaticText "How it moves", gold
+	Slider "Swirl",					"gitd_tornado_swirl", 0.0, 1.0, 0.05, 2
+	StaticText "Arms of density around the axis. At 0 it is a", darkgray
+	StaticText "smooth cone of haze, which does not read as", darkgray
+	StaticText "rotating at all no matter how fast it spins.", darkgray
+	Slider "  Spin",				"gitd_tornado_spin", -12.0, 12.0, 0.25, 2
+	Slider "  Twist",				"gitd_tornado_twist", 0.0, 32.0, 0.5, 1
+	StaticText "How far the arms wind up between base and", darkgray
+	StaticText "top. Straight arms turning look like a fence", darkgray
+	StaticText "going round; wound ones look like something", darkgray
+	StaticText "being drawn upward.", darkgray
+	StaticText ""
+	Slider "Lean",					"gitd_tornado_lean", 0.0, 256.0, 4.0, 0
+	Slider "  Sway period",			"gitd_tornado_lean_period", 0.5, 24.0, 0.5, 1
+	StaticText "Pushes the axis off vertical by an amount that", darkgray
+	StaticText "grows with height, so the column sways instead", darkgray
+	StaticText "of standing there. At 0 it is a traffic cone.", darkgray
 }
 
 // ---------------------------------------------------------------------------

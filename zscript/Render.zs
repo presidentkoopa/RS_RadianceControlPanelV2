@@ -53,7 +53,58 @@ class GITD_Render abstract
 		PushWave();
 		PushDarkness();
 		PushFog();
+		PushTornado();
 		PushSweepFill();
+	}
+
+	// ---- the tornado -----------------------------------------------------
+	//
+	// The same fog, gathered around a vertical axis instead of spread under a
+	// plane. It is a separate push rather than part of PushFog because it is
+	// separately switchable: a room can have a knee-high layer and no funnel,
+	// a funnel standing in clear air, or both.
+	//
+	// IT IS THE MOST EXPENSIVE THING IN THE SHADER and it does not early out
+	// the way a floor layer does -- a layer stops mattering the moment you
+	// look up, a funnel fills the screen from any angle you can see it. Off
+	// costs nothing, because density 0 is tested before any of the maths.
+	//
+	// The centre is left hollow so you can stand inside one and see out. That
+	// is not a compromise, it is what a real one looks like from the inside.
+	clearscope static void PushTornado(bool haveAnchor = false, double ax = 0, double ay = 0)
+	{
+		if (!GetB("gitd_tornado_enabled", false))
+		{
+			level.SetTornado(0, 0, 0, 0, 0, 0, 0.0);
+			return;
+		}
+
+		// WHERE IT STANDS. A fixed world point off two sliders by default, and
+		// the handler passes an anchor in when the origin mode says the funnel
+		// should follow something -- you, the nearest monster, where you last
+		// fired. Same split, and for the same reason, as the glow wave's origin:
+		// resolving "the nearest live monster" reads the playsim, and this
+		// function has to stay callable from a menu tic.
+		//
+		// The sliders remain an OFFSET in the anchored case, so "on top of me,
+		// two hundred units north" is expressible without a third mode.
+		double px = GetF("gitd_tornado_x", 0.0);
+		double py = GetF("gitd_tornado_y", 0.0);
+		if (haveAnchor) { px += ax; py += ay; }
+
+		level.SetTornado(px, py,
+			GetF("gitd_tornado_base", 0.0),
+			GetF("gitd_tornado_top", 512.0),
+			max(GetF("gitd_tornado_rad_base", 48.0), 1.0),
+			max(GetF("gitd_tornado_rad_top", 320.0), 1.0),
+			max(GetF("gitd_tornado_density", 1.0), 0.0));
+
+		level.SetTornadoMotion(
+			clamp(GetF("gitd_tornado_swirl", 0.5), 0.0, 1.0),
+			GetF("gitd_tornado_spin", 2.0),
+			GetF("gitd_tornado_twist", 8.0),
+			max(GetF("gitd_tornado_lean", 0.0), 0.0),
+			max(GetF("gitd_tornado_lean_period", 6.0), 0.1));
 	}
 
 	// ---- what is drawn inside a sweep band -------------------------------
@@ -118,6 +169,15 @@ class GITD_Render abstract
 			clamp(GetF("gitd_fog_scatter", 0.7), 0.0, 4.0),
 			col);
 
+		// The bottom edge, and the vertical hold that repeats the layer up the
+		// room. A period at or below 1 means "one layer", which is the old
+		// behaviour and the reason the slider's floor is 0 rather than 32 --
+		// off has to be reachable by dragging left, not by knowing a magic
+		// number.
+		level.SetFogBottom(
+			GetF("gitd_fog_bottom", -32768.0),
+			max(GetF("gitd_fog_period", 0.0), 0.0),
+			GetF("gitd_fog_roll", 0.0));
 		level.SetFogPickup(clamp(GetF("gitd_fog_pickup", 0.55), 0.0, 1.0));
 
 		level.SetFogSurface(

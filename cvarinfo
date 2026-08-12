@@ -981,3 +981,87 @@ server float gitd_fog_surf_cross = 0.6;  // strength of the second, angled wave
 // 0 = painted only, as before. Bars only -- ring and shell fall back to the
 // painted version, because a ray meets a cylinder in two places.
 server float gitd_ss_fill_air = 0.0;
+
+// THE LAYER'S BOTTOM.
+//
+// Without one the fog is a half-space -- everything below a height -- which
+// can only ever be mist lying on the floor. With one it is a LAYER, and that
+// single number is four different effects:
+//
+//   floor fog     bottom far below, top at the knee (the default)
+//   CEILING FOG   bottom near the ceiling, top above it
+//   a floating band at chest height
+//   drain and fill, by animating one edge toward the other
+//
+// -32768 is "no bottom", and leaves everything exactly as it was.
+server float gitd_fog_bottom = -32768.0;
+
+// VERTICAL HOLD.
+//
+// The layer repeats up the room every PERIOD units, and ROLL slides the whole
+// stack through that spacing -- the old television fault, where the picture
+// will not hold still and keeps rolling past the top.
+//
+// It costs nothing beyond the single layer, because a repeat is arithmetic
+// rather than a loop: one mod() and the same two smoothsteps. Twenty layers
+// or one is the same instruction count.
+//
+// 0 is off and means "one layer", which is why the slider's floor is 0 rather
+// than some minimum spacing -- off has to be reachable by dragging left.
+server float gitd_fog_period = 0.0;
+server float gitd_fog_roll = 0.0;   // units per second; negative rolls down
+
+// ---------------------------------------------------------------------------
+// THE TORNADO
+//
+// The same fog gathered around a vertical axis instead of spread under a
+// plane. Density near a line rather than density below a height, and every
+// other question the shader asks is unchanged -- which is why this is a shape
+// on the existing volumetric rather than a second system.
+//
+// YOU CAN STAND INSIDE IT. The centre is left hollow, so from within you are
+// looking out through the far wall of the funnel and the room beyond it is
+// still there, dimmed and moving. That is not a concession to performance,
+// it is what one looks like from the inside.
+//
+// IT IS THE EXPENSIVE ONE. A floor layer stops costing anything the moment
+// you look up; a funnel is on screen from every angle that can see it, and it
+// is evaluated per fragment. Density 0 is tested first and switches the whole
+// block off, so leaving it off is genuinely free.
+// ---------------------------------------------------------------------------
+server bool  gitd_tornado_enabled = false;
+
+// 0 fixed world point (the sliders below are absolute)
+// 1 where you spawned   2 you   3 last shot   4 last kill   5 nearest monster
+//
+// Anything but 0 makes the position sliders an OFFSET from that anchor, so
+// "beside me, not on me" needs no extra mode.
+server int   gitd_tornado_origin = 0;
+server float gitd_tornado_x = 0.0;
+server float gitd_tornado_y = 0.0;
+
+// The extent. Base and top are world heights; the radii are what it measures
+// at each. Wide at the top and pinched at the bottom is the shape everyone
+// pictures, and the flare between them runs on a curve rather than a straight
+// taper because the pinch near the ground is most of the silhouette.
+server float gitd_tornado_base = 0.0;
+server float gitd_tornado_top = 512.0;
+server float gitd_tornado_rad_base = 48.0;
+server float gitd_tornado_rad_top = 320.0;
+server float gitd_tornado_density = 1.0;
+
+// SWIRL is what reads as rotation: three arms of density around the axis,
+// twisting as they climb and turning as time passes. With it at 0 the funnel
+// is a smooth cone of haze and looks like weather on a screensaver.
+//
+// TWIST is how much those arms wind up between the base and the top, and it
+// is what makes the rotation legible -- straight arms turning look like a
+// spinning fence, wound ones look like something being drawn upward.
+//
+// LEAN pushes the axis off vertical by an amount that grows with height, on
+// its own slow period, so the whole column sways. Zero is a traffic cone.
+server float gitd_tornado_swirl = 0.5;
+server float gitd_tornado_spin = 2.0;
+server float gitd_tornado_twist = 8.0;
+server float gitd_tornado_lean = 0.0;
+server float gitd_tornado_lean_period = 6.0;

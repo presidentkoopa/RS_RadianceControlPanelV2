@@ -1789,6 +1789,7 @@ class GITD_Handler : StaticEventHandler
 		GITD_Render.PushAll();
 		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
 		PushFogWake();
+		PushTornadoAnchor();
 		PushLaserGrid();
 
 		int preset = CVar.FindCVar("gitd_preset").GetInt();
@@ -1941,6 +1942,27 @@ class GITD_Handler : StaticEventHandler
 	//
 	// Lives here and not in GITD_Render because it reads the player, and the
 	// menu tic that drives everything else cannot.
+	// A funnel that stands somewhere other than a fixed point on the map.
+	//
+	// Mode 0 is the fixed case and is already correct after PushAll, so it is
+	// not re-pushed -- which also means the position sliders keep working from
+	// the menu with the game stopped, since nothing here runs to overwrite them.
+	//
+	// Anchored to you it becomes a thing you carry rather than a thing you walk
+	// into, which is worth having as a screen effect but is NOT what a tornado
+	// is. Anchored to the nearest live monster it walks the room on its own,
+	// which is.
+	void PushTornadoAnchor()
+	{
+		if (!GITD_Render.GetB("gitd_tornado_enabled", false)) return;
+
+		int mode = GITD_Render.GetI("gitd_tornado_origin", 0);
+		if (mode <= 0) return;
+
+		Vector3 o = OriginFor(mode);
+		GITD_Render.PushTornado(true, o.x, o.y);
+	}
+
 	void PushFogWake()
 	{
 		if (!GITD_Render.GetB("gitd_fog_enabled", false)) return;
