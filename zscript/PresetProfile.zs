@@ -226,6 +226,29 @@ class GITD_PresetProfile abstract
 		EF("gl_bloom_tint_b", b);
 	}
 
+	// EXPOSURE, WHICH NO PRESET HAS EVER TOUCHED AND SHOULD HAVE.
+	//
+	// For a mod this dark it is a bigger lever than bloom, because it is the
+	// only one that models an EYE rather than a lens. Walking from a lit
+	// corridor into a black room is not a change in what is there; it is your
+	// pupil opening over a couple of seconds. Bloom cannot say that. This can.
+	//
+	// SPEED IS THE WHOLE CHARACTER. Fast adaptation is a camera and feels
+	// like cheating -- the dark stops being dark almost immediately. Slow
+	// adaptation is an eye, and it means a room that is genuinely blind for a
+	// moment after you leave the light, which is the single most atmospheric
+	// thing available here.
+	//
+	// MIN is the floor the auto-exposure will not lift past. Set it too high
+	// and the whole mod's darkness is quietly undone by the exposure pass.
+	clearscope static void Exposure(double base, double minimum, double scale, double speed)
+	{
+		EF("gl_exposure_base", base);
+		EF("gl_exposure_min", minimum);
+		EF("gl_exposure_scale", scale);
+		EF("gl_exposure_speed", speed);
+	}
+
 	// ---- apply and recall, derived from state ---------------------------
 	//
 	// This used to fire on "the number is different from last tic", which
@@ -411,8 +434,18 @@ class GITD_PresetProfile abstract
 		B("gitd_dd_enabled", true);
 		I("ddz_mode", 2);      // Compress -- proportional, keeps some shape
 		I("ddz_preset", 4);    // Oppressive
-		I("ddz_desat", 70);    // colour vision failing with the lamps
-		DeepDark(0.75, 1280.0, 0.35, 48.0, 320.0);
+		I("ddz_desat", 78);    // colour vision failing with the lamps
+		//
+		// DISTANCE HARDER, RANGE SHORTER. 0.86 over 1000 units means the
+		// corridor does not recede, it ENDS -- not at a wall, at the point
+		// where the light gave up. Twenty metres of visibility in a facility
+		// you are supposed to be lost in.
+		//
+		// And the height term deeper, so what little is left has fallen to
+		// the floor. Light pools downward when there is not enough of it to
+		// reach anywhere; that is not a stylisation, it is what a dying
+		// fixture actually does.
+		DeepDark(0.86, 1000.0, 0.50, 56.0, 260.0);
 
 		// ---- the air -----------------------------------------------------
 		//
@@ -421,8 +454,9 @@ class GITD_PresetProfile abstract
 		// stripe on a wall; with it, it is a body of dark moving down a
 		// corridor. It is also the only reason the torch has a beam rather
 		// than a bright patch at the end of it.
-		I("ddz_fog", 128);
+		I("ddz_fog", 168);
 		F("ddz_skymode", 1.0);
+		I("ddz_minlight", 0);   // no floor. Where it goes dark it goes dark.
 
 		// ---- the torch ---------------------------------------------------
 		//
@@ -435,15 +469,15 @@ class GITD_PresetProfile abstract
 		// has maintained this place since the incident and the fog should
 		// have something in it.
 		B("fl_enabled", true);
-		I("fl_range", 1400);
-		F("fl_intensity", 1.15);
-		F("fl_inner", 7.0);
-		F("fl_outer", 21.0);
-		F("fl_falloff", 1.7);
-		F("fl_density", 1.6);
-		F("fl_dust", 0.55);
-		F("fl_dust_scale", 0.05);
-		F("fl_dust_drift", 0.12);
+		I("fl_range", 1500);
+		F("fl_intensity", 1.20);
+		F("fl_inner", 6.0);      // tighter core: one thing at a time
+		F("fl_outer", 19.0);
+		F("fl_falloff", 1.9);    // concentrated near the lens, dies with range
+		F("fl_density", 2.0);    // the cone is a solid object in this air
+		F("fl_dust", 0.80);      // heavy. Nobody has swept this place since.
+		F("fl_dust_scale", 0.06);
+		F("fl_dust_drift", 0.07); // slow settle -- motes hanging, barely falling
 		B("fl_bounce", true);
 		I("fl_slots", 1);
 		I("fl_pattern", 0);
@@ -516,10 +550,22 @@ class GITD_PresetProfile abstract
 	// this is a glow around a weak source, not a haze over the screen.
 	clearscope static void LowPowerBloom()
 	{
-		Bloom(1.10, 0.28, 0.55, 1.0, 0.86, 0.62);
-		EF("gl_bloom_anamorphic", 0.35);   // a slight horizontal streak, like
-		EF("gl_bloom_anamorphic_ratio", 2.5);  // a tube fixture seen sideways
+		Bloom(1.35, 0.22, 0.60, 1.0, 0.84, 0.58);
+		EF("gl_bloom_anamorphic", 0.45);   // a horizontal streak, like a tube
+		EF("gl_bloom_anamorphic_ratio", 3.0);  // fixture seen from the side
 		EF("gl_bloom_chromatic", 0.0);
+
+		// THE SLOWEST EYE IN THE SET, and it is what makes this preset.
+		//
+		// Speed 0.6 is roughly three seconds to adapt. Step out of the one lit
+		// doorway on the level and you are BLIND for three seconds -- not
+		// dimmed, blind -- and then the room slowly arrives. Nothing else here
+		// produces that, because nothing else models an eye.
+		//
+		// Min low, so the adaptation is never allowed to undo the darkness it
+		// is adapting to. Base under 1 so even a fully adapted eye reads this
+		// place as underlit, which it is: the grid is failing, not fixed.
+		Exposure(0.85, 0.28, 1.0, 0.6);
 	}
 
 	// =====================================================================
@@ -806,26 +852,29 @@ class GITD_PresetProfile abstract
 		//
 		// No height pooling at all. Dark gathering on the floor is a stillness
 		// effect and this room is not still.
-		DeepDark(0.30, 2600.0, 0.0, 0.0, 256.0);
+		DeepDark(0.45, 2100.0, 0.18, 40.0, 300.0);
 
 		// FOG IS THE VOLUMETRIC LEVER. With air in the room, a band is
 		// visible BETWEEN you and the wall rather than only on it, so the
 		// klaxon is a body of red moving down the corridor instead of a
 		// colour arriving on a surface. Lighter than Low Power's: this is a
 		// lit room having an emergency, not a dead one.
-		I("ddz_fog", 72);
+		I("ddz_fog", 112);
 
-		// The torch, wide-ish and clean. Red Alert is not a preset about not
-		// being able to see -- the light is already on and it is already
-		// telling you something. A little dust so the cone reads against the
-		// fog, and no more.
+		// The torch, wide and clean. Red Alert is not a preset about being
+		// unable to see -- the light is already on and already telling you
+		// something. Dust raised enough that the klaxon's own bands have
+		// something to hang in, which is what turns the beacon from a stripe
+		// on a wall into a body of red crossing the room.
 		B("fl_enabled", true);
-		I("fl_range", 1100);
-		F("fl_intensity", 1.05);
-		F("fl_inner", 11.0);
-		F("fl_outer", 27.0);
-		F("fl_density", 1.1);
-		F("fl_dust", 0.20);
+		I("fl_range", 1200);
+		F("fl_intensity", 1.10);
+		F("fl_inner", 10.0);
+		F("fl_outer", 26.0);
+		F("fl_density", 1.5);
+		F("fl_dust", 0.38);
+		F("fl_dust_scale", 0.05);
+		F("fl_dust_drift", 0.20);   // stirred air, not settled dust
 		B("fl_bounce", true);
 
 		// ---- the weather ------------------------------------------------
@@ -947,9 +996,21 @@ class GITD_PresetProfile abstract
 	// wrong is saying the same thing the alarm is.
 	clearscope static void RedAlertBloom()
 	{
-		Bloom(1.85, 0.30, 0.40, 1.0, 0.42, 0.34);
+		Bloom(2.10, 0.24, 0.35, 1.0, 0.38, 0.30);
 		EF("gl_bloom_anamorphic", 0.0);
-		EF("gl_bloom_chromatic", 0.35);
+		EF("gl_bloom_chromatic", 0.45);
+
+		// A FAST EYE, and fast for a reason. Low Power's slow adaptation is
+		// about being lost in the dark; this one is the opposite situation --
+		// the room is lit and screaming at you, and an eye that took three
+		// seconds to catch up would blunt every beat of the klaxon.
+		//
+		// Speed 3.0 is roughly half a second, so the eye chases the alarm
+		// instead of averaging it. The floor rides HIGH: each time the beacon
+		// drops below baseline the exposure lifts after it, and the room
+		// swells back at you rather than simply going dark. That pumping is
+		// the alarm breathing, and it only exists because exposure is live.
+		Exposure(1.15, 0.55, 1.0, 3.0);
 	}
 
 	// =====================================================================
@@ -1004,11 +1065,32 @@ class GITD_PresetProfile abstract
 		// in antiphase -- the floor crests exactly as the ceiling troughs.
 		// This is the setting the wave was NOT designed for and it should be
 		// available anyway.
-		Wave(180.0, 5.5, 3.0, 4,   // shape 4: a shell, so it has volume too
-		     0.60, 0.85, 0.80,
+		Wave(90.0, 9.0, 5.0, 4,    // shape 4: a shell, so it has volume too
+		     0.90, 1.0, 1.0,       // every term at the ceiling at once
 		     1.0,                  // maximum detune
 		     1.0,                  // maximum scatter
 		     180);
+
+		// AND THE OLD PER-SECTOR ANIMATION ON TOP OF THE PER-PIXEL ONE.
+		//
+		// Everywhere else in this file those two are treated as alternatives,
+		// because running a per-room pulse underneath a per-pixel wave is
+		// double-counting the same idea at two granularities and it muddies
+		// both. Here it is the point: rooms breathing on one clock while the
+		// surfaces inside them ripple on another, agreeing about nothing.
+		LanesI("_anim", 1);
+		Lanes("_anim_speed", 2.2);
+		Lanes("_anim_depth", 0.9);
+		Lanes("_anim_sharp", 4.0);
+		Lanes("_anim_phase", 0.37);
+
+		// Randomised colours ON TOP of the written table, so even the thirty
+		// two literal colours stop being a fixed set. Nothing else in this
+		// file would dare.
+		B("gitd_rnd_colors", true);
+		I("gitd_rnd_governor", 3);   // neon only: full sat, high value, any hue
+		B("gitd_rnd_times", true);   // and the holds re-roll every arrival
+		B("gitd_rnd_patterns", true);// and each lane picks its own transition
 
 		// Darkness on, deep, with both spatial terms -- so the chaos still
 		// falls off with distance and pools on the floor. Without it this is
@@ -1018,18 +1100,25 @@ class GITD_PresetProfile abstract
 		I("ddz_mode", 4);      // Crush
 		I("ddz_preset", 5);
 		I("ddz_desat", 0);     // every colour survives. That is the point.
-		DeepDark(0.55, 2200.0, 0.30, 32.0, 400.0);
+		DeepDark(0.72, 1700.0, 0.55, 24.0, 300.0);
 
-		I("ddz_fog", 110);
+		I("ddz_fog", 190);
 
 		B("fl_enabled", true);
-		I("fl_range", 1600);
-		F("fl_intensity", 1.5);
-		F("fl_density", 2.0);
+		I("fl_range", 1800);
+		F("fl_intensity", 2.0);
+		F("fl_density", 3.0);
 		F("fl_dust", 1.0);
-		F("fl_dust_scale", 0.09);
-		F("fl_dust_drift", 0.5);
+		F("fl_dust_scale", 0.12);
+		F("fl_dust_drift", 1.0);
 		B("fl_bounce", true);
+		// The torch cycles colour too, because why would it not.
+		I("fl_slots", 8);
+		I("fl_pattern", 4);          // ping-pong through all eight
+		F("fl_speed", 0.030);
+		I("fl_c1", 0xFF00E6); I("fl_c2", 0x00FF66); I("fl_c3", 0xFFD400);
+		I("fl_c4", 0x6600FF); I("fl_c5", 0x00E5FF); I("fl_c6", 0xFF3300);
+		I("fl_c7", 0x99FF00); I("fl_c8", 0xFF0066);
 
 		// EIGHT BANDS, AND ONE OF EACH KIND OF THING A BAND CAN DO. Add,
 		// lift, crush and recolour all running in the same train, with the
@@ -1048,16 +1137,20 @@ class GITD_PresetProfile abstract
 		I("gitd_ss_thickness", 110);
 		I("gitd_ss_trail", 320);
 		B("gitd_ss_underlay", true);
-		F("gitd_ss_drift", 0.55);     // they overtake each other
-		F("gitd_ss_health_speed", 1.6);// and hurry as you weaken
-		F("gitd_ss_spin", 140.0);
-		F("gitd_ss_spin_radius", 420.0);
+		F("gitd_ss_drift", 0.95);     // they overtake constantly
+		F("gitd_ss_health_speed", 3.0);// and the whole train panics as you weaken
+		F("gitd_ss_spin", 260.0);
+		F("gitd_ss_spin_radius", 700.0);
 		I("gitd_ss_spin_colors", 8);
-		B("gitd_ss_drop", false);
-		B("gitd_ss_actors", false);   // still off: it walks the thinker list
+		B("gitd_ss_drop", true);      // and it leaves bands behind in place
+		F("gitd_ss_drop_every", 3.0);
+		I("gitd_ss_drop_max", 32);
+		B("gitd_ss_actors", true);    // ON. It walks the thinker list, and the
+		                              // whole point of this preset is to find
+		                              // out what falls over.
 		B("gitd_ss_light", false);    // all per pixel, via draw modes below
 
-		for (int i = 1; i <= 7; i++) I("gitd_ss_gap" .. i, 14);
+		for (int i = 1; i <= 7; i++) I("gitd_ss_gap" .. i, 7);
 
 		static const int omgDraw[] = { 1, 4, 2, 1, 3, 4, 1, 2 };
 		static const int omgShape[] = { 1, 4, 2, 5, 1, 3, 4, 1 };
@@ -1065,16 +1158,25 @@ class GITD_PresetProfile abstract
 			0xFF00E6, 0x00FF66, 0xFFD400, 0x6600FF,
 			0x00E5FF, 0xFF3300, 0x99FF00, 0xFF0066 };
 
+		// AND EVERY BAND ALSO CARRIES A PER-SECTOR EFFECT ON TOP OF ITS DRAW
+		// MODE. Two systems saying different things about the same band at
+		// two different granularities -- a per-pixel crush riding a
+		// per-sector brighten, monsters woken and marked and slowed by the
+		// bands that pass them. Nowhere else would this be defensible.
+		static const int omgFx[] = { 1, 2, 4, 5, 1, 6, 2, 7 };
+
 		for (int i = 1; i <= 8; i++)
 		{
-			F("gitd_ss_speed" .. i, 260.0 + i * 55.0);
+			F("gitd_ss_speed" .. i, 380.0 + i * 90.0);
 			I("gitd_ss_shape" .. i, omgShape[i - 1]);
-			I("gitd_ss_thick" .. i, 80 + i * 30);
+			I("gitd_ss_thick" .. i, 60 + i * 45);
 			I("gitd_ss_draw" .. i, omgDraw[i - 1]);
 			I("gitd_ss_c" .. i, omgCol[i - 1]);
-			I("gitd_ss_fx" .. i, 0);
+			I("gitd_ss_fx" .. i, omgFx[i - 1]);
+			I("gitd_ss_amount" .. i, 96);
 		}
 		B("gitd_ss_perband", true);
+		B("gitd_ss_light", true);     // yes, both paths at once. On purpose.
 	}
 
 	// Bloom with no restraint left: threshold on the floor so everything
@@ -1083,10 +1185,16 @@ class GITD_PresetProfile abstract
 	// ever do, and which is exactly why they are here.
 	clearscope static void OmgWtfBloom()
 	{
-		Bloom(2.40, 0.15, 0.80, 1.0, 1.0, 1.0);
-		EF("gl_bloom_anamorphic", 0.85);
-		EF("gl_bloom_anamorphic_ratio", 4.0);
-		EF("gl_bloom_chromatic", 0.9);
+		Bloom(3.20, 0.05, 1.0, 1.0, 1.0, 1.0);
+		EF("gl_bloom_anamorphic", 1.0);
+		EF("gl_bloom_anamorphic_ratio", 6.0);
+		EF("gl_bloom_chromatic", 1.0);
+
+		// An eye that never settles. Speed 8 is faster than the wave it is
+		// chasing, so the exposure hunts the flicker instead of averaging it
+		// and the whole image pumps. Every other preset picks a speed to
+		// avoid exactly this.
+		Exposure(1.6, 0.9, 1.6, 8.0);
 	}
 
 	// Blackout's bloom is no bloom. There is nothing to bleed and a threshold
