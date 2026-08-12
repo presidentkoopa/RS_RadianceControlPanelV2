@@ -1432,17 +1432,14 @@ class GITD_PresetProfile abstract
 		// corridor through chest-deep multicoloured fog while eight bands do
 		// four different things to the light. Nowhere else would this be
 		// defensible. That is the preset.
-		Fog(72, 2.6, 30, 0xFF00E6,
-		    2.5,      // scatter cranked: the torch carves through it
-		    1.0,      // maximum pickup: the mist is whatever is behind it
-		    0.9, 200, 0.5);
-
-		Grid(4, 4, 200.0, 176.0,
-		     1.0,      // thin, so they read as lasers rather than bars
-		     3.0, 2.6,
-		     0x00FF66, // acid green against the magenta fog, on purpose
-		     14.0,     // energy tearing along them
-		     true);    // and the whole lattice rides the sweep at you
+		//
+		// The fog and the lattice are both set in the air block at the end of
+		// this function, not here. They used to be set twice -- once here in
+		// the original preset and once again down there when reactive fog
+		// arrived -- and the second write silently won. Two calls where the
+		// loser is invisible is the same fault as a cvar that reads On while
+		// nothing happens, so the dead one is gone rather than left to be
+		// found by someone tuning the wrong number.
 
 		B("fl_enabled", true);
 		I("fl_range", 1800);
