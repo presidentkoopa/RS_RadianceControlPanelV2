@@ -39,9 +39,11 @@ alias gitd_hallway_off "gitd_ss_enabled 0; gitd_ss_fill_air 0; gitd_fog_enabled 
 // ---------------------------------------------------------------------------
 // THE TORNADO, in one line.
 //
-// Anchored to you, so it is on you the moment you type it and you are standing
-// inside it -- the centre is hollow, so you see the far wall of it around you
-// rather than a wall of grey.
+// Placed IN FRONT OF YOU rather than on you. "Follows you" is the wrong
+// anchor for something this size: you end up standing inside it and never see
+// the shape you asked for, because a funnel on your own head is a grey screen.
+// gitd_origin_ahead is how far, and origin 2 still puts it on you if being
+// inside one is what you want.
 //
 // Base and top are ABSOLUTE world Z, and the anchor only moves it in X and Y.
 // So they are set wide on purpose: a map whose floor sits at 300 would bury
@@ -52,7 +54,7 @@ alias gitd_hallway_off "gitd_ss_enabled 0; gitd_ss_fill_air 0; gitd_fog_enabled 
 // of haze that does not appear to turn at any spin value, because there is
 // nothing on it to watch go past.
 // ---------------------------------------------------------------------------
-alias gitd_tornado "gitd_enabled 1; gitd_tornado_enabled 1; gitd_tornado_origin 2; gitd_tornado_x 0; gitd_tornado_y 0; gitd_tornado_base -256; gitd_tornado_top 900; gitd_tornado_rad_base 40; gitd_tornado_rad_top 300; gitd_tornado_density 1.8; gitd_tornado_swirl 0.85; gitd_tornado_spin 4; gitd_tornado_twist 9; gitd_tornado_lean 60; gitd_tornado_lean_period 7; gitd_tornado_color \"8c 99 b3\"; gitd_tornado_scatter 1.4; echo \"GITD: tornado on you. gitd_tornado_origin 5 makes it hunt the nearest monster; 4 parks it on the last kill.\""
+alias gitd_tornado "gitd_enabled 1; gitd_tornado_enabled 1; gitd_tornado_origin 6; gitd_origin_ahead 420; gitd_tornado_x 0; gitd_tornado_y 0; gitd_tornado_base -256; gitd_tornado_top 900; gitd_tornado_rad_base 40; gitd_tornado_rad_top 300; gitd_tornado_density 1.8; gitd_tornado_swirl 0.85; gitd_tornado_spin 4; gitd_tornado_twist 9; gitd_tornado_lean 60; gitd_tornado_lean_period 7; gitd_tornado_color \"8c 99 b3\"; gitd_tornado_scatter 1.4; echo \"GITD: tornado ahead of you. origin 5 hunts the nearest monster, 4 parks it on the last kill, 2 puts it on you.\""
 
 // It hunts. Anchored to the nearest live monster, so it walks the room on its
 // own and is always standing where the fight is.

@@ -1396,3 +1396,8 @@ server float gitd_fog_follow_bottom = 0.0;
 server int   gitd_fog_color_mode = 0;
 server int   gitd_fog_color_lane = 3;    // 0 wb, 1 wt, 2 ceiling, 3 floor
 server float gitd_fog_color_blend = 1.0; // how far toward it, 0..1
+
+// How far "in front of you" is, for origin mode 6. Shared by the sweep, the
+// glow wave and the tornado -- the same reason OriginFor is shared: three
+// copies of "ahead" would drift into three different distances.
+server float gitd_origin_ahead = 320.0;

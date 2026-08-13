@@ -82,6 +82,7 @@ OptionValue "GITDSweepOrigin"
 	3, "Your last shot"
 	4, "The last monster that died"
 	5, "The nearest monster"
+	6, "In front of you"
 }
 
 // Mode 0 differs from the sweep's: a sweep with no anchor falls back to the
@@ -96,6 +97,7 @@ OptionValue "GITDTornadoOrigin"
 	3, "Your last shot"
 	4, "The last monster that died"
 	5, "The nearest monster"
+	6, "In front of you"
 }
 
 OptionValue "GITDSweepCount"

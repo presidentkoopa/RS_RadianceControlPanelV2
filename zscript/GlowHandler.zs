@@ -1240,6 +1240,22 @@ class GITD_Handler : StaticEventHandler
 			if (best) return best.pos;
 			if (pmo) return pmo.pos;
 		}
+		if (mode == 6 && pmo)
+		{
+			// IN FRONT OF YOU. "Follows you" is the wrong anchor for anything
+			// large, because you end up standing inside it and never see the
+			// shape you asked for -- a tornado on your own head is a grey
+			// screen. This puts it at arm's length in the direction you are
+			// facing, so it is a thing in the room rather than a thing you
+			// are wearing.
+			//
+			// Recomputed every tic, so it swings as you turn. That is correct
+			// for placing something and looking at it, and wrong for anything
+			// you then want to walk around -- for that, place it with mode 6,
+			// read the position, and switch to a fixed point.
+			double d = GITD_Render.GetF("gitd_origin_ahead", 320.0);
+			return pmo.pos + (cos(pmo.angle) * d, sin(pmo.angle) * d, 0);
+		}
 		return (mapCentre.x, mapCentre.y, 0);
 	}
 
