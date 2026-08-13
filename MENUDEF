@@ -2096,6 +2096,13 @@ OptionValue "GITDShapeKind"
 	7, "Triangle"
 }
 
+OptionValue "GITDShapeRepeat"
+{
+	0, "A single shape"
+	1, "Radial -- a ring of them, spinning"
+	2, "Grid -- tiled, drifting"
+}
+
 OptionValue "GITDShapeOrient"
 {
 	0, "Floors"
@@ -2157,6 +2164,24 @@ OptionMenu "GITDShapes"
 	Slider "Grows by",				"gitd_shape_grow", -128.0, 256.0, 4.0, 0
 	StaticText "Size added per second. Negative shrinks it,", darkgray
 	StaticText "which is a mark closing rather than opening.", darkgray
+	StaticText ""
+
+	StaticText "One slot, many copies", gold
+	Option "Formation",				"gitd_shape_repeat", "GITDShapeRepeat"
+	Slider "  How many / how far",	"gitd_shape_rep_count", 1, 512, 1, 0
+	Slider "  Orbit / spacing",		"gitd_shape_rep_space", 4, 512, 4, 0
+	Slider "  Spin / drift",		"gitd_shape_rep_spin", -180, 180, 5, 0
+	StaticText "A formation folds the COORDINATE rather than", darkgray
+	StaticText "drawing the shape again, so eight copies and", darkgray
+	StaticText "eight hundred cost exactly the same.", darkgray
+	StaticText "", darkgray
+	StaticText "Still dynamic -- the anchor is the mark's own", darkgray
+	StaticText "position, so a ring of runes follows whatever", darkgray
+	StaticText "it was dropped on.", darkgray
+	StaticText "", darkgray
+	StaticText "What it CANNOT do is give each copy its own", darkgray
+	StaticText "age or colour. That is what the slots are for,", darkgray
+	StaticText "and why both exist.", darkgray
 	StaticText ""
 
 	StaticText "What drops one", gold

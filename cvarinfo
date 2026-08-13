@@ -1329,3 +1329,26 @@ server float gitd_shape_reach = 0.0;     // a little glow past the edge
 // What drops one.
 server bool  gitd_shape_on_death = true; // a mark where a monster died
 server bool  gitd_shape_on_shot = false; // and where you fired
+
+// ---- Repeat: one slot, many copies -----------------------------------------
+//
+// Slots and patterns answer different questions and you want both.
+//
+// A SLOT is one distinct event: this monster, here, at this angle, fading on
+// its own clock. Combat is made of those, and no pattern can express them
+// because every copy in a pattern is necessarily identical.
+//
+// A PATTERN is many of the same thing at once, and it folds the coordinate
+// rather than drawing N shapes -- so eight copies and eight hundred cost the
+// same. It is still dynamic: the anchor is the slot's own position, so a
+// formation follows an actor exactly as a single shape does.
+//
+//   0  a single shape
+//   1  RADIAL -- count copies around a circle, spinning. Ritual circles,
+//      summoning marks, a rune ring orbiting whatever it is anchored to.
+//   2  GRID -- tiled out to an extent, drifting. Floor panels, scanlines,
+//      a field of cracks.
+server int   gitd_shape_repeat = 0;
+server float gitd_shape_rep_count = 6.0;   // radial: how many. grid: extent
+server float gitd_shape_rep_space = 96.0;  // radial: orbit radius. grid: spacing
+server float gitd_shape_rep_spin = 20.0;   // deg/sec, or grid drift units/sec

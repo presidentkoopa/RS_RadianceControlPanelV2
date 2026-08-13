@@ -1842,10 +1842,19 @@ class GITD_Handler : StaticEventHandler
 		// The split is set separately because it is the ANIMATED half, and a
 		// caller usually wants a mark and only sometimes wants it to open.
 		if (slot >= 0)
+		{
 			level.SetShapeMotion(slot,
 				clamp(GITD_Render.GetF("gitd_shape_seam", 0.0), 0.0, 1.0),
 				GITD_Render.GetF("gitd_shape_seam_rate", 0.35),
 				GITD_Render.GetF("gitd_shape_grow", 0.0));
+
+			// And whether this one mark is actually a formation.
+			level.SetShapeRepeat(slot,
+				clamp(GITD_Render.GetI("gitd_shape_repeat", 0), 0, 2),
+				max(GITD_Render.GetF("gitd_shape_rep_count", 6.0), 1.0),
+				max(GITD_Render.GetF("gitd_shape_rep_space", 96.0), 1.0),
+				GITD_Render.GetF("gitd_shape_rep_spin", 20.0));
+		}
 	}
 
 	// ---- WHAT MAKES THE MIST REACT ---------------------------------------
