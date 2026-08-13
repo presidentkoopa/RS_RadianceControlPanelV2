@@ -650,8 +650,12 @@ class GITD_Handler : StaticEventHandler
 	// What the world last did, remembered so an origin can point at it.
 	Vector3 lastShotPos, lastKillPos;
 	bool lastFogShotDown;   // rising edge for the muzzle ripple
-	int lastTintSlot = -1;  // which lane slot the random fog tint was rolled on
-	Color tintRandom;       // and the colour it rolled
+	// Which lane slot the random fog tint was last rolled on, and the colour it
+	// rolled. Initialised in WorldLoaded, not here -- ZScript rejects an
+	// initialiser on a class field and the error it gives points at the '='
+	// rather than saying so.
+	int lastTintSlot;
+	Color tintRandom;
 	double alarmLevel;      // eased toward the target, never snapped
 	bool haveShot, haveKill;
 	bool lastAttackDown;
@@ -712,6 +716,11 @@ class GITD_Handler : StaticEventHandler
 		ambient = null;
 		nextWaveId = 0;
 		haveShot = false; haveKill = false; lastAttackDown = false;
+
+		// -1 rather than 0, so the first slot the lane happens to be on still
+		// counts as a change and rolls a colour. Starting at 0 would leave the
+		// random fog tint black until the lane advanced.
+		lastTintSlot = -1;
 		haveWake = false;   // snap to the player on the first tic of the map
 		lastSecrets = level.found_secrets;
 		sonarGlow.Clear();
