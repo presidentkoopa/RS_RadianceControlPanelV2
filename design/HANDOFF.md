@@ -69,6 +69,123 @@ first question is *what question does a pixel ask*, not *what do I spawn*.
 
 ---
 
+## WHERE EVERYTHING LIVES
+
+For coming back cold and going straight to integration. Full feature list with
+costs is in [`INVENTORY.md`](INVENTORY.md); this is the address book.
+
+### The five files that matter
+
+| File | What is in it |
+| --- | --- |
+| `UZDXREMA/wadsrc/static/shaders/glsl/main.fp` | every per-fragment effect |
+| `UZDXREMA/src/scripting/vmthunks.cpp` | every native ZScript can call |
+| `UZDXREMA/src/g_levellocals.h` | the state those natives write |
+| `UZDXREMA/src/rendering/hwrenderer/scene/hw_drawinfo.cpp` | state → uniforms, once per scene |
+| `GlowInTheDark/zscript/Render.zs` | the mod's push, callable from a menu tic |
+
+Uniform declarations — **all four must agree**, see the rules below:
+`hw_viewpointuniforms.h`, `gl_shader.cpp`, `vk_shader.cpp` struct,
+`vk_shader.cpp` `#define` block.
+
+### Shader functions, by name — `main.fp`
+
+| Function | Draws |
+| --- | --- |
+| `SweepBandAttenAt` | a sweep band's coverage at this pixel |
+| `SweepFillAt` / `SweepLineAxis` | the lattice PAINTED on a surface |
+| `SweepAirLattice` | the lattice IN THE AIR — the laser grid |
+| `GlowWaveRaw` / `GlowWaveSeedOff` | the wave that moves a glow's edge |
+| `GlowTextureAt` | the five terms inside a lit area |
+| `DarknessAt` | the four darkness curves |
+| `FogSlabAt` | fog, tornado, tendrils, disturbances, bow wave — **all of it** |
+| `FogTendrilAt` | wisps, as a lattice |
+| `BeamLightAt` / `BeamAirGlow` | beams on surfaces / beams in the air |
+| `ShapesAt` | shapes on floors and walls |
+| `sdCircle` `sdBox` `sdHexagon` `sdTriangle` `sdCross` | the shape primitives |
+| `opOutline` `opUnion` `opSub` `opInter` `opSmoothUnion` `opRotate` | and their operators |
+| `GITDHash21` `GITDNoise2` `GITDHash31` `GITDNoise3` | shared noise |
+| `getLightColor` | where darkness is applied, before glow |
+
+Composite order in `main()`: fog slab → sweep air lattice → **shapes** →
+beam air glow. Emissive things go last so bloom sees them.
+
+### Natives, by system — declared in `wadsrc/static/zscript/doombase.zs`
+
+| System | Calls |
+| --- | --- |
+| Sweep | `SetSweepOrigin` `SetSweepBand` `SetSweepBandAt` `SetSweepBandDraw` `SetSweepCount` `SetSweepTrail` `ClearSweep` |
+| Band fill | `SetSweepFill` `SetSweepFillMotion` `SetSweepBandFill` `SetSweepFillAir` |
+| Glow wave | `SetGlowWave` `SetGlowWaveOrigin` `SetGlowWaveDepth` `SetGlowWavePhase` `ClearGlowWave` |
+| Glow texture | `SetGlowTexture` `SetGlowFlow` `SetGlowCells` `SetGlowReact` |
+| Darkness | `SetDarkness` `SetDarknessSpace` `SetDesatKeep` `ClearDarkness` |
+| Fog | `SetFogSlab` `SetFogBottom` `SetFogSurface` `SetFogWake` `SetFogWakeMotion` `SetFogPickup` `SetFogGradient` `ClearFogSlab` |
+| Fog reactive | `FogDisturb` `ClearFogDisturb` `SetFogNoise` `SetFogTendrils` `SetFogBow` |
+| Tornado | `SetTornado` `SetTornadoMotion` `SetTornadoLook` |
+| Beams | `SetBeam` `SetBeamCount` `SetBeamLook` `ClearBeams` |
+| Heatmap | `HeatmapAdd` `HeatmapAt` `HeatmapClear` `SetHeatmap` |
+| Shapes | `AddShape` `SetShapeMotion` `SetShapeRepeat` `MoveShape` `RemoveShape` `ClearShapes` `SetShapeLook` |
+| Torch | `SetVolumetricBeam` `ClearVolumetricBeam` |
+| Billboards | `AddBillboard` `AddBillboardPersistent` `AttachBillboard` `AimBillboard` `TouchBillboard` `SweepBillboard` + the `SetBillboard*` setters and the `*BillboardGroup*` transform calls |
+
+`AddShape` returns its slot; the other shape calls take that slot. Everything
+else is fire-and-forget.
+
+### Mod-side push — `zscript/Render.zs`
+
+`PushAll()` calls, in order: `PushWave` `PushDarkness` `PushFog` `PushTornado`
+`PushHeatmap` `PushGlowTexture` `PushShapeLook` `PushSweepFill`.
+
+All `clearscope`, so the menu ticker can call them and sliders move the picture
+live. Anything needing the playsim lives in `GlowHandler.zs` instead.
+
+### Event hooks — `zscript/GlowHandler.zs`
+
+| Hook | Fires |
+| --- | --- |
+| `WorldTick` | pushes render state, then the playsim-dependent parts |
+| `WorldThingDied` | sweep trigger, fog burst, heatmap stamp, **`DropShape`** |
+| `WorldThingDamaged` | player-hurt heatmap, sweep trigger |
+| `PushFogShot` | trigger rising edge → fog ring + shape mark (**one edge, both consumers**) |
+| `PushFogDisplacers` | nearest monsters push the mist |
+| `PushTornadoAnchor` | funnel follows its origin mode |
+| `PushGlowAlarm` | nearby-monster count → alarm pulse |
+| `PushFogWake` | the lagged point behind you |
+| `OriginFor(mode)` | **the shared origin resolver** — map centre / spawn / you / last shot / last kill / nearest monster. Used by sweep, wave and tornado so "nearest monster" cannot come to mean different things. |
+
+### Cvar prefixes
+
+`gitd_wb_` `gitd_wt_` `gitd_cg_` `gitd_fg_` lanes ·
+`gitd_ss_` sweep · `gitd_ss_fill_` band fill (`_air` = laser grid) ·
+`gitd_wave_` waves · `gitd_dd_` per-pixel darkness (`_keep` = desat) ·
+`ddz_` DarkDoom base · `gitd_fog_` fog and everything reactive ·
+`gitd_tornado_` · `gitd_heat_` · `gitd_shape_` ·
+`gitd_gtex_` `gitd_gflow_` `gitd_gcell_` `gitd_gpulse_` glow texture ·
+`gitd_neon_` numbers · `gitd_law_` colour law · `fl_` torch ·
+`gitd_p1_`…`gitd_p11_` preset slots · `gitd_pc_` preset customiser
+
+### Menu pages — `MENUDEF`
+
+`GITDOptions` is the front page. Sub-pages: `GITDSweepVisual` `GITDSweepPlay`
+`GITDSweepFill` `GITDFloorFog` `GITDFogReact` `GITDTornado` `GITDHeatmap`
+`GITDShapes` `GITDGlowTex` `GITDWaves` `GITDDarkPixel` `GITDColorLaw`
+`GITDFlashlight` `GITDNeon` `GITDBloom` `GITDFog` `GITDPresetOptions`
+`GITDWallBottom` `GITDWallTop` `GITDCeilingGlow` `GITDFloorGlow`
+
+### The original mod, for the keep/cut pass
+
+`D:\SteamLibrary\steamapps\Common\DooM VR\not relevant for claude project\New folder\GITD-EarlySource\uzDoomGITD-0.1\GlowInTheDark.pk3`
+
+Inside it: `shaders/glsl/main.fp` has the 13 `wgType` branches (lines 831-1075)
+and the 5 `wallPat` branches (772-820), packed as one number —
+`wallPat = floor(raw/100)`, `wgType = raw - wallPat*100`. `menudef` has the
+names. The full list is in `INVENTORY.md`.
+
+`wgType 13` is already transcribed 1:1 into this fork as `BB_WG13` /
+`wadsrc/static/shaders/glsl/func_wg13.fp`.
+
+---
+
 ## Two rules this project keeps re-learning
 
 **1. Turning something off is a thing you DO, not a thing you skip.** A push
