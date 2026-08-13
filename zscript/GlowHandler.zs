@@ -14,6 +14,58 @@
 
 class GITD_Palette : Object
 {
+	// THE OPPOSITE HUE AT THE SAME BRIGHTNESS.
+	//
+	// Not 255-minus-each-byte, which is what "opposite colour" usually gets
+	// implemented as and is wrong for this: inverting the bytes also inverts
+	// VALUE, so a dark red glow hands back a pale cyan mist. Two things change
+	// when only one was asked for, and the result reads as a different
+	// brightness rather than a different colour.
+	//
+	// Rotating the hue 180 degrees and keeping saturation and value is what
+	// "complement" means to an eye. It is what makes cyan light in orange air
+	// read as two distances rather than as one wash and one glare.
+	static Color Complement(Color c)
+	{
+		double r = c.r / 255.0, g = c.g / 255.0, b = c.b / 255.0;
+		double mx = max(r, max(g, b)), mn = min(r, min(g, b));
+		double d = mx - mn;
+
+		// Grey has no hue to oppose, so there is nothing honest to return but
+		// the same grey. Rotating an undefined hue would produce a colour out
+		// of nothing and make the mode look broken on a monochrome preset.
+		if (d < 0.0001) return c;
+
+		double h;
+		if (mx == r)      h = 60.0 * (((g - b) / d) % 6.0);
+		else if (mx == g) h = 60.0 * (((b - r) / d) + 2.0);
+		else              h = 60.0 * (((r - g) / d) + 4.0);
+		h = (h + 180.0) % 360.0;
+		if (h < 0) h += 360.0;
+
+		double s = (mx <= 0.0) ? 0.0 : d / mx;
+		double v = mx;
+
+		double hh = h / 60.0;
+		double ff = hh - floor(hh);
+		double p = v * (1.0 - s);
+		double q = v * (1.0 - s * ff);
+		double t = v * (1.0 - s * (1.0 - ff));
+
+		double nr, ng, nb;
+		int i = int(floor(hh)) % 6;
+		if      (i == 0) { nr = v; ng = t; nb = p; }
+		else if (i == 1) { nr = q; ng = v; nb = p; }
+		else if (i == 2) { nr = p; ng = v; nb = t; }
+		else if (i == 3) { nr = p; ng = q; nb = v; }
+		else if (i == 4) { nr = t; ng = p; nb = v; }
+		else             { nr = v; ng = p; nb = q; }
+
+		return Color(255, int(clamp(nr * 255.0, 0.0, 255.0)),
+		                  int(clamp(ng * 255.0, 0.0, 255.0)),
+		                  int(clamp(nb * 255.0, 0.0, 255.0)));
+	}
+
 	static Color RandomColor()
 	{
 		// The GOVERNOR decides what "random" is allowed to mean. Unconstrained
@@ -598,6 +650,8 @@ class GITD_Handler : StaticEventHandler
 	// What the world last did, remembered so an origin can point at it.
 	Vector3 lastShotPos, lastKillPos;
 	bool lastFogShotDown;   // rising edge for the muzzle ripple
+	int lastTintSlot = -1;  // which lane slot the random fog tint was rolled on
+	Color tintRandom;       // and the colour it rolled
 	double alarmLevel;      // eased toward the target, never snapped
 	bool haveShot, haveKill;
 	bool lastAttackDown;
@@ -731,6 +785,7 @@ class GITD_Handler : StaticEventHandler
 		level.SetGlowWaveOrigin(OriginFor(GITD_Render.GetI("gitd_wave_origin", 0)));
 		PushFogWake();
 		PushTornadoAnchor();
+		PushFogTint();
 		PushFogShot();
 		PushFogDisplacers();
 		PushGlowAlarm();
@@ -2153,6 +2208,53 @@ class GITD_Handler : StaticEventHandler
 	// into, which is worth having as a screen effect but is NOT what a tornado
 	// is. Anchored to the nearest live monster it walks the room on its own,
 	// which is.
+	// ---- the mist takes its colour from the room -------------------------
+	//
+	// A fixed fog colour while four lanes cycle thirty-two around it reads as
+	// two mods running at once. This re-pushes the fog with a tint taken from
+	// a lane's LIVE colour, which only exists here -- PushFog runs from the
+	// menu ticker too, and there is no lane object to ask from there.
+	//
+	// COMPLEMENT is the one worth trying first. Match makes the air agree with
+	// the room, which is pleasant and quiet; complement puts the mist opposite
+	// the glow in hue, and hue separation is what reads as depth. Cyan light
+	// standing in orange air looks like two distances. Cyan light in cyan air
+	// looks like one flat wash.
+	//
+	// Random re-rolls only when the lane CHANGES SLOT, not every tic -- a
+	// colour that changes 35 times a second is not a colour, it is noise.
+	void PushFogTint()
+	{
+		int mode = GITD_Render.GetI("gitd_fog_color_mode", 0);
+		if (mode <= 0) return;
+		if (!GITD_Render.GetB("gitd_fog_enabled", false)) return;
+
+		int which = clamp(GITD_Render.GetI("gitd_fog_color_lane", 3), 0, 3);
+		GITD_Lane src = (which == 0) ? wb : (which == 1) ? wt : (which == 2) ? cg : fg;
+		if (!src) return;
+
+		Color t = src.outColor;
+
+		if (mode == 2)
+		{
+			// The opposite hue at the same brightness -- inverting the bytes
+			// would also invert value, and a dark glow would hand back a pale
+			// mist, which is a different effect and not the one asked for.
+			t = GITD_Palette.Complement(t);
+		}
+		else if (mode == 3)
+		{
+			if (src.slotIndex != lastTintSlot)
+			{
+				lastTintSlot = src.slotIndex;
+				tintRandom = GITD_Palette.RandomColor();
+			}
+			t = tintRandom;
+		}
+
+		GITD_Render.PushFog(true, t);
+	}
+
 	void PushTornadoAnchor()
 	{
 		if (!GITD_Render.GetB("gitd_tornado_enabled", false)) return;

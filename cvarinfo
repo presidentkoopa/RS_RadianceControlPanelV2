@@ -1352,3 +1352,47 @@ server int   gitd_shape_repeat = 0;
 server float gitd_shape_rep_count = 6.0;   // radial: how many. grid: extent
 server float gitd_shape_rep_space = 96.0;  // radial: orbit radius. grid: spacing
 server float gitd_shape_rep_spin = 20.0;   // deg/sec, or grid drift units/sec
+
+// ---- The fog follows the architecture --------------------------------------
+//
+// A slab with one world Z is flat across the whole map -- knee deep in one
+// room, overhead in the pit next door, and it does not climb a staircase.
+// What "fog on the floor" actually means is a constant height ABOVE THE
+// GROUND, which is a different question.
+//
+// One dial per EDGE, because floor fog and ceiling fog want opposite things:
+// floor fog wants its TOP a fixed height above the floor; ceiling fog wants
+// its BOTTOM a fixed depth below the ceiling.
+//
+//   0    absolute world Z, exactly as before
+//   > 0  follow the FLOOR by this much
+//   < 0  follow the CEILING by this much
+//
+// THE MAGNITUDE IS THE GENTLENESS and it is the useful part. At 1 the surface
+// tracks every step exactly; at 0.3 it rises three units for every ten the
+// floor does, so a staircase reads as a slope rather than a flight of steps.
+// Fog that steps looks like geometry. Fog that lags looks like weather.
+//
+// The surface swell rides on top of whatever this produces, so the layer can
+// climb a stair AND roll while it does it.
+server float gitd_fog_follow_top = 0.0;
+server float gitd_fog_follow_bottom = 0.0;
+
+// ---- Fog colour from the lanes ---------------------------------------------
+//
+// The fog had one fixed colour while the four lanes cycled thirty-two around
+// it, which reads as two mods running at once rather than one room.
+//
+//   0  the colour picker, as before
+//   1  MATCH -- take the floor lane's current colour
+//   2  COMPLEMENT -- take its opposite, so the mist is what the glow is not
+//   3  RANDOM -- a fresh colour each time the lane changes slot
+//
+// Match makes the air agree with the room. Complement is the one worth trying
+// first: cyan glow standing in orange mist reads as depth, because the two
+// are separated in hue rather than in brightness alone.
+//
+// Applies to the layer; the tornado has its own, on its own page.
+server int   gitd_fog_color_mode = 0;
+server int   gitd_fog_color_lane = 3;    // 0 wb, 1 wt, 2 ceiling, 3 floor
+server float gitd_fog_color_blend = 1.0; // how far toward it, 0..1

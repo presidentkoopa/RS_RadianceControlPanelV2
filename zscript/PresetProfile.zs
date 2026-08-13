@@ -347,7 +347,7 @@ class GITD_PresetProfile abstract
 		// Turning another back on is one number here and one line in MENUDEF,
 		// plus a pass over it for the systems that did not exist when it was
 		// written.
-		return preset == 11 || preset == 12;
+		return preset == 11;
 	}
 
 	clearscope static void Apply(int preset)
@@ -358,7 +358,6 @@ class GITD_PresetProfile abstract
 			case 2:  LowPower(); return;
 			case 3:  RedAlert(); return;
 			case 11: BlackAndWhite(); return;
-			case 12: OmgWtf(); return;
 			default: return;   // no profile yet: colours only, as before
 		}
 	}
@@ -385,7 +384,6 @@ class GITD_PresetProfile abstract
 			case 2:  LowPowerBloom(); return;
 			case 3:  RedAlertBloom(); return;
 			case 11: BlackAndWhiteBloom(); return;
-			case 12: OmgWtfBloom(); return;
 			default: return;
 		}
 	}
@@ -1053,11 +1051,25 @@ class GITD_PresetProfile abstract
 	// tint, and chromatic fringing explicitly at zero -- colour fringing on a
 	// monochrome preset is exactly the kind of small dishonesty that makes a
 	// black and white image look like a filter over a colour one.
-	clearscope static void BlackAndWhiteBloom()
+	// BLACK AND WHITE NO LONGER TOUCHES BLOOM, and that is the point of it.
+	//
+	// It used to set threshold 0.72 and amount 1.6, on the reasoning that
+	// white should blow out rather than glow. Defensible, and wrong to ship: a
+	// preset that overwrites the Bloom page is a preset you cannot use
+	// alongside your own bloom, and bloom is not part of what makes this
+	// preset black and white. The colour drain is.
+	//
+	// Kept as an empty function rather than deleted so the dispatch below
+	// stays a straight table -- and so the next person who wonders whether the
+	// bloom was forgotten finds this note instead of a missing case.
+	clearscope static void BlackAndWhiteBloom() {}
+
+	// Which presets have an engine half at all. Only ones that do get their
+	// bloom restored on the way out -- see SyncEngine. Without this, leaving a
+	// preset that never touched bloom would still reset the player's own.
+	clearscope static bool HasEngineHalf(int preset)
 	{
-		Bloom(1.60, 0.72, 0.10, 1.0, 1.0, 1.0);
-		EF("gl_bloom_anamorphic", 0.0);
-		EF("gl_bloom_chromatic", 0.0);
+		return false;
 	}
 
 	// =====================================================================

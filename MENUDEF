@@ -142,7 +142,6 @@ OptionValue "GITDPreset"
 {
 	0,  "Off (use my colours)"
 	11, "Black and White"
-	12, "OMGWTF"
 }
 
 // DarkDoom's own mode names, restored. They were briefly all labelled "Use
@@ -352,11 +351,8 @@ OptionMenu "GITDOptions"
 	StaticText "hand-cut edge on every band of light, and a", darkgray
 	StaticText "floor that quietly remembers who died on it.", darkgray
 	StaticText "", darkgray
-	StaticText "OMGWTF refuses nothing. Eight bands, a hunting", darkgray
-	StaticText "tornado, a forest of wisps, a laser lattice in", darkgray
-	StaticText "the air and rings going off from every shot --", darkgray
-	StaticText "four systems arguing about the same cubic", darkgray
-	StaticText "metre of air. It is not a look, it is a test.", darkgray
+	StaticText "It leaves bloom alone. A preset that fights", darkgray
+	StaticText "your Bloom page is a preset you cannot use.", darkgray
 	StaticText "A preset REPLACES your settings. Disable", darkgray
 	StaticText "puts back exactly what you had when you", darkgray
 	StaticText "chose it -- including anything you changed", darkgray
@@ -712,6 +708,45 @@ OptionMenu "GITDFloorFog"
 	StaticText "56 tall and the view sits near 41, so about", darkgray
 	StaticText "40 is knee deep on a flat floor.", darkgray
 	Slider "Bottom height",			"gitd_fog_bottom", -512, 512, 4, 0
+
+	StaticText "It follows the floor", gold
+	Slider "Top follows",			"gitd_fog_follow_top", -1.0, 1.0, 0.05, 2
+	Slider "Bottom follows",		"gitd_fog_follow_bottom", -1.0, 1.0, 0.05, 2
+	StaticText "A single height is FLAT ACROSS THE MAP -- knee", darkgray
+	StaticText "deep in one room and overhead in the pit next", darkgray
+	StaticText "door, and it will not climb a staircase.", darkgray
+	StaticText "", darkgray
+	StaticText "Positive follows the FLOOR. Negative follows", darkgray
+	StaticText "the CEILING. 0 is the old flat behaviour.", darkgray
+	StaticText "", darkgray
+	StaticText "Floor fog wants TOP FOLLOWS about +0.8.", darkgray
+	StaticText "Ceiling fog wants BOTTOM FOLLOWS about -0.8.", darkgray
+	StaticText "", darkgray
+	StaticText "THE NUMBER IS THE GENTLENESS. At 1 it tracks", darkgray
+	StaticText "every step exactly; at 0.3 it rises three", darkgray
+	StaticText "units for every ten the floor does, so stairs", darkgray
+	StaticText "read as a slope instead of a flight of steps.", darkgray
+	StaticText "Fog that steps looks like geometry.", darkgray
+	StaticText "", darkgray
+	StaticText "The swell below rides on top of this, so the", darkgray
+	StaticText "layer can climb AND roll while it does it.", darkgray
+	StaticText ""
+
+	StaticText "Its colour, from the room", gold
+	Option "Colour source",			"gitd_fog_color_mode", "GITDFogColorMode"
+	Option "  Which lane",			"gitd_fog_color_lane", "GITDFogColorLane"
+	Slider "  How far toward it",	"gitd_fog_color_blend", 0.0, 1.0, 0.05, 2
+	StaticText "A fixed fog colour while four lanes cycle", darkgray
+	StaticText "thirty-two around it reads as two mods running", darkgray
+	StaticText "at once rather than as one room.", darkgray
+	StaticText "", darkgray
+	StaticText "COMPLEMENT is the one to try first. Match makes", darkgray
+	StaticText "the air agree with the room, which is quiet;", darkgray
+	StaticText "complement puts the mist opposite the glow in", darkgray
+	StaticText "hue, and hue separation is what reads as depth.", darkgray
+	StaticText "Cyan light in orange air looks like two", darkgray
+	StaticText "distances. Cyan light in cyan air looks flat.", darkgray
+	StaticText ""
 	StaticText "Where the layer STOPS going down. Leave it at", darkgray
 	StaticText "the far left and there is no bottom -- fog on", darkgray
 	StaticText "the floor, as before.", darkgray
@@ -2094,6 +2129,22 @@ OptionValue "GITDShapeKind"
 	5, "Cross"
 	6, "Hexagon"
 	7, "Triangle"
+}
+
+OptionValue "GITDFogColorMode"
+{
+	0, "The colour picker below"
+	1, "Match a lane"
+	2, "Complement a lane"
+	3, "Random, per slot change"
+}
+
+OptionValue "GITDFogColorLane"
+{
+	0, "Wall bottom"
+	1, "Wall top"
+	2, "Ceiling"
+	3, "Floor"
 }
 
 OptionValue "GITDShapeRepeat"

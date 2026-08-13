@@ -233,7 +233,7 @@ class GITD_Render abstract
 	// lives in GITD_Handler where the playsim is. Same split as the glow
 	// wave's origin, and for the same reason: these are numbers off sliders
 	// and can be pushed from a menu tic, that one cannot.
-	clearscope static void PushFog()
+	clearscope static void PushFog(bool haveTint = false, Color tint = 0)
 	{
 		bool on = GetB("gitd_fog_enabled", false);
 
@@ -271,6 +271,13 @@ class GITD_Render abstract
 			max(GetF("gitd_fog_bow_width", 64.0), 1.0),
 			clamp(GetF("gitd_fog_bow_thin", 0.6), 0.0, 1.0));
 
+		// Which reference each edge follows. Pushed whether the fog is on or
+		// off for the usual reason -- a value that stops being pushed keeps
+		// whatever it last held.
+		level.SetFogFollow(
+			on ? clamp(GetF("gitd_fog_follow_top", 0.0), -1.0, 1.0) : 0.0,
+			on ? clamp(GetF("gitd_fog_follow_bottom", 0.0), -1.0, 1.0) : 0.0);
+
 		int g2 = GetI("gitd_fog_color2", 0xB38059);
 		level.SetFogGradient(
 			Color(255, (g2 >> 16) & 255, (g2 >> 8) & 255, g2 & 255),
@@ -292,6 +299,24 @@ class GITD_Render abstract
 		// it from bytes, the same way GITD_Lane.SlotColor has to.
 		int pk = GetI("gitd_fog_color", 0xB41810);
 		Color col = Color(255, (pk >> 16) & 255, (pk >> 8) & 255, pk & 255);
+
+		// THE MIST CAN TAKE ITS COLOUR FROM THE ROOM.
+		//
+		// A fixed fog colour while four lanes cycle thirty-two around it reads
+		// as two mods running at once rather than as one room.
+		//
+		// The tint arrives as a PARAMETER rather than being read here, because
+		// only GITD_Handler knows what the lanes are currently showing and
+		// this function also runs from the menu ticker where there is no
+		// handler to ask. Same split as the tornado's anchor and the glow
+		// wave's origin: the menu tic pushes everything it can compute, and
+		// the world tic pushes the one thing it cannot.
+		//
+		// Mode 0 leaves the picker alone entirely, which is why the read above
+		// happens first and this only ever blends away from it.
+		if (haveTint && GetI("gitd_fog_color_mode", 0) > 0)
+			col = GITD_Palette.Lerp(col, tint,
+				clamp(GetF("gitd_fog_color_blend", 1.0), 0.0, 1.0));
 
 		level.SetFogSlab(
 			double(GetI("gitd_fog_top", 40)),

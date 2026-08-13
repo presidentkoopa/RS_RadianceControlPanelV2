@@ -673,7 +673,8 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 		lastEnginePreset = preset;
 
 		if (preset > 0) GITD_PresetProfile.ApplyEngine(preset);
-		else if (prev > 0) GITD_PresetProfile.RestoreEngine();
+		else if (prev > 0 && GITD_PresetProfile.HasEngineHalf(prev))
+			GITD_PresetProfile.RestoreEngine();
 	}
 
 	// Which preset's engine half was last applied. Reset to -1 in Init, so the
