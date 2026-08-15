@@ -408,13 +408,45 @@ class GITD_Render abstract
 	// version used, and doing it once a tic instead of once a pixel is free.
 	clearscope static void PushDarkness()
 	{
-		// WHAT SURVIVES THE COLOUR DRAIN.
+		// ---- THE COLOUR DRAIN, AND WHAT SURVIVES IT ----------------------
 		//
-		// Pushed before the early returns below, because it is not part of the
-		// darkness curve -- it modifies the sector DESATURATION, which runs in
-		// both the per-sector and per-pixel modes and is switched off by
-		// neither. Putting it under one of those returns would make blood stop
-		// being red the moment somebody changed an unrelated mode.
+		// Both pushed BEFORE the early returns below, and that placement is
+		// load-bearing. The drain is not part of the darkness curve: it runs
+		// in the per-sector and per-pixel modes alike and is switched off by
+		// neither. Under one of those returns, changing an unrelated mode
+		// would stop blood being red, or leave a monochrome world stuck grey
+		// with no way to clear it.
+		//
+		// THE DRAIN USED TO BE A WALK OVER EVERY SECTOR IN THE MAP.
+		// ApplyDarkness wrote ddz_desat into each sector's colormap byte every
+		// tic, on the reasoning -- correct when it was written -- that a sector
+		// desaturation is what reaches the TEXTURES rather than only what this
+		// mod draws, and that no per-fragment equivalent existed.
+		//
+		// SetDesatGlobal is that equivalent. It lands in the same
+		// dodesaturate() every path already funnels through, so it reaches
+		// textures, sprites, glow, sweeps and brightmaps exactly as the byte
+		// did. The shader takes max() against the per-sector value rather than
+		// replacing it, so a sector something else drained harder stays
+		// drained harder -- which is what leaves the per-sector channel free
+		// for the things that should be LOCAL, like a setpiece draining only
+		// the rooms its wavefront has reached.
+		//
+		// Nothing is mutated, so switching it off is passing zero rather than
+		// writing 255 sectors back, and a savegame does not carry a drained
+		// map around inside it.
+		//
+		// The dial stays 0-255 because that is what the menu and every preset
+		// speak. It is a byte there and a fraction here.
+		//
+		// It DOES honour the master switch, unlike the keep below: with GITD's
+		// darkness turned off entirely, leaving the world grey would be the
+		// mod still visibly running after being told to stop.
+		double drain = GetB("gitd_dd_enabled", true)
+			? clamp(GetI("ddz_desat", 0), 0, 255) / 255.0
+			: 0.0;
+		level.SetDesatGlobal(drain);
+
 		level.SetDesatKeep(
 			clamp(GetF("gitd_dd_keep", 0.0), 0.0, 1.0),
 			max(GetF("gitd_dd_keep_soft", 0.15), 0.001),

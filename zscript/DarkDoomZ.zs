@@ -233,7 +233,30 @@ class DarkDoomZ_Handler : EventHandler {
 	// the map's own levels at WorldLoaded and is the only thing that writes
 	// them now, so there is nothing left to repair.
 	void ApplyDarkness() {
-		int desat = clamp(ddz_desat, 0, 255);
+		// [GITD] THE COLOUR DRAIN LEFT THIS FUNCTION.
+		//
+		// It used to be declared per sector, right beside the tint, and the
+		// comment below said it had to stay that way because a sector
+		// desaturation is what makes it reach the TEXTURES rather than only
+		// what this mod draws, and there was no per-fragment equivalent.
+		//
+		// There is one now. Level.SetDesatGlobal lands in the same
+		// dodesaturate() every path already goes through -- textures,
+		// sprites, glow, sweeps, brightmaps -- so it reaches exactly what the
+		// sector byte reached. Render.zs pushes it; see the note there.
+		//
+		// Two things that buys, beyond one call replacing a walk over every
+		// sector in the map:
+		//
+		//   Nothing is MUTATED. Turning the drain off is passing zero rather
+		//   than writing 255 sectors back, so it cannot half-restore and a
+		//   savegame does not carry a drained map around.
+		//
+		//   And the per-sector channel is FREE AGAIN for the things that
+		//   should be local. A setpiece's envDesat (SweepEngine.zs) drains the
+		//   rooms its wavefront has reached; it was competing with a map-wide
+		//   drain for one accumulator, and a global one has no business being
+		//   spent on that.
 
 		// NOTHING TO SAY? DO NOT WALK THE MAP. Added 2026-08-11.
 		//
@@ -256,22 +279,21 @@ class DarkDoomZ_Handler : EventHandler {
 		// every level on the dial reads wrong. Not a subtle failure, but a
 		// confusing one, because both halves are behaving correctly.
 		//
-		// So exactly one of them runs. Colour drain is NOT one of them: it is
-		// a sector desaturation, which is what makes it reach the TEXTURES
-		// and not just what this mod draws, and there is no per-fragment
-		// equivalent that would keep that. It stays here in both modes.
+		// So exactly one of them runs. The colour drain used to be exempt from
+		// that -- it was a sector desaturation and there was no per-fragment
+		// equivalent -- so it stayed here in both modes. It has one now and it
+		// has left this function entirely; see the note at the top.
 		bool perPixel = GITD_Render.GetB("gitd_dd_perpixel", false);
 		if (perPixel) on = false;
 
-		if ((!on || ddz_mode == 0) && desat == 0) return;
+		if (!on || ddz_mode == 0) return;
 
 		// Per sector, because three of the four curves read the sector's own
 		// starting brightness. Sky handling lives inside DarknessMulFor, where
 		// it scales the adjustment the way the original did.
 		for (int i = 0; i < Level.Sectors.Size(); i++) {
-			int v = on ? clamp(int(DarknessMulFor(i) * 255.0), 0, 255) : 255;
+			int v = clamp(int(DarknessMulFor(i) * 255.0), 0, 255);
 			GITD_Composite.Tint(i, Color(255, v, v, v));
-			GITD_Composite.Desaturate(i, desat);
 		}
 	}
 

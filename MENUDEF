@@ -565,9 +565,10 @@ OptionMenu "GITDDarkPixel"
 	StaticText "Dark gathering on the floor, or a rising", darkgray
 	StaticText "tide of it. Above the line nothing changes.", darkgray
 	StaticText ""
-	StaticText "Colour drain stays per sector in both modes.", darkgray
-	StaticText "That is what makes it reach the textures and", darkgray
-	StaticText "not just the glow.", darkgray
+	StaticText "Colour drain runs in both modes and is one", darkgray
+	StaticText "value for the whole frame, not a pass over", darkgray
+	StaticText "every sector. It still reaches the textures", darkgray
+	StaticText "and not just the glow.", darkgray
 }
 
 OptionValue "GITDSweepFillMode"
