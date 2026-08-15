@@ -371,6 +371,9 @@ OptionMenu "GITDOptions"
 	Option "DarkDoom",				"gitd_dd_enabled", "OnOff"
 	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
 	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
+	Slider "  Light floor",			"ddz_minlight", 0, 128, 4, 0
+	Slider "  Gain before the curve","ddz_pregain", -128, 128, 4, 0
+	Slider "  Gain after the curve","ddz_postgain", -128, 128, 4, 0
 	Submenu "  Per-pixel darkness...","GITDDarkPixel"
 	StaticText ""
 
@@ -395,6 +398,7 @@ OptionMenu "GITDOptions"
 	StaticText "Sector Sweep", gold
 	Option "Sector Sweep",			"gitd_ss_enabled", "OnOff"
 	Submenu "Visual Options...",	"GITDSweepVisual"
+	Submenu "  Edit one band...",	"GITDSweepBand"
 	Submenu "Gameplay Options...",	"GITDSweepPlay"
 	StaticText ""
 
@@ -1200,6 +1204,8 @@ OptionMenu "GITDSweepVisual"
 	StaticText ""
 	Option "Shape",					"gitd_ss_shape", "GITDSweepShape"
 	Option "Starts from",			"gitd_ss_origin", "GITDSweepOrigin"
+	Slider "  Distance ahead of you","gitd_origin_ahead", 64, 1024, 32, 0
+	StaticText "Only used by the \"in front of you\" origin.", darkgray
 	Option "Number of sweeps",		"gitd_ss_count", "GITDSweepCount"
 	StaticText ""
 	ColorPicker "Sweep 1 colour",	"gitd_ss_c1"
@@ -1366,6 +1372,7 @@ OptionMenu "GITDWallBottom"
 	Title "Wall Bottom Glow"
 	StaticText ""
 	Option "Enabled",				"gitd_wb_enabled", "OnOff"
+	Option "Random colour",			"gitd_wb_random", "OnOff", "gitd_wb_enabled"
 	StaticText ""
 	Slider "Coverage",				"gitd_wb_coverage", 0, 512, 8, 0
 	Slider "Saturation",			"gitd_wb_saturation", 0.0, 2.0, 0.05, 2
@@ -1420,6 +1427,7 @@ OptionMenu "GITDWallTop"
 	Title "Wall Top Glow"
 	StaticText ""
 	Option "Enabled",				"gitd_wt_enabled", "OnOff"
+	Option "Random colour",			"gitd_wt_random", "OnOff", "gitd_wt_enabled"
 	StaticText ""
 	Slider "Coverage",				"gitd_wt_coverage", 0, 512, 8, 0
 	Slider "Saturation",			"gitd_wt_saturation", 0.0, 2.0, 0.05, 2
@@ -1474,6 +1482,7 @@ OptionMenu "GITDCeilingGlow"
 	Title "Ceiling Glow"
 	StaticText ""
 	Option "Enabled",				"gitd_cg_enabled", "OnOff"
+	Option "Random colour",			"gitd_cg_random", "OnOff", "gitd_cg_enabled"
 	StaticText ""
 	Slider "Coverage",				"gitd_cg_coverage", 0, 512, 8, 0
 	Slider "Saturation",			"gitd_cg_saturation", 0.0, 2.0, 0.05, 2
@@ -1532,6 +1541,7 @@ OptionMenu "GITDFloorGlow"
 	Title "Floor Glow"
 	StaticText ""
 	Option "Enabled",				"gitd_fg_enabled", "OnOff"
+	Option "Random colour",			"gitd_fg_random", "OnOff", "gitd_fg_enabled"
 	StaticText ""
 	Slider "Coverage",				"gitd_fg_coverage", 0, 512, 8, 0
 	Slider "Saturation",			"gitd_fg_saturation", 0.0, 2.0, 0.05, 2
@@ -2344,4 +2354,55 @@ OptionValue "FWWallSpacing"
 	64,  "Normal"
 	128, "Sparse"
 	256, "Thin"
+}
+
+//============================================================================
+// EDIT ONE BAND
+//
+// The eight sweep bands carry seven settings each. Listing all of them is 56
+// rows, which is why the explicit per-band lists elsewhere in this file stop
+// at the four everyone actually changes.
+//
+// GlowHandler's SaveSweep/LoadSweep/CommitSweep proxy exists to solve that: a
+// working set of nine cvars plus a selector, with the handler writing the
+// outgoing band and loading the incoming one as the selector moves. It was
+// written, it works, and until now nothing in this file addressed it -- so the
+// three settings with no explicit rows anywhere (effect amount, the per-band
+// effect, and the band SCRIPT) were console-only.
+//
+// Edits go straight through to the selected band, so the sweep you are
+// watching changes as you drag rather than when you next move the selector.
+//============================================================================
+OptionMenu "GITDSweepBand"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Edit One Band"
+	StaticText ""
+
+	Option "Editing band",			"gitd_sw_sel", "GITDSweepCount"
+	StaticText "Everything below edits THIS band. Move the", darkgray
+	StaticText "selector and the rows reload for the next one;", darkgray
+	StaticText "the band you were on is written first.", darkgray
+	StaticText ""
+
+	ColorPicker "Colour",			"gitd_sw_c"
+	Slider "Speed",					"gitd_sw_speed", 5, 2000, 5, 0
+	Option "Shape",					"gitd_sw_shape", "GITDSweepShapeB"
+	Option "Does",					"gitd_sw_draw", "GITDSweepDraw"
+	Slider "Thickness (0 = shared)","gitd_sw_thick", 0, 2048, 4, 0
+	Slider "Time to the next band",	"gitd_sw_gap", 1, 210, 1, 0
+	StaticText "Band 8 has no gap -- there is no ninth band.", darkgray
+	StaticText ""
+
+	StaticText "Effect", gold
+	Option "This band does",		"gitd_sw_fx", "GITDSweepFx"
+	Slider "  Amount",				"gitd_sw_amount", 0, 128, 4, 0
+	StaticText ""
+
+	StaticText "Script", gold
+	TextField "Class to fire",		"gitd_sw_script"
+	StaticText "A GITD_SweepEffect subclass, run as the band", darkgray
+	StaticText "passes. The most open-ended thing a band can", darkgray
+	StaticText "do, and it had no menu row at all until now.", darkgray
+	StaticText "Leave blank for none.", darkgray
 }
