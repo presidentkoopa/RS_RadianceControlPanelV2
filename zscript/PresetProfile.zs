@@ -1902,19 +1902,41 @@ class GITD_PresetProfile abstract
 	//   no heatmap        a floor that remembers is a place you changed.
 	//   no lattice        a laser grid says "do not cross", which is drama.
 	//   no bow wave       the scan is light. Light has no mass.
+	//   no glow pulse     a light that brightens when monsters are near is
+	//                     the building acknowledging you, and it is the ONE
+	//                     toy this preset had a genuine claim on and still
+	//                     refuses. Refusing the loudest available system is
+	//                     what makes the other six refusals credible.
 	//
-	// And the three that are on are on hard:
+	// AND FOUR THAT ARE ON, ON HARD. There were three, and three was the
+	// fault: the preset was a set of correct decisions with no image in it.
 	//
 	//   the key light     lit from ABOVE, linear falloff, wide and even. An
 	//                     institutional ceiling, not a pool of light.
+	//   the substance     the mains hum this preset wrote four paragraphs
+	//                     wanting and could not get out of the glow wave. It
+	//                     is in the glow TEXTURE layer instead -- a fine fast
+	//                     line running along the lit surface, a stain in the
+	//                     diffuser and frost veining in the glass. It samples
+	//                     WITHIN the lit area, so unlike the wave it does not
+	//                     need an edge on screen to say anything.
 	//   the cold air      a thin layer at CONSTANT DEPTH everywhere, because
 	//                     cold comes off the structure, it does not pool.
-	//   the scan          one thin bar, out and back, every two and a half
-	//                     minutes, with a slightly darker one behind it.
+	//   the scan          one thin bar, out and back over eighty-five
+	//                     seconds, with a wide dim crush band behind it.
 	//
 	// The colours are generated, not literal: GITD_Presets.Params case 4 is
-	// hue 210 spread 80, sat 0.78 +/- 0.20, val 0.62 +/- 0.28. Blue through
-	// arctic purple. This file supplies the timing, the shape and the cold.
+	// hue 210 spread 80, sat 0.78 +/- 0.20, val 0.62 +/- 0.28. SlotColor
+	// divides the spread by four, so the four lanes sit at 210 / 230 / 250 /
+	// 270 -- azure through violet-blue, four neighbours of one family rather
+	// than four different colours -- and the eight slots inside a lane walk
+	// 17.5 degrees. The dominant axis is therefore BRIGHTNESS, not hue: val
+	// runs 0.34 to 0.90, a 2.6x range, under a saturation this file pulls
+	// down again to 0.72. That is the correct reading of a fluorescent bank
+	// and it is worth stating plainly, because a reader who takes "hue 210
+	// spread 80" at face value will expect four colours and see one.
+	//
+	// This file supplies the timing, the shape, the substance and the cold.
 	// =====================================================================
 	clearscope static void ColdWar()
 	{
@@ -1930,7 +1952,7 @@ class GITD_PresetProfile abstract
 		// hold PLUS 1/speed tics (GITD_Lane.Step -- the hold runs first, then
 		// the clock). 0.070 is 14 tics, four tenths of a second, so the
 		// crossfade that is never drawn costs under half a second on top of a
-		// thirty-second hold and the row totals below are honest to about one
+		// twenty-second hold and the row totals below are honest to about two
 		// per cent. Left at the shipped 0.004 default it would be 250 tics --
 		// seven seconds on every slot, nearly a minute added to each of the
 		// four service intervals, and they stop being the numbers they say.
@@ -2009,55 +2031,90 @@ class GITD_PresetProfile abstract
 		// other. They were commissioned in different decades by different
 		// contractors and they have all been correct ever since.
 		//
-		// Long, too. Thirty seconds is a slot you stop noticing, which is
-		// what makes the changeover land: you were not waiting for it.
+		// THE FOUR RATES WERE 34 / 26 / 30 / 22 AND ALL FOUR WERE EVEN, which
+		// quietly undid the paragraph above: every changeover in the building
+		// landed on an even second, so the four "unrelated" circuits shared a
+		// two-second grid and pairs of them re-aligned constantly. Four PRIMES
+		// have no shared grid at all, which is the property the comment was
+		// claiming and never had.
 		//
-		//   ceiling  8 x 34 = 272s      wall top  8 x 26 = 208s
-		//   wall bot 8 x 30 = 240s      floor     8 x 22 = 176s
+		// 34 was also above the lane hold slider's own 0-30 ceiling, so the
+		// shipped ceiling lane was a value a player could see, lose, and never
+		// get back from the menu. All four below are inside it.
 		//
-		// None of them is a factor of the sweep's 149-second cycle either,
-		// and that is also deliberate. Red Alert locks its palette to its
-		// sweep because an alarm is one procedure. This building is running
-		// five procedures that have never been introduced.
-		HoldFor("gitd_cg", 34, 34, 34, 34, 34, 34, 34, 34);
-		HoldFor("gitd_wt", 26, 26, 26, 26, 26, 26, 26, 26);
-		HoldFor("gitd_wb", 30, 30, 30, 30, 30, 30, 30, 30);
-		HoldFor("gitd_fg", 22, 22, 22, 22, 22, 22, 22, 22);
+		//   ceiling  8 x 29 = 232s      wall top  8 x 19 = 152s
+		//   wall bot 8 x 23 = 184s      floor     8 x 13 = 104s
+		//
+		// Long, still. Twenty-nine seconds on the key light is a slot you stop
+		// noticing, which is what makes the changeover land: you were not
+		// waiting for it. The floor lane is the fast one at 13 because it is
+		// the dimmest surface in the plan (intensity 0.55) and therefore the
+		// cheapest place to buy the room a pulse -- across all four lanes
+		// something in the room now changes about every five seconds instead
+		// of every seven, without the key light ever becoming restless.
+		//
+		// None of the four divides the scan's 85-second leg or its 171-second
+		// out-and-back, and that is checked rather than asserted: 17 was the
+		// obvious fourth prime and was rejected because 85 is 5 x 17, which
+		// would have locked the floor lane to the sweep for minutes at a time.
+		// Red Alert locks its palette to its sweep because an alarm is one
+		// procedure. This building is running five procedures that have never
+		// been introduced.
+		HoldFor("gitd_cg", 29, 29, 29, 29, 29, 29, 29, 29);
+		HoldFor("gitd_wt", 19, 19, 19, 19, 19, 19, 19, 19);
+		HoldFor("gitd_wb", 23, 23, 23, 23, 23, 23, 23, 23);
+		HoldFor("gitd_fg", 13, 13, 13, 13, 13, 13, 13, 13);
 
 		// AND THE THREE SWITCHES THAT WOULD THROW ALL THIRTY-TWO OF THEM AWAY.
 		//
 		// gitd_rnd_times is not a roll, it is a MODE: GITD_Lane.Step reads it
 		// at every slot arrival and replaces that slot's hold with
-		// frandom(0, 6) seconds. Thirty-four becomes three, the metronome
-		// becomes a stutter, and the twenty-six lines above describing four
+		// frandom(0, 6) seconds. Twenty-nine becomes three, the metronome
+		// becomes a stutter, and the thirty lines above describing four
 		// perfectly regular service intervals describe nothing. It is the
 		// single cvar in this mod that can delete a preset's central argument
 		// without touching one of the cvars that preset wrote.
 		//
 		// gitd_rnd_patterns does the same to the snap -- each lane picks its
 		// own transition from a map hash, so the contactor becomes a fade on
-		// whichever lanes the hash felt like. gitd_rnd_colors replaces the
-		// generated blue outright, and with it the entire reason the drain
-		// below keeps hue 3.
+		// whichever lanes the hash felt like.
+		//
+		// gitd_rnd_colors is written for completeness and honesty rather than
+		// for effect, and the honesty is the point. GITD_Lane.Step line 272
+		// reads `toCol = (preset > 0) ? GITD_Presets.SlotColor(...) :
+		// SlotColor(nextSlot)`, and every path that consults gitd_rnd_colors
+		// lives inside the branch a preset never takes. Under any preset above
+		// zero it is currently incapable of doing anything at all. Written
+		// false so that the day the lane code is fixed to honour it, this
+		// preset is already protected instead of newly broken.
 		//
 		// None of the four shipping presets states any of them, which is
 		// survivable for a preset whose look does not rest on its rhythm.
-		// This one's does. gitd_rnd_governor is deliberately not written: it
-		// only constrains gitd_rnd_colors, which is now off, and writing a
-		// dead value leaves the next reader wondering whether it was meant to
-		// be on.
+		// This one's does.
 		B("gitd_rnd_colors", false);
 		B("gitd_rnd_times", false);
 		B("gitd_rnd_patterns", false);
+
+		// gitd_rnd_governor is deliberately NOT written, and the reason this
+		// file used to give was false. It said the governor "only constrains
+		// gitd_rnd_colors, which is now off". It does not: GITD_Palette
+		// .RandomColor reads it directly, and Flashlight.SlotColor calls
+		// RandomColor under fl_random with no preset gate whatsoever
+		// (Flashlight.zs:88). The governor is live under any preset with a
+		// random torch. The correct protection is not to pin the governor --
+		// which decides what a random colour MEANS and belongs to whoever
+		// switched randomness on -- but to state that this preset's torch is
+		// not random at all. That is fl_random, written down with the rest of
+		// the torch, and it is a safety interlock as well as a look. See there.
 
 		// ---- NO WAVE, and it was the last thing cut ----------------------
 		//
 		// What this preset wanted from the wave was MAINS HUM: the hundred
 		// hertz shimmer off a fluorescent bank that you only catch at the
-		// edge of vision and cannot see when you look straight at it. That
-		// would have been perfect and the dial cannot reach it -- speed caps
-		// at 8 rad/s, four orders of magnitude short, and what you get up
-		// there is a throb. Red Alert already owns the throb.
+		// edge of vision and cannot see when you look straight at it. The
+		// dial cannot reach it -- speed caps at 8 rad/s, four orders of
+		// magnitude short, and what you get up there is a throb. Red Alert
+		// already owns the throb.
 		//
 		// Everything the wave CAN say is wrong here. Slow and deep is a
 		// supply sagging, which is Low Power's entire preset. Slow and sharp
@@ -2066,7 +2123,10 @@ class GITD_PresetProfile abstract
 		// this preset is that the light is correct and indifferent.
 		//
 		// So: off, explicitly, rather than left to inherit whichever of those
-		// two the player last had running.
+		// two the player last had running. The hum is not abandoned, it has
+		// moved -- the glow texture block below is where it went, and the
+		// reason it works there is that the wave varies a lane's EDGE while
+		// the texture layer varies what is inside it.
 		NoWave();
 
 		// SEAMLESS OFF, EXPLICITLY, and this is a gap all four shipping
@@ -2331,6 +2391,12 @@ class GITD_PresetProfile abstract
 		// your muzzle the building has acknowledged you. That single frame of
 		// acknowledgement is worth more than every other system in the mod,
 		// and it is why nothing here gets to have it.
+		//
+		// NoReactive() also clears gitd_fog_displace, which matters more than
+		// it looks: displace carves the mist around nearby actors, so an
+		// inherited value would have the air outlining monsters through a
+		// wall of fog in the preset that just spent nine lines refusing to
+		// notice them.
 		NoReactive();
 
 		// NO BOW WAVE, and this is the only preset with a travelling band
@@ -2388,24 +2454,91 @@ class GITD_PresetProfile abstract
 		NoGrid();
 		for (int i = 1; i <= 8; i++) I("gitd_ss_fill" .. i, 0);
 
-		// ---- the glow has no substance in it -----------------------------
+		// ---- THE MAINS HUM, WHICH IS THE ONE SYSTEM THIS PRESET OWNS -----
 		//
-		// Seventeen cvars put TEXTURE inside a glow -- veining, a current
-		// running along the surface, a crawling cell network, rings off
-		// gunfire, a global alarm pulse -- and not one of the four shipping
-		// presets states a position on any of them, so every preset in this
-		// file inherits whatever the last one or the player left running.
-		// It is the largest hole in the discipline and there is no helper for
-		// it, which is presumably why.
+		// This block used to be five zeroes and a paragraph about how an
+		// institutional surface is EVEN. The paragraph was half right and it
+		// cost the preset its only image. Cold War's problem was never that
+		// it was restrained; it was that after every refusal was honoured
+		// there was nothing left in the frame but four flat rectangles of
+		// blue changing colour on a slow clock. Restraint is a choice about
+		// what carries the image. It is not the absence of one.
 		//
-		// This preset closes it with five lines because it is the preset that
-		// can least afford them. An institutional surface is EVEN. Mottling,
-		// flow and cell noise are all ways of saying the light has weather in
-		// it; react and pulse are both ways of saying the light knows you are
-		// here. Five zeroes, and the fixture is a fixture again.
-		F("gitd_gtex_noise", 0.0);
-		F("gitd_gflow", 0.0);
-		F("gitd_gcell", 0.0);
+		// So the fifth paragraph of NO WAVE above gets what it asked for.
+		// The wave varies a lane's EDGE and had no way to make a hundred-hertz
+		// shimmer; the texture layer varies what is INSIDE the lit area and is
+		// sampled in world space (Render.PushGlowTexture), which is a
+		// completely different mechanism and can. Three of the five terms are
+		// on, at the smallest weights in the file, and the two that would make
+		// the building notice you stay at zero.
+		//
+		// NOISE -- the fitting has an age. Scale is inverted (cvarinfo:1314,
+		// "smaller = larger patches"), so 0.06 against the 0.02 default is a
+		// FINER grain, which is staining in the diffuser rather than weather
+		// on the wall. Drift 0 because a stain is a property of the fitting
+		// and does not travel through it. Contrast at the neutral 1.0; above
+		// that the mottle becomes plasma and this is a light fixture.
+		F("gitd_gtex_noise", 0.10);
+		F("gitd_gtex_scale", 0.06);
+		F("gitd_gtex_drift", 0.0);
+		F("gitd_gtex_contrast", 1.0);
+
+		// FLOW -- the hum itself, and the only fast thing in the preset.
+		// Spacing 16 against the 64 default is four times finer, and sharp
+		// 4.0 makes them lines rather than a swell: what crosses the surface
+		// is a comb, not a wave.
+		//
+		// SPEED 2.4 AND NOT THE 4.0 THE DIAL ALLOWS, and this is a safety
+		// number as much as a taste one. A fine high-contrast pattern at 20%
+		// depth crossing a lit surface at the dial's ceiling is a flicker, and
+		// a flicker is exactly the failure mode of the fixture this preset is
+		// depicting -- the one place in the mod where "it looks like a broken
+		// tube" is a hazard rather than a compliment. 2.4 is a shimmer you
+		// catch at the edge of vision, which was the specification.
+		//
+		// AND THE HONEST LIMITATION, because it will look like a bug
+		// otherwise. The axis comes from the surface normal (cvarinfo:1332):
+		// vertical on a wall, along world X on a floor or ceiling. In a
+		// north-south corridor the ceiling's shimmer therefore runs ACROSS
+		// the tubes rather than along them. There is no cvar that fixes this
+		// and it is worth the term anyway -- on walls, which is most of the
+		// lit surface you look at, the axis is right everywhere.
+		F("gitd_gflow", 0.20);
+		F("gitd_gflow_spacing", 16.0);
+		F("gitd_gflow_speed", 2.4);
+		F("gitd_gflow_sharp", 4.0);
+
+		// CELLS -- frost in the glass. Scale 192 against the 96 default is
+		// cells twice the size, so it is a structure rather than a texture;
+		// width 0.03 against 0.08 is hairlines; and crawl 0.2 against 1.2 is
+		// nearly still, because frost does not crawl and a cell network that
+		// visibly moves is the single most organic thing this mod can draw.
+		// At 0.15 it is the faintest term in the preset and you should not be
+		// certain you saw it.
+		F("gitd_gcell", 0.15);
+		F("gitd_gcell_scale", 192.0);
+		F("gitd_gcell_speed", 0.2);
+		F("gitd_gcell_width", 0.03);
+
+		// AND THE TWO THAT STAY AT ZERO, which is where the restraint went.
+		//
+		// greact rides the same eight disturbance slots as reactive fog and
+		// puts a ring through the lit surfaces of a room off every shot. It
+		// is free here in the sense that NoReactive() above has already
+		// emptied the array -- and that is exactly why it is written rather
+		// than left: free today, live the moment anything else fills those
+		// slots.
+		//
+		// gpulse is the loud one and the refusal that matters. It is the only
+		// term in this system that makes the light carry INFORMATION -- driven
+		// by monsters near you or by your health -- and cvarinfo:1360 calls it
+		// "the one thing none of the four above can do however good they look".
+		// That is true, and it is the sentence four hundred lines of this
+		// function exist to refuse. A building that brightens when something
+		// is near you has noticed you. The four sub-terms (src, range, count,
+		// level) are deliberately unwritten: the shader reads them inside the
+		// gpulse > 0 branch, and writing dead numbers leaves the next reader
+		// working out whether the pulse was meant to be on.
 		F("gitd_greact", 0.0);
 		F("gitd_gpulse", 0.0);
 
@@ -2446,6 +2579,34 @@ class GITD_PresetProfile abstract
 		I("fl_slots", 1);
 		I("fl_pattern", 0);
 
+		// FL_RANDOM FALSE, AND IT IS AN INTERLOCK RATHER THAN A PREFERENCE.
+		//
+		// This preset runs fl_slots 1, which takes the short-circuit at
+		// Flashlight.CurrentColor line 106: `if (count <= 1) return
+		// SlotColor(0);`. That line runs EVERY FRAME, and SlotColor's first
+		// statement under fl_random is `return GITD_Palette.RandomColor()`
+		// (Flashlight.zs:88). One slot plus a random torch is therefore a
+		// full-saturation colour strobe at frame rate, six inches from the
+		// eye, with no error, no warning and nothing in the menu suggesting
+		// it. No preset in this file states fl_random, so any player who has
+		// ever switched it on carries it into here.
+		//
+		// It is written false because inheriting true is a photosensitivity
+		// hazard, and it is written HERE, next to fl_slots 1, so that anyone
+		// who later raises the slot count can see what the pairing was for.
+		// A preset that wants a random torch must have two slots or more.
+		B("fl_random", false);
+
+		// AND THE LIGHT DOES NOT WAKE WHAT IT LANDS ON. fl_agitate makes
+		// pointing the beam at a monster alert it -- a genuinely good idea and
+		// the sharpest sentence in the whole flashlight rig, in a preset where
+		// the torch is the only way to see. It is the exact opposite of this
+		// one. Here the building is indifferent and so is everything in it;
+		// a torch that provokes is the player's light making the room react,
+		// which is the same refusal as the wake, the ring and the pulse.
+		// No preset states it, so it is inherited by all eight today.
+		B("fl_agitate", false);
+
 		// AND THE THING YOU CARRY IS COLD TOO. Every other preset leaves the
 		// torch its shipped halogen white -- warm, and correct for them,
 		// because a warm object in your hands against a cold room is a
@@ -2456,14 +2617,40 @@ class GITD_PresetProfile abstract
 
 		// ---- THE SCAN ----------------------------------------------------
 		//
-		// range over speed 1 is one TRAVERSE: 8192 over 55 is about a hundred
-		// and forty-nine seconds. Under direction 2 that is the half cycle,
-		// not the cycle -- GITD_Wave.Step reverses at range and again at 0, so
-		// the full out-and-back is five minutes and the bar passes any given
-		// spot once every two and a half. Range is travel, not map size, so
-		// most of each traverse is spent outside the geometry: two and a half
-		// minutes of nothing, then a thin bar crosses the map, and about five
-		// seconds later a slightly darker and much wider one follows it.
+		// THE ARITHMETIC WAS WRONG AND THE COMMENT ABOVE IT WAS WORSE. It
+		// shipped as range 8192 at speed1 55, and it described that as "the
+		// bar passes any given spot once every two and a half minutes". Two
+		// things were false about that sentence.
+		//
+		// First, 8192 is TRAVEL and not map size. Shape 2 compares the band's
+		// position against abs(dx) from the origin, so on a map of half-extent
+		// 2000 the bar was inside the geometry for 2000/55 = 36 seconds of
+		// each 149-second leg. A 24 PER CENT DUTY CYCLE: three quarters of the
+		// preset's headline system was happening outside the level.
+		//
+		// Second, under pingpong the interval at a fixed point is not uniform
+		// and never was. A point at distance d from the origin is crossed once
+		// per leg, so the intervals ALTERNATE 2d/v and 2(range-d)/v. At d=1000
+		// that shipped as 36 seconds and then 261 seconds. The player saw the
+		// scan twice in half a minute and then not again for four minutes, and
+		// "once every two and a half minutes" was an average nobody ever
+		// experienced.
+		//
+		// SO: RANGE 2560 AND SPEED1 30. One leg is 85.3 s, the out-and-back is
+		// 170.7 s, and the duty cycle on that same 2000-unit map is 78 per
+		// cent. The alternating intervals become 67 s / 104 s at d=1000 and
+		// 33 s / 137 s at d=500 -- still alternating, because pingpong cannot
+		// do otherwise and pretending it can is what produced the old comment,
+		// but the long half has come down from four and a half minutes to
+		// under two. 2560 is on the range slider's own 128-unit step and 30 is
+		// on the per-band speed slider's 5-unit step, which 48 never was.
+		//
+		// AND SPEED2 HAD TO MOVE WITH IT, WHICH IS NOT OPTIONAL.
+		// WaveBandSpeedScale (GlowHandler.zs:1047) is speedN / speed1, so the
+		// crush band's rate is expressed as a RATIO of the line's. Leaving 48
+		// against a new speed1 of 30 would make that ratio 1.6 and the crush
+		// band would overtake the line it is supposed to be a consequence of.
+		// 25/30 keeps the old 0.87 relationship almost exactly.
 		//
 		// DIRECTION 2, OUT AND BACK, and it is the first use of it in this
 		// file. Low Power and Red Alert both run outward and then silence,
@@ -2497,10 +2684,12 @@ class GITD_PresetProfile abstract
 		I("gitd_ss_trigger", 0);      // free-running. It ran before you came in.
 		I("gitd_ss_drive", 0);        // time, not kills and not your health.
 		                              // Nothing in this preset is driven by you.
-		I("gitd_ss_range", 8192);
+		I("gitd_ss_range", 2560);
 		F("gitd_ss_softness", 1.2);   // a line, not a front
 		F("gitd_ss_intensity", 1.0);  // and no brighter than the room it crosses
-		I("gitd_ss_thickness", 40);
+		I("gitd_ss_thickness", 24);   // the shared fallback, set to match the
+		                              // line below so the menu's Thickness row
+		                              // describes the band you actually see
 		I("gitd_ss_trail", 0);
 		B("gitd_ss_underlay", true);  // the lanes keep running underneath;
 		                              // the room is not put on hold for this
@@ -2523,34 +2712,59 @@ class GITD_PresetProfile abstract
 		// completely different preset and it would arrive here by inheritance
 		// with no line of this file mentioning it.
 		//
-		// So all three are written. This is the trap that pays for itself.
+		// perband false has a second job as well: WaveBandAction resolves
+		// gitd_ss_scriptN whenever perband is true, so leaving it inherited
+		// would let a class name somebody typed on the Edit One Band page fire
+		// on every band of this preset. Off here means the eight script slots
+		// cannot be reached and do not need writing.
 		B("gitd_ss_light", false);
 		B("gitd_ss_perband", false);
 		I("gitd_ss_light_mode", 0);
 
-		// Five seconds between the line and what follows it. 175 tics, under
-		// the 210 cap, and chosen to be a gap you read as CONSEQUENCE rather
-		// than as a second band -- long enough that the first has left the
-		// part of the room you are in before the second arrives.
+		// Five seconds of the line's own travel between it and what follows.
+		// The gap is in TICS, which is why it survived the speed change
+		// untouched: 175 tics is 5 s of leader travel whatever the leader's
+		// rate, so the crush band still arrives about six seconds behind the
+		// line at the origin plane. It is chosen to be a gap you read as
+		// CONSEQUENCE rather than as a second band -- long enough that the
+		// first has left the part of the room you are in before the second
+		// arrives.
 		I("gitd_ss_gap1", 175);
 
-		// The line itself. Eighty units wide at fifty-five a second is a
-		// second and a half to cross you: quick, clean, and gone.
-		F("gitd_ss_speed1", 55.0);  I("gitd_ss_shape1", 2);
-		I("gitd_ss_thick1", 40);    I("gitd_ss_draw1", 1);
+		// The line itself. Thickness 24 is 48 units wide (a band is twice its
+		// thickness) and at 30 units a second that is 1.6 seconds to cross
+		// you: quick, clean, and gone. It was 40 thick at 55, which was the
+		// same 1.5 seconds -- halving the speed without thinning the band
+		// would have made the one sharp object in the preset take nearly three
+		// seconds to pass, which is not a line any more, it is a wall.
+		F("gitd_ss_speed1", 30.0);  I("gitd_ss_shape1", 2);
+		I("gitd_ss_thick1", 24);    I("gitd_ss_draw1", 1);
 
 		// AND WHAT IT LEAVES BEHIND. Draw 3 is crush -- a per-pixel multiply
-		// down, travelling. Five hundred and twenty units at forty-eight a
-		// second is eleven seconds to pass, so it is not a band at all, it is
-		// the room getting fractionally colder for ten seconds after the scan
-		// and then recovering.
+		// down, travelling. 140 thick is 280 units, and at 25 a second that is
+		// 11 seconds to pass, so it is not a band at all, it is the room
+		// getting fractionally colder for ten seconds after the scan and then
+		// recovering. Thickness came down from 260 for the same reason the
+		// line's did: at the new rate 520 units would have taken 21 seconds
+		// and the crush would have stopped being an event and become the
+		// weather.
 		//
-		// Slower than the line, so over a cycle the two drift further apart
-		// rather than staying a pair. Nothing overtakes and nothing catches
-		// up, which is what a routine looks like when it has been running
-		// unattended for long enough.
-		F("gitd_ss_speed2", 48.0);  I("gitd_ss_shape2", 2);
-		I("gitd_ss_thick2", 260);   I("gitd_ss_draw2", 3);
+		// Slower than the line, so over a leg the two drift further apart
+		// rather than staying a pair -- six seconds behind at the origin
+		// plane, thirteen at a thousand units out. Nothing overtakes and
+		// nothing catches up, which is what a routine looks like when it has
+		// been running unattended for long enough.
+		//
+		// THE COST OF THAT, STATED RATHER THAN DISCOVERED: a band expressed as
+		// a ratio of the leader's speed also has a shorter REACH. Band 2's
+		// furthest position is range x 0.833 minus the 150-unit gap lag, which
+		// is 1983 units against the line's 2560. On a map wider than about
+		// four thousand units the crush band does not quite reach the far
+		// walls that the line does. That is the price of the drift and it is
+		// worth it; a uniform train would cover the whole range and hold
+		// formation forever, which is a different and more mechanical claim.
+		F("gitd_ss_speed2", 25.0);  I("gitd_ss_shape2", 2);
+		I("gitd_ss_thick2", 140);   I("gitd_ss_draw2", 3);
 
 		// The line is the coldest white in the preset; the crush band carries
 		// no light of its own and its colour is only what the menu shows, so
@@ -2599,6 +2813,26 @@ class GITD_PresetProfile abstract
 		// no helper, so it is written flat.
 		B("gitd_shape_enabled", false);
 
+		// AND THE THIRD LEDGER, WHICH SHIPS ON. gitd_neon_enabled defaults to
+		// TRUE (cvarinfo:444) -- it is the only master in this family that
+		// does -- so the Numeric Violence Engine is armed under every preset
+		// in this file and is drawing nothing only because its two payload
+		// switches happen to default off. A player who has ever turned on the
+		// kill counter gets floating numerals stamped where each body fell,
+		// in the preset whose entire thesis is that the building does not
+		// notice you. A score is a score whether it is painted on the floor
+		// or set in a font above it.
+		B("gitd_neon_enabled", false);
+
+		// AND THE COLOUR LAW, which is the only system in the mod where the
+		// room's colour changes the FIGHT rather than the picture. It is off
+		// by default, so this write only bites a player who configured it --
+		// but Cold War was the one preset of eight that never said so, and a
+		// preset that spends four hundred lines refusing to be addressed to
+		// you cannot leave a rule in force that makes the lighting a combat
+		// modifier. A lighting menu is not consent to a gameplay change.
+		B("gitd_law_enabled", false);
+
 		// ---- the ambience layer -------------------------------------------
 		//
 		// LIGHTS WHERE THE MAP SAYS THERE ARE LIGHTS, AND NOWHERE ELSE.
@@ -2618,6 +2852,20 @@ class GITD_PresetProfile abstract
 		// which is a stated position rather than the blanket NoAmbienceLight
 		// -- the lights are wanted here, and only the particles are not.
 		Ambience(1, 0.55, 0.0);
+
+		// AND THE RADIUS, WHICH NoAmbienceLight'S OWN COMMENT DEMANDS AND NO
+		// PRESET HAS EVER GIVEN IT. fw_range is the per-emitter audibility
+		// radius (fw/fancy_common.zs:163), so every preset in this file has
+		// so far sounded identical no matter what it argued about acoustics.
+		//
+		// 1024, half the shipped default, and it is the same claim Occlude
+		// makes below rather than a second one: if a metre of reinforced
+		// concrete means an emitter with no sight line all but disappears,
+		// then an emitter three rooms away should not be audible through the
+		// open doors either. Halving the radius is what makes "a series of
+		// small silences" true of the ambience layer and not only of the
+		// geometry. It is the shortest range in the file and it should be.
+		F("fw_range", 1024.0);
 
 		// FOOTSTEPS, RAISED A LITTLE. Concrete, steel and a lot of empty
 		// volume: you are the loudest thing in here, and that is worth
@@ -2653,17 +2901,22 @@ class GITD_PresetProfile abstract
 	// hard: a tube is on or it is not.
 	//
 	// ANAMORPHIC, AND LOW POWER GOT HERE FIRST WITH A DIFFERENT ARGUMENT.
-	// It runs 0.45 at ratio 3.0 to draw a horizontal streak off a dying
-	// fixture seen side on. The mechanism is the same and the claim is not:
-	// there, the streak is a fault. Here it is simply what a four-foot tube
-	// looks like, so it is weaker (0.28) and stretched further (4.5) -- a
-	// long thin smear that reads as the SHAPE of the source rather than as
-	// something wrong with it.
+	// It draws a horizontal streak off a dying fixture seen side on, and
+	// there the streak is a FAULT. Here it is simply what a four-foot tube
+	// looks like -- the smear reads as the SHAPE of the source rather than as
+	// something wrong with it -- and since the gate cannot express "weaker",
+	// the whole difference has to live in the ratio. See the block below.
 	//
-	// Chromatic explicitly zero. Red Alert is the only preset that earns
-	// fringing, because an image that is slightly wrong says the same thing
-	// its alarm does. Nothing here is wrong. The lens is in focus, the
-	// fixtures are lit, the schedule is being kept.
+	// It is also the lens agreeing with the surfaces for once: the glow flow
+	// term now runs fine lines along the lit area at 16-unit spacing, and a
+	// bloom that stretches a highlight along one axis is the same statement
+	// made by the optics. That was an accident of two systems arriving a year
+	// apart and it is worth keeping on purpose.
+	//
+	// Chromatic explicitly zero. Fringing is a lens failing to agree with
+	// itself, which is the right artefact for a room that is telling you
+	// something has gone wrong. Nothing here is wrong. The lens is in focus,
+	// the fixtures are lit, the schedule is being kept.
 	clearscope static void ColdWarBloom()
 	{
 		Bloom(1.10, 0.55, 0.25, 0.86, 0.94, 1.0);
@@ -2689,15 +2942,26 @@ class GITD_PresetProfile abstract
 		// the exposure combine pass as the SOURCE ALPHA of an alpha-blended
 		// one-pixel draw (hw_postprocess.cpp, PPCameraExposure::Render), so it
 		// is a per-FRAME lerp factor between 0 and 1 and the engine's own
-		// default is 0.05 -- about a third of a second at sixty frames. Above
-		// 1.0 the destination factor 1-src goes NEGATIVE and the accumulator
-		// stops converging on anything; it is not a slow eye, it is an
-		// unstable one. Low Power's 0.6 and Red Alert's 3.0 read as three
-		// seconds and half a second and are neither, which is why this is
-		// spelled out here rather than copied from them.
+		// default is 0.05. Above 1.0 the destination factor 1-src goes
+		// NEGATIVE and the accumulator stops converging on anything; it is not
+		// a slow eye, it is an unstable one. Low Power's 0.6 and Red Alert's
+		// 3.0 read as three seconds and half a second and are neither, which
+		// is why this is spelled out here rather than copied from them.
 		//
-		// 0.02 is roughly a second at sixty frames, and a second is the value
-		// at which nobody notices. That is the whole specification.
+		// 0.02 WAS RIGHT ARITHMETIC AGAINST THE WRONG REFERENCE. It was picked
+		// as "roughly a second at sixty frames", and 1/(0.02 x 60) is indeed
+		// 0.83 s -- but Exposure()'s own derivation, and every other call site
+		// in this file, reckons the time constant at the tic rate of 35, where
+		// 0.02 is 1.4 s. Two conventions in one file is how a number stops
+		// meaning anything.
+		//
+		// 0.03 IS 1/(0.03 x 35) = 1.0 SECOND on the house convention, which is
+		// the specification this block already stated: a second is the value at
+		// which nobody notices. Worth saying once and not repeating: because
+		// the blend is per FRAME, there is no value that is one second on every
+		// machine -- 0.03 is 1.0 s at 35 fps and 0.55 s at 60. The convention
+		// is the tic rate, and the fastest this preset's eye can be on any
+		// hardware is still slower than the scan crossing you.
 		//
 		// BASE 1.0 IS WHAT ACTUALLY PROTECTS THE DARKNESS, and not min. The
 		// pass computes 1 / max(base + light*scale, min), so the adjustment
@@ -2711,29 +2975,44 @@ class GITD_PresetProfile abstract
 		// LOW min permits more lift, not less, and every preset in this file
 		// that argued the opposite argued it backwards. Nothing is asked of
 		// it, so nothing is claimed for it.
-		//
-		// NOTE FOR WHOEVER ADDS THE NEXT ONE: RestoreEngine() puts nine bloom
-		// cvars back and does NOT restore gl_bloom_anamorphic_ratio or any of
-		// the four gl_exposure_*. Both are written above. Leaving Cold War
-		// therefore leaves a 4.5 ratio and this exposure curve in place while
-		// the Preset row reads Off -- the same class of fault RestoreEngine
-		// was written to fix, inherited rather than introduced. It should be
-		// fixed there, in one place, for all four presets that leak it.
-		Exposure(1.0, 0.35, 1.0, 0.02);
+		Exposure(1.0, 0.35, 1.0, 0.03);
 	}
 
 	// =====================================================================
-	// 6. NEON UNISON -- one building, one clock, one beat
+	// 6. NEON UNISON -- a room somebody lit on purpose
 	//
-	// WHAT IT IS. Every light in the place is wired to the same metronome.
-	// Not "everything switched on" -- everything switched on TOGETHER. The
-	// four lanes strike at the same instant, the sweep launches a band on
-	// every strike, the lattice inside those bands counts the bar, the air
-	// takes its colour from the lane changing next to it, and the exposure
-	// pass swells behind all of it. What the room reads as is one organism
-	// breathing, not eight systems running at once.
+	// WHAT IT IS, AND WHAT YOU SEE IN ONE FRAME. A cool room with warm light
+	// travelling through it. The architecture -- ceiling, walls, floor, the
+	// air itself -- sits in one cool family, cyan through violet, and
+	// everything that MOVES across it is amber. Those two families are
+	// complements. Standing still, before anything has had time to happen,
+	// the room reads as composed: teal and orange, the oldest deliberate
+	// colour scheme there is, applied by someone who chose it.
 	//
-	// THE BEAT IS 140 TICS AND EVERYTHING IS DERIVED FROM IT.
+	// THAT IS THE AXIS AGAINST ITS SISTER, and it is the only one that
+	// survives a still frame. Neon Chaos is a room full of cheap party lights
+	// that were never coordinated. This one is a room lit by a designer with a
+	// key light, two fills and an accent, on one circuit. Tempo is what the
+	// two presets used to be sorted by, and tempo is a thirty-second read that
+	// nobody was ever going to make. Colour relationship is a two-second one.
+	//
+	// THE HIERARCHY, WHICH IS THE OTHER HALF OF "DESIGNED".
+	//
+	//   ceiling      KEY      coverage 208, intensity 1.70 -- the source
+	//   wall bottom  FILL     144 / 1.20 -- the light standing on the floor
+	//   wall top     FILL     120 / 0.95 -- further from the source, dimmer
+	//   floor        ACCENT    72 / 1.85 -- narrow, hot, a strip
+	//
+	// No lighting designer has ever lit a room with four surfaces at equal
+	// weight, and this preset used to: one coverage and one intensity written
+	// four times over, on the argument that identical lanes make a corner read
+	// as one body of light. That argument produced a WASH, which is the exact
+	// word this preset's own header used for the thing it must not be. Unison
+	// is a claim about TIME -- everything strikes on the same tic -- and it
+	// costs nothing to make the four strike at four deliberate weights. Equal
+	// weights are not unison, they are an absence of decision.
+	//
+	// THE BEAT IS 140 TICS. It is the mechanism, not the thesis:
 	//
 	//   140 tics          =  4.000 s   one slot, one band, one bar line
 	//   127 tics hold  + 13 tics of phase clock at speed 0.080 = 140
@@ -2742,49 +3021,31 @@ class GITD_PresetProfile abstract
 	//   gap 140 x 7      = seven beats, so band 8 leaves one beat before
 	//                      band 1 comes round again and the bar closes
 	//
-	// That table is the preset. Change any one number and the others have to
-	// move with it, which is exactly the property that makes this readable in
-	// two seconds and makes its sister unmistakable from it: NEON CHAOS is
-	// the same palette family with no shared clock at all.
+	// Change any one of those and the others have to move with it. It is what
+	// makes the room feel like one organism rather than eight systems, and it
+	// is invisible in a still frame, which is why it is no longer the pitch.
 	//
-	// WHERE THE STRUCTURE COMES FROM, since unison with no structure is soup.
-	// Three places, and only three:
+	// WHERE THE COOL FAMILY COMES FROM. Params(6) is baseHue 180, spread 140,
+	// and SlotColor hands each lane its own quarter -- lanes at 180, 215, 250
+	// and 285, cyan through violet, walking about thirty degrees across their
+	// eight slots. So the four surfaces are four neighbours of one family
+	// rather than four arbitrary colours, and the fog takes lane 0 on top of
+	// that. Nothing in this function fights it; everything this function owns
+	// outright -- the eight sweep bands, the lattice, the torch -- goes warm,
+	// and that is where the complement comes from. It needs no Params change.
 	//
-	//   the chord      Params(6) gives each LANE its own quarter of a 140
-	//                  degree spread -- cyan, blue, violet, magenta -- and
-	//                  barely moves hue across the eight slots. So a lane is
-	//                  one held note and the slots are its LOUDNESS. Four
-	//                  fixed notes struck together is a chord, not a wash.
-	//   the voicing    SlotColor's brightness term carries a per-lane phase
-	//                  offset, so the four strike together and the EMPHASIS
-	//                  rotates around the room from beat to beat. Nobody
-	//                  wrote that for this preset; it is what the generator
-	//                  already does, and it is the reason identical holds do
-	//                  not produce four identical surfaces.
-	//   the rest       beat 5 of 8 is a CRUSH band. A bar of eight equal
-	//                  flashes is a strobe. Seven flashes and a hole where
-	//                  the eighth should be is a rhythm, and the hole is the
-	//                  part you hear.
-	//
-	// WHAT IT REFUSES, AND WHY THAT IS MOST OF THE DESIGN. Every system in
-	// this mod that keeps its OWN time is off: reactive fog, tendrils, the
+	// WHAT IT REFUSES, AND WHY THAT IS STILL MOST OF THE DESIGN. Every system
+	// in this mod that keeps its OWN time is off: reactive fog, tendrils, the
 	// tornado, density banks, the heatmap, glow texture, floor shapes,
 	// particles, band drift, fill flicker. Not because they look bad -- Low
 	// Power's tendrils are the best thing in that preset -- but because each
-	// of them introduces a second tempo, and a second tempo is the one thing
-	// that cannot survive here. The refusals below are longer than the
-	// selections and they should be.
+	// introduces a second tempo, and a second tempo is the one thing that
+	// cannot survive here. The refusals below are longer than the selections
+	// and they should be.
 	// =====================================================================
 	clearscope static void NeonUnison()
 	{
-		// ---- the four voices ---------------------------------------------
-		//
-		// IDENTICAL IN EVERY RESPECT, which no other preset in this file is.
-		// Low Power and Red Alert shape the lanes per surface because their
-		// four lanes are doing four different jobs. Here they are doing ONE
-		// job in four places, so coverage, falloff, saturation and intensity
-		// are the same number four times over and a corner reads as one
-		// continuous body of light rather than as two surfaces meeting.
+		// ---- the four voices, at four weights ----------------------------
 		//
 		// SNAP. At a four second beat a crossfade means the colour is in
 		// transit for a tenth of the bar, and a beat you cannot locate to the
@@ -2801,16 +3062,60 @@ class GITD_PresetProfile abstract
 		                              // clock, running per room, and this
 		                              // preset has exactly one clock
 		LanesI("_slots", 8);
-		LanesI("_falloff", 1);        // Smooth -- a defined band with a
-		                              // shoulder. Sharp is an etched seam and
-		                              // that is Black and White's look
-		LanesI("_coverage", 144);
+		LanesI("_falloff", 1);        // Smooth on all four -- a defined band
+		                              // with a shoulder. The WEIGHTS differ
+		                              // below; the CURVE must not, or the four
+		                              // stop reading as one scheme and start
+		                              // reading as four fittings from four
+		                              // suppliers, which is the sister preset
 		Lanes("_saturation", 1.00);   // hot, all four, no exceptions
-		Lanes("_intensity", 1.45);
 		Lanes("_speed", 0.080);
 
-		// BLEED OFF, and this is the one line above that is about the CHORD
-		// rather than about the clock.
+		// KEY, TWO FILLS AND AN ACCENT. Four numbers a lighting plan would
+		// carry, and the reason this preset now reads as lit rather than as
+		// switched on.
+		//
+		// The ceiling is the key because that is where a room's light comes
+		// from and because it is the surface you cannot avoid seeing. 208 is
+		// well past the shipped 128: it is meant to reach across the room and
+		// be the thing everything else is measured against.
+		//
+		// The two walls are fills at 144 and 120, and wall TOP is the dimmer
+		// of the two on purpose -- it is the surface furthest from the floor
+		// the light is bouncing off, and a fill that outshines the surface it
+		// is filling is not a fill.
+		//
+		// The floor is the accent: 72 units of reach, the narrowest thing in
+		// the preset, at the highest intensity in it. Narrow and hot is a
+		// STRIP -- a bright seam along the base of the walls rather than a lit
+		// floor -- and an accent is supposed to be the brightest thing in the
+		// room and the smallest. It is also Params(6)'s violet-magenta lane,
+		// the far end of the cool family, so the hottest thing in the room is
+		// also the furthest from the fog's cyan. That contrast is deliberate.
+		I("gitd_cg_coverage", 208); F("gitd_cg_intensity", 1.70);   // KEY
+		I("gitd_wb_coverage", 144); F("gitd_wb_intensity", 1.20);   // fill
+		I("gitd_wt_coverage", 120); F("gitd_wt_intensity", 0.95);   // fill
+		I("gitd_fg_coverage",  72); F("gitd_fg_intensity", 1.85);   // ACCENT
+
+		// AND THE SWITCH THAT FLATTENS THE HIERARCHY BACK TO A WASH.
+		//
+		// gitd_pc_shape lives on the colour customiser page and does not stay
+		// in the colour half: GlowHandler.zs:2200 gates it on `preset > 0`,
+		// not on WHICH preset, so with it set all four coverages become
+		// gitd_pc_coverage and all four intensities gitd_pc_intensity. The
+		// eight numbers above are read, discarded and replaced by two.
+		//
+		// This preset used to leave it alone, and the note explaining why was
+		// honest at the time: no lane difference was load-bearing, so
+		// overruling a player's explicit customisation of this preset would
+		// have been a worse fault than the one it fixed. That is no longer
+		// true. The lane difference IS the design now, and flattening it is
+		// not a degraded Unison, it is the wash this preset exists to refuse.
+		// Cold War, Chaos and Lovecraft all force it off for the same reason.
+		B("gitd_pc_shape", false);
+
+		// BLEED OFF, and this is the line that protects the cool FAMILY
+		// rather than the beat.
 		//
 		// Bleed is on by default and no preset in this file has ever said a
 		// word about it, which is survivable for the other four because their
@@ -2820,21 +3125,19 @@ class GITD_PresetProfile abstract
 		// BleedToward pulls each lane 35% toward the MEAN of its two
 		// neighbours (GlowHandler.zs:890), and the four lanes here are four
 		// deliberately separated hues, 35 degrees apart out of Params(6)'s
-		// 140. Bled, cyan and magenta both walk a third of the way to the blue
-		// between them and the chord closes into a wash -- which is the exact
-		// word the header uses for what this must not be.
+		// 140. Bled, cyan and violet both walk a third of the way to the blue
+		// between them, and a designed spread closes into one colour.
 		//
 		// The cost is real and it is worth naming: a corner where two lanes
 		// meet is now two colours meeting rather than one blend. Seamless
 		// would have answered that and the wave has already taken it (below).
-		// So the corners are hard here. Four distinct notes with hard edges is
-		// the preset; one soft note is not.
+		// So the corners are hard here. Four related colours with hard edges
+		// is a scheme; one soft average of them is a puddle.
 		LanesI("_bleed", 0);
 
 		// 3.63 s is 127 tics. Written to all thirty-two slots, which is the
 		// single most load-bearing line in the function: Hold() rather than
-		// four HoldFor() rows is the entire difference between this preset
-		// and its sister.
+		// four HoldFor() rows is what makes the four surfaces strike together.
 		Hold(3.63);
 
 		// ---- THE ONE THING THAT CAN DELETE THIS PRESET SILENTLY -----------
@@ -2858,10 +3161,8 @@ class GITD_PresetProfile abstract
 		// GITD_Presets.SlotColor and the lane's own _random is on the same
 		// dead branch. It is stated because the discipline is to state a
 		// position, not because it can bite; saying so here is cheaper than
-		// the next author re-deriving it.
-		//
-		// No other preset states any of these because no other preset dies
-		// without them. This one does, so it says so.
+		// the next author re-deriving it. If that branch is ever fixed, this
+		// line starts doing real work and needs no edit.
 		B("gitd_rnd_times", false);
 		B("gitd_rnd_colors", false);
 		B("gitd_rnd_patterns", false);
@@ -2888,6 +3189,10 @@ class GITD_PresetProfile abstract
 		// on the same tic. Red Alert uses 90 to make the throb travel upward
 		// like a turning beacon; travel is exactly what this must not have.
 		//
+		// COLOUR SLIDE ZERO. It would put a second hue on one surface at a
+		// distance, which is a fifth colour nobody chose in a preset whose
+		// entire claim is that all of them were chosen.
+		//
 		// Long wavelength -- 640 units is most of a room, so a room is mostly
 		// in one phase rather than showing three crests at once. Sharp 2.0 is
 		// a defined attack without being a spike; a spike is an alarm.
@@ -2895,7 +3200,7 @@ class GITD_PresetProfile abstract
 		     0.25,                    // the edge moves a little
 		     0.55,                    // the light moves more -- this is a
 		                              // BEAT, and a beat is loudness
-		     0.0,                     // no colour slide: the chord holds
+		     0.0,                     // no colour slide: the scheme holds
 		     0.0,                     // it MUST repeat exactly
 		     0.0,                     // and every room on the same phase
 		     0);
@@ -2906,7 +3211,7 @@ class GITD_PresetProfile abstract
 		// Wave() forces gitd_seamless off, and that is a real cost here: this
 		// is the preset that would most like its corners to ramp rather than
 		// meet. The two are exclusive in GITD_Render.PushWave, the beat is
-		// worth more than the join, and identical coverage on all four lanes
+		// worth more than the join, and identical FALLOFF on all four lanes
 		// above is the consolation. Not restated below -- Wave owns it.
 
 		// ---- the floor it stands on ---------------------------------------
@@ -2914,14 +3219,15 @@ class GITD_PresetProfile abstract
 		// Compress rather than Crush, and Dismal rather than Stygian. This is
 		// the brightest preset in the file and it still has to be dark enough
 		// that neon is the only light -- but Crush at Stygian flattens the
-		// gap between a lit slot and a dim one, and that gap is the beat.
-		// Compress keeps proportion, so a bright slot stays measurably
-		// brighter than the one before it.
+		// gap between the key and the fills, and that gap is now the design.
+		// Compress keeps proportion, so a 1.70 ceiling stays measurably
+		// brighter than a 0.95 wall top instead of both pinning to the same
+		// crushed value.
 		//
 		// DESAT ZERO, said out loud. Every other preset here drains something.
-		// A preset whose palette runs cyan to magenta at saturation 0.95 and
-		// which inherits Black and White's 255 is a grey room, and the bug
-		// would look like the palette rather than like the drain.
+		// A preset whose whole pitch is a colour relationship, inheriting
+		// Black and White's 255, is a grey room -- and the bug would look like
+		// the palette rather than like the drain.
 		B("gitd_dd_enabled", true);
 		I("ddz_mode", 2);        // Compress
 		I("ddz_preset", 3);      // Dismal
@@ -2940,9 +3246,8 @@ class GITD_PresetProfile abstract
 		// depth for the sweep to come out of. Push it to Low Power's 0.86 and
 		// the bands appear from nowhere mid-corridor, which reads as pop-in.
 		//
-		// NO HEIGHT POOLING. Dark gathering on the floor would mute the floor
-		// lane, and the floor lane is one voice of the four. A chord with one
-		// note taken out is not this preset.
+		// NO HEIGHT POOLING. Dark gathering on the floor would swallow the
+		// accent, and the accent is the brightest thing in the scheme.
 		DeepDark(0.55, 2400.0, 0.0, 0.0, 256.0);
 
 		// Nothing drains, so there is nothing to rescue from the drain.
@@ -2952,7 +3257,7 @@ class GITD_PresetProfile abstract
 		// touched the desat slider.
 		NoKeepColor();
 
-		// ---- the air ------------------------------------------------------
+		// ---- the air, WHICH IS ON THE COOL SIDE ---------------------------
 		//
 		// THIN, AND IT CHANGES COLOUR ON THE BEAT.
 		//
@@ -2960,14 +3265,17 @@ class GITD_PresetProfile abstract
 		// ensemble, and it costs one cvar: colour mode 1 takes the layer's
 		// tint from a lane, so when that lane cuts, the air cuts with it. No
 		// new system, no second clock -- the fog is simply another surface
-		// wired to the same circuit.
+		// wired to the same circuit, and it is one more member of the cool
+		// family the warm bands are crossing.
 		//
-		// LANE 0, wall bottom, and the choice is physical rather than
-		// decorative: wall bottom is the glow lit upward off the floor, which
-		// is the light actually standing in this layer. Red Alert takes the
-		// floor lane because its klaxon lives there. Taking the floor here
-		// would put magenta in the air and leave the cyan reading as accent,
-		// which inverts the palette.
+		// LANE 0, wall bottom, and the choice is physical before it is
+		// compositional: wall bottom is the glow lit upward off the floor,
+		// which is the light actually standing in this layer. It is also
+		// Params(6)'s hue 180, the cyan end -- so the air is the COOLEST thing
+		// in the room and the amber bands read against it hardest. Taking the
+		// floor lane instead would put the violet-magenta accent in the air
+		// and leave the cyan reading as the odd one out, which inverts the
+		// scheme and throws away the complement.
 		//
 		// Density 0.6 and top 28: shin deep and barely there. A dense layer
 		// would soften the leading edge of every band, and the leading edges
@@ -2984,7 +3292,7 @@ class GITD_PresetProfile abstract
 		    0.90,     // and it takes its colour from the room, hard
 		    0.15, 80, 0.5);
 		I("gitd_fog_color_mode", 1);     // match a lane
-		I("gitd_fog_color_lane", 0);     // wall bottom -- the light in it
+		I("gitd_fog_color_lane", 0);     // wall bottom -- the cyan end
 		F("gitd_fog_color_blend", 0.80); // most of the way, never all
 
 		// THE THREE FOG CVARS Fog() DOES NOT TOUCH, and one of them is the
@@ -3059,51 +3367,60 @@ class GITD_PresetProfile abstract
 		// ONE COLOUR THROUGH THE LAYER. Mix 0 is the position, not an
 		// oversight: the air is whatever wall bottom currently is, top to
 		// bottom, so it changes as one thing on the beat. A gradient through
-		// its thickness is a second colour on no clock at all, and Black and
-		// White leaves 0.30 behind.
+		// its thickness is a fifth hue nobody picked, in the preset whose
+		// pitch is that every hue in it was picked, and Black and White leaves
+		// 0.30 behind.
 		FogGradient(0x123A4A, 0.0);
 
 		// A funnel is a soloist. It stands in one place turning at its own
 		// rate and takes the eye off everything that is keeping time.
 		NoTornado();
 
-		// ---- THE LATTICE, USED AS A BAR LINE ------------------------------
+		// ---- THE LATTICE, USED AS A RULER ---------------------------------
 		//
-		// The first preset in this file to call Grid() at all. All four
-		// shipping ones refuse it, and they are right to: a laser lattice in
-		// a band you have to walk through is an obstacle, and none of them
-		// wanted an obstacle.
+		// Both Neon presets now draw this lattice and they draw OPPOSITE
+		// statements with it, which makes it the sharpest two-second
+		// separator in the pair. Here it is MEASURED: ruled diamonds, every
+		// fourth line bolder, nothing drifting, nothing missing, painted on
+		// the surfaces. In Chaos it is squares with the spacing knocked out of
+		// true, sliding, and hanging in the air. Same eleven cvars, same
+		// system, and you can tell which room you are in from one frame.
 		//
-		// It is not an obstacle here -- literally, see the air note below, and
-		// then in intent. It is NOTATION. Rotate 45 turns squares into
-		// diamonds, gap 0 lights only the lines so you see the surface between
-		// them, and spacing 96 is about two paces -- ruled widely enough that
-		// a wall reads as marked rather than as fenced off.
+		// Rotate 45 turns squares into diamonds, gap 0 lights only the lines
+		// so you see the surface between them, and spacing 96 is about two
+		// paces -- ruled widely enough that a wall reads as marked rather than
+		// as fenced off.
 		//
-		// AND EVERY FOURTH LINE IS BOLDER. That is the whole reason this
-		// system earned its place: fill_major 4 draws a heavy line every
-		// fourth one, so the lattice is a RULER rather than a mesh. It is not
-		// counting the beat -- it cannot, it is spacing in world units and the
-		// beat is tics, and drift is zeroed below precisely so the two never
-		// pretend to be coupled. What it does is rhyme: a player who never
-		// works out that the room is on a clock still sees, inside the band
-		// that arrives on that clock, a thing that has been MEASURED rather
-		// than a thing that is merely dense. Same argument, different axis.
+		// AND EVERY FOURTH LINE IS BOLDER. fill_major 4 is what makes this a
+		// ruler rather than a mesh. It is not counting the beat -- it cannot,
+		// it is spacing in world units and the beat is tics, and drift is
+		// zeroed below precisely so the two never pretend to be coupled. What
+		// it does is rhyme: a player who never works out that the room is on a
+		// clock still sees, inside the band that arrives on that clock, a
+		// thing that has been MEASURED rather than a thing that is merely
+		// dense. Same argument, different axis.
 		//
-		// AIR STRENGTH ZERO, AND IT IS NOT A TASTE DECISION. The in-air
-		// lattice is bars only: SweepAirLattice solves a ray against a plane
-		// and cases shape 2, 3 and 5, then `else continue` -- ring and shell
-		// need a quadratic nobody wrote, and they fall through to the painted
-		// fill instead (main.fp, and the comment above that function says so).
+		// THE COLOUR IS WARM, and that is the change. It used to be 0x8CFDFF,
+		// the same cyan as lane 0 -- so the ruler was invisible against the
+		// wall it was ruling and the one piece of structure in the preset read
+		// as more wall. 0xFFD08A puts it on the warm side with the bands it
+		// lives inside, so the lattice belongs to the LIGHT rather than to the
+		// architecture. That is also what a real gobo does: it is a property
+		// of the lamp, not of the surface.
+		//
+		// AIR STRENGTH ZERO, AND IT IS NOT A TASTE DECISION. SweepAirLattice
+		// solves a ray against a plane and cases shapes 2, 3 and 5, then
+		// `else continue` -- ring and shell need a quadratic nobody wrote.
 		// Every band here is shape 1. Any air value would therefore be a
 		// number on this preset's Customise page that reads as doing something
 		// and does nothing, which is the fault this file exists to not ship.
+		// Chaos's bands are shapes 1, 2, 3 and 5, which is why the air lattice
+		// belongs to that preset and can never belong to this one.
 		//
 		// The painted lattice is what draws, and for a ring it is drawn in arc
 		// length and height -- constant spacing in world units as the ring
-		// grows, so 96 stays about two paces however far out the band is. That
-		// is the notation. It just lives on the surfaces rather than in the air.
-		Grid(96.0, 2.5, 0.9, 0x8CFDFF, 45.0, 0.0);
+		// grows, so 96 stays about two paces however far out the band is.
+		Grid(96.0, 2.5, 0.9, 0xFFD08A, 45.0, 0.0);
 		F("gitd_ss_fill_major", 4.0);
 		F("gitd_ss_fill_major_boost", 2.2);
 
@@ -3113,16 +3430,19 @@ class GITD_PresetProfile abstract
 		// along one axis so the far half of a bar line is not the same weight
 		// as the near half. All four are ways of saying "this is not a
 		// measured thing", which is the one statement the lattice is here to
-		// contradict. Grid() touches none of them and they persist from
-		// whatever anyone rolled last. Grad axis is left alone deliberately:
-		// the shader reads it only inside `if (grad > 0)`, so zeroing the
-		// amount already answers it and a second write would be noise.
+		// contradict -- and all four are exactly what Chaos turns UP. Grid()
+		// touches none of them and they persist from whatever anyone rolled
+		// last, so with the pair now sharing this system, stating them is what
+		// stops Unison's ruler arriving pre-broken. Grad axis is left alone
+		// deliberately: the shader reads it only inside `if (grad > 0)`, so
+		// zeroing the amount already answers it and a second write would be
+		// noise.
 		F("gitd_ss_fill_drift", 0.0);
 		F("gitd_ss_fill_jitter", 0.0);
 		F("gitd_ss_fill_flicker", 0.0);
 		F("gitd_ss_fill_grad", 0.0);
 
-		// ---- the torch, ON THE SAME CLOCK ---------------------------------
+		// ---- the torch, ON THE SAME CLOCK AND ON THE WARM SIDE ------------
 		//
 		// The most literal reading of the brief and the one that took the
 		// most restraint. Every light in the building is on one clock -- and
@@ -3134,10 +3454,16 @@ class GITD_PresetProfile abstract
 		// changes colour is a torch you cannot read a room with, and this
 		// mod's darkness makes reading the room the torch's actual job.
 		//
-		// The eight are near-whites, a few percent off neutral, walking the
-		// same cyan-to-magenta arc the room is walking. You will not name the
-		// colour. You will notice that the beam agrees with the beat, which
-		// is the entire effect being bought.
+		// THE EIGHT ARE WARM NEAR-WHITES NOW, a few percent off neutral,
+		// walking out to the warmest at slot 4 and back to nearly neutral at
+		// slot 8 -- the same arch the eight bands walk, one octave quieter.
+		// They used to be COOL near-whites tracking the lanes, which put the
+		// only light you control on the same side as the architecture and left
+		// the warm family belonging entirely to things you cannot touch.
+		// Warm puts the light in your hand on the ACCENT side of the scheme:
+		// what you point at goes momentarily amber against a cool room, which
+		// is the whole preset restated in the one system the player operates.
+		// You will not name the colour. You will notice that the beam belongs.
 		//
 		// Beam wide-ish and dust modest: this is a lit room, not Low Power's
 		// dead one, and heavy dust in air that is already carrying a lattice
@@ -3156,15 +3482,22 @@ class GITD_PresetProfile abstract
 		I("fl_slots", 8);
 		I("fl_pattern", 0);         // Snap, with everything else
 		B("fl_random", false);      // random would be the one light in the
-		                            // building off the schedule
+		                            // building off the schedule, and it is the
+		                            // one thing Chaos gives its torch
+		B("fl_agitate", false);     // pointing the light at a monster does not
+		                            // wake it. This room does not notice you
+		                            // and the torch is part of this room --
+		                            // Blackout owns that switch, where the
+		                            // torch is the only way to see anything
+		                            // and making it dangerous means something
 		F("fl_speed", 0.080);
-		I("fl_c1", 0xEFFDFF); I("fl_c2", 0xE2F8FF);
-		I("fl_c3", 0xDCF2FF); I("fl_c4", 0xE0EAFF);
-		I("fl_c5", 0xE8E6FF); I("fl_c6", 0xF0E6FF);
-		I("fl_c7", 0xF9E6FC); I("fl_c8", 0xFCEAF6);
+		I("fl_c1", 0xFFF6E8); I("fl_c2", 0xFFF0DC);
+		I("fl_c3", 0xFFEAD0); I("fl_c4", 0xFFE4C4);
+		I("fl_c5", 0xFFE8CE); I("fl_c6", 0xFFEEDA);
+		I("fl_c7", 0xFFF4E6); I("fl_c8", 0xFFF8EE);
 		for (int i = 1; i <= 8; i++) F("fl_hold" .. i, 3.63);
 
-		// ---- THE BAR ------------------------------------------------------
+		// ---- THE BAR, AND IT IS THE WARM HALF OF THE SCHEME ---------------
 		//
 		// Eight bands, one per beat, all at the same speed, evenly spaced,
 		// forever. Nothing overtakes, nothing stretches apart, nothing
@@ -3203,18 +3536,24 @@ class GITD_PresetProfile abstract
 		I("gitd_ss_trail", 60);       // a short decay behind each tick, the
 		                              // way a struck note has a tail
 		B("gitd_ss_underlay", true);  // the lanes keep running underneath.
-		                              // Off calls ClearAll() and the chord
-		                              // stops, leaving eight bands and silence
+		                              // Off calls ClearAll() and the whole
+		                              // cool half of the scheme goes with it
 		F("gitd_ss_drift", 0.0);      // DRIFT IS THE LITERAL ENEMY HERE. It
 		                              // spreads the per-band speeds apart,
 		                              // which is the one edit that would turn
 		                              // this preset into its sister
 		F("gitd_ss_health_speed", 0.0); // the tempo does not follow your health
-		F("gitd_ss_spin", 0.0);
-		F("gitd_ss_spin_radius", 0.0);
-		I("gitd_ss_spin_colors", 0);  // a colour rolodex indexed by spin phase
-		                              // overrides the band colours entirely,
-		                              // and the band colours are the bar
+		F("gitd_ss_spin", 0.0);         // NO RIG. A swung origin rakes the room
+		F("gitd_ss_spin_radius", 0.0);  // from a moving centre, which is a
+		                                // lighting RIG and is exactly what
+		                                // Chaos now owns. Eight bands leaving
+		                                // one fixed place is a building's
+		                                // installation; four leaving a turning
+		                                // one is a hired-in truss
+		I("gitd_ss_spin_colors", 0);  // and above 1 the rolodex OVERRIDES all
+		                              // eight band colours by spin phase,
+		                              // which would delete the warm half of
+		                              // the scheme in one cvar
 		B("gitd_ss_drop", false);
 		B("gitd_ss_actors", false);
 
@@ -3269,34 +3608,56 @@ class GITD_PresetProfile abstract
 		I("gitd_ss_draw6", 1); I("gitd_ss_draw7", 1);
 		I("gitd_ss_draw8", 1);
 
-		// The bar walks the same cyan-to-magenta arc the lanes are holding,
-		// one step per beat, so a band crossing a wall is briefly the same
-		// colour as the wall it is crossing and then is not. Band 1 is near
-		// white because a downbeat is louder, not different. Band 5 crushes
-		// and ignores its rgb entirely, but keeps a truthful near-black
-		// swatch so the menu shows what it is rather than a leftover.
-		I("gitd_ss_c1", 0xB6FBFF);   // the downbeat
-		I("gitd_ss_c2", 0x2FE6FF);
-		I("gitd_ss_c3", 0x2FA8FF);
-		I("gitd_ss_c4", 0x5A78FF);
+		// ---- AND HERE IS THE COMPLEMENT ----------------------------------
+		//
+		// The bands used to walk the same cyan-to-magenta arc as the lanes --
+		// 0xB6FBFF, 0x2FE6FF, 0x2FA8FF, 0x5A78FF, 0xA355FF, 0xE23CFF,
+		// 0xFF3AC8. That was wrong twice. A band arriving on a wall was
+		// within a few degrees of the colour of the wall, so eight events an
+		// eye could not separate from the surface they crossed; and the whole
+		// preset was then ONE hue family, which is not a scheme, it is a
+		// filter. What a lighting designer does with a cool room is put warm
+		// light through it, because complements are the one pair of colours
+		// that make each other louder rather than averaging.
+		//
+		// So the eight are amber, and they are an ARCH rather than a walk:
+		// near-white on the downbeat, down through gold to the deepest orange
+		// at beat 4, the rest at beat 5, and back up through amber to warm
+		// cream at beat 8 -- which hands off to beat 1 with no jump, so the
+		// bar closes on colour as well as on time. A walk would have band 8
+		// and band 1 as far apart as the arc is wide, and you would hear the
+		// seam once a bar.
+		//
+		// Band 1 is near white because a downbeat is LOUDER, not different.
+		// Band 5 crushes and ignores its rgb entirely, but keeps a truthful
+		// near-black swatch so the menu shows what it is rather than a
+		// leftover -- and it is the one band left at its old value, because a
+		// hole has no colour to warm.
+		I("gitd_ss_c1", 0xFFF2D8);   // the downbeat
+		I("gitd_ss_c2", 0xFFC24A);
+		I("gitd_ss_c3", 0xFFA020);
+		I("gitd_ss_c4", 0xFF7A12);   // the far point of the arch
 		I("gitd_ss_c5", 0x07131C);   // the rest
-		I("gitd_ss_c6", 0xA355FF);
-		I("gitd_ss_c7", 0xE23CFF);
-		I("gitd_ss_c8", 0xFF3AC8);
+		I("gitd_ss_c6", 0xFF8C1E);
+		I("gitd_ss_c7", 0xFFB43A);
+		I("gitd_ss_c8", 0xFFD86E);   // and back, to hand off to band 1
 
 		// ---- the systems with no helper, refused by hand ------------------
 		//
-		// THE GLOW TEXTURE TERMS. Seventeen cvars, no helper in this file, and
-		// not one shipping preset states any of them -- so they inherit from
-		// whatever anyone last rolled, in the preset least able to survive it.
-		// Every one is a texture sampled in world space on its own rate:
+		// THE GLOW TEXTURE TERMS. Five cvars, no helper in this file, and
+		// every one is a texture sampled in world space on its own rate:
 		// veining that crawls, a current running along a surface, a cell
 		// network, rings off gunfire, a global alarm swell. Five separate
-		// tempos laid over a preset that has exactly one.
+		// tempos laid over a preset that has exactly one, and five separate
+		// textures laid over a scheme whose whole argument is that the
+		// surfaces are flat fields of chosen colour.
 		//
-		// gitd_greact and gitd_gpulse are the two that hurt most, because
-		// they are pulses and this preset already has a pulse. A second one,
-		// driven by how many monsters are near you, would read as the
+		// Cold War owns the first three and Red Alert owns gitd_greact, so
+		// these zeroes are now live protection rather than hygiene: leaving
+		// Cold War for this preset would otherwise carry a mains shimmer onto
+		// every surface here. gitd_gpulse is the one that would hurt most,
+		// because it is a pulse and this preset already has a pulse -- a
+		// second one, driven by how many monsters are near you, reads as the
 		// building's clock stuttering.
 		F("gitd_gtex_noise", 0.0);
 		F("gitd_gflow", 0.0);
@@ -3311,12 +3672,22 @@ class GITD_PresetProfile abstract
 		// shared a helper.
 		B("gitd_shape_enabled", false);
 
+		// THE NUMBERS IN THE WORLD, OFF. gitd_neon_enabled ships TRUE, so
+		// this is an inheritance that arrives switched on rather than one that
+		// has to be turned on -- and the payloads under it (killcount, damage)
+		// default off, so it only fires for a player who went and enabled one.
+		// That is exactly the player who then cannot work out where the
+		// floating figures came from. They are unowned colour with a font on
+		// it, in a room where every colour was chosen. Black and White is the
+		// one preset that takes this system, and takes it deliberately.
+		B("gitd_neon_enabled", false);
+
 		// THE FLOOR DOES NOT KEEP SCORE. Blackout, Red Alert and Black and
 		// White all take the heatmap and all three are right: a room that
 		// remembers is a room with a history. This one has no history. It is
 		// a machine running a loop, identical on your first pass and your
 		// fifth, and a stain in the corner is the map admitting that time
-		// passed.
+		// passed -- and it is a colour nobody in this scheme chose.
 		NoHeat();
 
 		// THE COLOUR LAW STAYS OFF. It is the one system that would make the
@@ -3338,6 +3709,18 @@ class GITD_PresetProfile abstract
 		// is trying not to be.
 		Ambience(2, 0.90, 0.0);
 
+		// AND THE EMITTER RADIUS, STATED AT THE SHIPPED VALUE. NoAmbienceLight
+		// says out loud that a preset wanting silence has to say so with the
+		// range, and no preset in this file ever has -- so FancyWorld's ambient
+		// sound has been identical under all eight, whatever each of them
+		// argued. This one wants it exactly where it ships: a building running
+		// one circuit throughout should sound like one building, carrying from
+		// room to room, which is the audio restatement of the whole preset.
+		// Cold War halves it because its rooms are sealed; Black and White
+		// extends it because hearing carries more there. Here 2048 is a
+		// choice that happens to match the default.
+		F("fw_range", 2048.0);
+
 		// FOOTSTEPS DOWN, which is the only preset here that turns them down.
 		// Blackout runs 1.25 because in the dark your feet are the map. Here
 		// they are a second tempo -- an irregular one, set by how you walk --
@@ -3345,26 +3728,29 @@ class GITD_PresetProfile abstract
 		// enough to place you and quiet enough not to argue.
 		Steps(0.8);
 
-		// And sound carries between rooms. A building running one circuit
-		// throughout should sound like one building; 0.6 is most of the way
-		// open, short of Red Alert's 0.75, which was an alarm's job.
+		// And sound carries between rooms. 0.6 is most of the way open, short
+		// of Red Alert's 0.75, which was an alarm's job.
 		Occlude(0.6);
 
 		// NOTE FOR WHOEVER EDITS THIS NEXT. Preset 6 is a GENERATED palette,
 		// not a literal table -- SlotColor special-cases 1, 2, 3 and 11 and
-		// falls through to the gitd_pc_* working set for this one. That means
-		// two things this function deliberately does not fight:
+		// falls through to the gitd_pc_* working set for this one. So the four
+		// cool hues come from Params(6) via LoadWorkingSet, and writing
+		// gitd_wb_c3 here would be dead weight while preset 6 is selected.
 		//
-		//   the colours come from Params(6) via LoadWorkingSet, so writing
-		//   gitd_wb_c3 here would be dead weight while preset 6 is selected;
+		// WHICH MEANS HALF THE SCHEME LIVES IN A FILE THIS ONE DOES NOT OWN,
+		// and it is worth being precise about which half. The COOL family is
+		// Params(6)'s -- baseHue 180, spread 140. The WARM family is entirely
+		// here: eight band colours, the lattice, eight torch colours. The
+		// complement therefore holds only while Params(6) stays in the blues.
+		// Anyone moving that baseHue has to move all seventeen warm values
+		// with it or the preset silently stops being about anything.
 		//
-		//   gitd_pc_shape, if the player has set it on this preset's
-		//   Customise page, overrides coverage, falloff and intensity on all
-		//   four lanes and silently discards the six lines at the top of this
-		//   function. It is NOT forced off here, because that switch is the
-		//   player asking for exactly that, and a profile that overrules a
-		//   player's explicit customisation of itself is a worse fault than
-		//   the one it fixes.
+		// And LoadWorkingSet reads gitd_p6_custom FIRST. A player who ever
+		// pressed Save on this slot gets their own stored palette under these
+		// warm bands, with every menu row reading correctly and no indication
+		// why the room no longer agrees with itself. That is a fault in
+		// GlowHandler and is recorded there.
 	}
 
 	// NEON WITHOUT BLOOM IS NOT NEON. It is a coloured stripe on a wall.
@@ -3384,16 +3770,25 @@ class GITD_PresetProfile abstract
 	// through the wave cycle, and a soft knee means the bloom SWELLS with it
 	// rather than snapping on at a threshold. The lens breathes with the room.
 	//
-	// TINT WHITE, EXPLICITLY. Every other bloom here is tinted, because every
-	// other preset owns a colour. This palette spans cyan to magenta and its
-	// entire claim is that the four voices are equal -- tinting the bloom
-	// warm or cool picks one of them, and the bloom pass would quietly be
-	// mixing the chord.
+	// TINT WHITE, EXPLICITLY, AND THE REASON HAS CHANGED. It used to be "this
+	// palette spans cyan to magenta and all four voices are equal, so tinting
+	// picks one of them". The four voices are no longer equal -- there is a
+	// key and an accent now -- but the preset has TWO families, cool surfaces
+	// and warm light, and a tint votes for exactly one of them at the last
+	// stage of the pipeline, where it cannot see which it is tinting. A warm
+	// tint would fold the bands into the walls; a cool one would grey the
+	// bands. White is the only setting that leaves the complement standing.
 	//
-	// Anamorphic and chromatic both zero, and both said out loud. A
-	// horizontal streak is a lens artefact with a direction, and nothing here
-	// has a direction. Fringing is a lens failing to agree with itself, which
-	// is Red Alert's whole point and the precise opposite of this one.
+	// AND THE CLEAN LENS IS NOW A STATED CONTRAST. Anamorphic and chromatic
+	// are both zero here and Chaos takes the fringing, so the pair differ in
+	// the optics as well as in the palette: a room that was composed is shot
+	// through glass that agrees with itself. A streak has an AXIS and nothing
+	// in a room lit from a key and an accent points one way; fringing is a
+	// lens failing to resolve, which is the last thing a deliberate image
+	// wants. Anamorphic is a bare gate in the engine -- any non-zero value is
+	// fully on -- so 0.0 is the whole statement, and its RATIO is left
+	// unwritten because a zero gate makes it unobservable and RestoreEngine
+	// puts it back to the engine's 3.0 on the way out.
 	clearscope static void NeonUnisonBloom()
 	{
 		Bloom(1.90, 0.45, 0.65, 1.0, 1.0, 1.0);
@@ -3403,79 +3798,85 @@ class GITD_PresetProfile abstract
 		// THE EXPOSURE IS THE LAST VOICE, and it is the only one that can act
 		// on the whole frame at once.
 		//
-		// Speed 1.6 is roughly a second to adapt -- a quarter of the beat. The
+		// SPEED 0.03 IS ROUGHLY ONE SECOND, and both halves of that sentence
+		// have to be here because the number is not seconds. It is the source
+		// alpha of a per-FRAME alpha blend, so the time constant is
+		// 1 / (speed * 35) -- 0.03 gives 0.95 s, a quarter of the beat. The
 		// lanes cut, the wave peaks, and the frame swells a beat-quarter
 		// behind them and settles before the next cut. That lag is what turns
 		// four synchronised systems into something that reads as BREATHING
-		// rather than as flashing. Faster (Red Alert's 3.0) and the eye keeps
-		// perfect pace, which cancels the pulse instead of carrying it; slower
-		// (Low Power's 0.6) and it averages the bar into one brightness and
-		// the beat disappears entirely.
+		// rather than as flashing.
 		//
-		// Min 0.35 -- above Low Power's floor, because this room is meant to
-		// be legible, and well under a value that would lift the darkness the
-		// neon is being read against.
+		// This shipped as 1.6 with a comment claiming "roughly a second".
+		// Above 1.0 the destination factor (1 - speed) goes NEGATIVE and the
+		// meter oscillates instead of converging -- so the loudest preset in
+		// the file, hard-cutting four surfaces on one beat under a low bloom
+		// threshold, had an eye that never settled. Faster than 0.03 (Red
+		// Alert's territory) and the eye keeps perfect pace, which cancels
+		// the pulse instead of carrying it; slower (Low Power's ~3 s) and it
+		// averages the bar into one brightness and the beat disappears.
 		//
-		// NOTE: RestoreEngine() puts the bloom back and does NOT put exposure
-		// back -- it restores nine gl_bloom_* cvars and no gl_exposure_* at
-		// all. Low Power and Red Alert already leak the same way. Leaving this
-		// preset therefore leaves 1.00 / 0.35 / 1.0 / 1.6 standing with the
-		// Preset row reading Off. That is a fault in RestoreEngine rather than
-		// here, and it is written down so the third preset to hit it is the
-		// one that gets it fixed.
-		// 0.03 for the "roughly a second" the comment claims. 1.6 was above
-		// 1.0 and therefore divergent -- and this is the loudest preset in the
-		// file, hard-cutting all four surfaces on one beat under a low bloom
-		// threshold. An exposure that never settles is the last thing it needed.
+		// Min 0.35 -- the engine's own floor, above Low Power's, because this
+		// room is meant to be legible and well under a value that would lift
+		// the darkness the neon is being read against. Base 1.0 with scale
+		// 1.0 means base + light*scale never drops below 1, so this exposure
+		// is incapable of LIFTING the room at all; it can only pull a bright
+		// one down. That is what actually protects the dark, not min.
 		Exposure(1.00, 0.35, 1.0, 0.03);
 	}
 
 	// =====================================================================
-	// 7. NEON CHAOS -- five clocks, and none of them is the beat
+	// 7. NEON CHAOS -- cheap party lights that nobody ever coordinated
 	//
-	// WHAT IT IS. Neon Unison is this hardware with everything agreeing: one
-	// palette, one rhythm, the whole room arriving on a colour together. This
-	// is the same hardware with the conductor shot. Nothing agrees with
-	// anything, on purpose, and the thing being aimed at is not "busy" -- it
-	// is UNPREDICTABLE. You should never be able to picture the room you are
-	// about to walk back into.
+	// WHAT IT IS, AND WHAT YOU SEE IN ONE FRAME. A room somebody hired a rig
+	// for and never dressed. Eight colours that were bought separately and do
+	// not belong together, a truss turning slowly overhead throwing them
+	// around, a floor grid with the spacing knocked out of true and lasers
+	// hanging in the air above it, and a torch in your hand that picks its own
+	// colour and will not tell you which. Nothing agrees with anything. It is
+	// a disco, and a disco is not a design failure -- it is the one room where
+	// refusing to choose is the correct answer.
+	//
+	// THAT IS THE AXIS AGAINST ITS SISTER. Neon Unison is a cool room crossed
+	// by warm light, a key and two fills and an accent, chosen by somebody
+	// with taste. This is the same hardware with nobody in charge. Both
+	// presets used to argue that the axis was TEMPO -- one clock against five
+	// mutually-prime clocks -- and that is a thirty-second read at minimum
+	// which no player was ever going to make. Colour relationship is a
+	// two-second one and it is visible in a still frame.
 	//
 	// THE FAILURE MODE HAS A NAME AND IT IS EPILEPSY. A preset called Chaos
 	// invites exactly one mistake: getting the chaos from RATE. Turn every
 	// clock up, let the lanes strobe, and what you have built is not
 	// unpredictable, it is a hazard -- and it is also boring, because a room
 	// changing five times a second reads as one texture rather than as a
-	// sequence of rooms.
+	// sequence of rooms. So every individual clock in here is SLOW. The
+	// shortest colour hold is seven seconds, the fastest undulation is one
+	// every three and a quarter, and the rig overhead takes seventy-two
+	// seconds to come round. NOTHING IN THIS FUNCTION BLINKS, and the one
+	// place a party preset would obviously reach for a blink is refused by
+	// name below with the reason spelled out.
 	//
-	// So the whole design runs the other way. Every individual clock in here
-	// is SLOW -- slower than Red Alert's, and in places slower than Low
-	// Power's. The shortest colour hold anywhere is seven seconds. The
-	// fastest thing that moves is a per-sector undulation at 0.31 cycles a
-	// second, about one every three seconds, which is an order of magnitude
-	// below the three-per-second where photosensitive response begins. The
-	// chaos comes from the fact that five slow clocks are mutually prime and
-	// therefore never line up:
+	// The chaos is not rate. It is that five slow clocks are mutually prime
+	// and therefore never line up:
 	//
 	//   wall bottom   151 s of holds   snap        travels east/west
 	//   wall top      157 s            fade        travels north/south
 	//   ceiling       163 s            breathe     ripples from the centre
 	//   floor         167 s            ping-pong   travels by height
-	//   your torch    131 s            fade        eight hues, in your hand
+	//   your torch    131 s            fade        a colour it rolls itself
 	//
-	// All five totals are prime, so the five come back into agreement once
-	// every hundred and thirty-one times a hundred and fifty-one times ...
-	// -- about two thousand six hundred years of continuous play. Nobody
-	// will ever see this room twice, and not one surface in it is moving
-	// fast.
+	// All five totals are prime, so the five come back into agreement about
+	// once every two and a half thousand years of continuous play.
 	//
-	// AND THE COLOUR IS FREE. GITD_Presets.Params gives slot 7 hue spread
-	// 360, and the generator hands each lane its own QUARTER of that: wall
-	// bottom lives in the reds, wall top in the yellow-greens, the ceiling in
-	// the cyans, the floor in the violets, each walking about eighty degrees
-	// of its own quarter across eight slots. The four surfaces of a room are
-	// structurally incapable of being the same colour. That is the entire
-	// colour half of this preset and it costs nothing here -- which is why
-	// this function spends its budget on TIME and SPACE instead.
+	// AND THE COLOUR IS FREE, ON THE SURFACES. Params(7) gives slot 7 hue
+	// spread 360, and SlotColor hands each lane its own QUARTER: wall bottom
+	// in the reds, wall top in the yellow-greens, the ceiling in the cyans,
+	// the floor in the violets, each walking about eighty degrees of its own
+	// quarter across eight slots. The four surfaces of a room are structurally
+	// incapable of being the same colour. That costs this function nothing, so
+	// the budget goes on the three things Params cannot do: the RIG, the FLOOR
+	// and the TORCH.
 	// =====================================================================
 	clearscope static void NeonChaos()
 	{
@@ -3486,20 +3887,24 @@ class GITD_PresetProfile abstract
 		LanesI("_enabled", 1);
 		LanesI("_slots", 8);
 
-		// TWO SWITCHES THAT WOULD UNDO THE WHOLE PRESET, OFF.
+		// THE HARMONISER, OFF, AND A DEAD SWITCH STATED ANYWAY.
 		//
-		// _random is the lane rolling a fresh colour every time one is asked
-		// for. It sounds like this preset and it is its opposite: a value
-		// re-rolled on arrival cannot be composed, so the four quarters of the
-		// wheel collapse into one uniform confetti and every lane becomes the
-		// same lane. Chaos that is uniform is a texture.
+		// _bleed pulls each lane 35% toward the average of its two neighbours.
+		// It is the mod's one dial whose entire job is making the four
+		// surfaces agree, it is ON by default, and leaving it unstated would
+		// have quietly averaged the red wall and the cyan ceiling toward each
+		// other at every junction in the map. This was the first thing that
+		// had to go.
 		//
-		// _bleed is worse. It pulls each lane 35% toward the average of its
-		// two neighbours -- it is the mod's HARMONISER, the one dial whose
-		// entire job is making the four surfaces agree. It is on by default,
-		// so leaving it unstated would have quietly averaged the red wall and
-		// the cyan ceiling toward each other at every junction in the map.
-		// This is the first thing that had to go.
+		// _random is stated beside it and is currently INCAPABLE of doing
+		// anything: GITD_Lane.Step takes colours from GITD_Presets.SlotColor
+		// whenever preset > 0, and every path that reads _random lives inside
+		// GITD_Lane.SlotColor on the other branch. So the one preset that
+		// actually wants a rolled colour cannot get one from the lanes. It
+		// gets one from the torch instead (below), which is the only live
+		// randomiser in the mod. This zero is a stated position, not a
+		// defence; if that branch is ever fixed it should be reconsidered
+		// here first, because this is the preset the switch was built for.
 		LanesI("_random", 0);
 		LanesI("_bleed", 0);
 
@@ -3563,6 +3968,12 @@ class GITD_PresetProfile abstract
 		// spreads over four to one, so the ceiling wash and the wall seam are
 		// not even the same ORDER of thing.
 		//
+		// Unison now spreads its four as well, and the two spreads are
+		// opposite statements: Unison's is a HIERARCHY -- a key, two fills and
+		// an accent, four weights a lighting plan would carry. This is four
+		// unrelated numbers, four different curves, no relationship at all.
+		// Same twelve cvars; one of them was planned and one of them was not.
+		//
 		// The floor gets the widest reach and Linear, the flattest curve, so
 		// it is the one surface that stays legible while everything above it
 		// argues. You have to be able to see the ground.
@@ -3589,9 +4000,6 @@ class GITD_PresetProfile abstract
 		B("gitd_pc_shape", false);
 
 		// ---- AND THE ROOM ITSELF IS NOT EVENLY LIT ------------------------
-		//
-		// This is the spatial half of the preset and no shipping preset had
-		// ever touched it -- all four set _anim 0 and leave it there.
 		//
 		// The lane animation offsets each SECTOR's phase by where that sector
 		// sits, so a crest travels through the map rather than the whole map
@@ -3632,7 +4040,9 @@ class GITD_PresetProfile abstract
 		// product. That is not a flourish -- it is the cheapest possible way
 		// to guarantee what the preset promises. Any two rows that shared a
 		// factor would re-sync on that factor and the room would acquire a
-		// beat, and a beat is a thing you learn.
+		// beat, and a beat is a thing you learn. It is also the exact property
+		// the sister preset spends its entire function BUYING, which is worth
+		// noticing: these two functions run the same machine in reverse.
 		//
 		// The holds inside each row are deliberately uneven, so a lane is not
 		// merely on a long cycle, it is on a long cycle with no internal
@@ -3644,17 +4054,15 @@ class GITD_PresetProfile abstract
 		// odd numbers mostly are -- the last entry in each row is simply
 		// whatever makes the sum come out right, which is why every row ends
 		// on a composite and wall top carries a nine in the middle of it.
-		// Nothing rests on those; the four sums are the whole mechanism.
 		//
 		// SEVEN SECONDS IS THE FLOOR and among the lanes it appears exactly
 		// twice -- the torch row further down carries a third. That number
 		// is the humane-rate constraint written down: no surface in this room
-		// is ever asked to change more than once every seven seconds, and the
-		// four of them together average a change about every five.
+		// is ever asked to change more than once every seven seconds.
 		//
 		// (The menu's hold slider stops at 30. Anything above that is
-		// preset-only -- Black and White already ships a 40 -- so a player who
-		// opens the lane page will not be able to reach these from it.)
+		// preset-only, so a player who opens the lane page cannot reach these
+		// from it -- which also means they cannot be restored from it.)
 		HoldFor("gitd_wb", 19, 31, 11, 23, 13, 29, 17,  8);   // 151
 		HoldFor("gitd_wt", 23, 13, 37, 11, 19,  9, 29, 16);   // 157
 		HoldFor("gitd_cg", 11, 41, 17,  7, 23, 13, 31, 20);   // 163
@@ -3667,14 +4075,14 @@ class GITD_PresetProfile abstract
 		// distance across the floor. The wave is the only vertical motion in
 		// the room, so it can never be mistaken for any of them.
 		//
-		// AND IT IS THE FIRST PRESET TO USE THE COLOUR SLIDE. All four
-		// shipping presets set gitd_wave_colour to 0.0 and nobody has ever
-		// touched it. It slides the near/far colour boundary along the wave,
-		// which means one wall is two colours at two distances and the join
-		// between them crawls. That is colour chaos bought with no rate at
-		// all -- it changes what a surface IS without changing how often it
-		// changes -- which makes it the single most on-brief dial in the mod
-		// for this preset.
+		// AND IT IS THE ONLY PRESET TO USE THE COLOUR SLIDE. It slides the
+		// near/far colour boundary along the wave, which means one wall is two
+		// colours at two distances and the join between them crawls. That is
+		// colour chaos bought with no rate at all -- it changes what a surface
+		// IS without changing how often it changes -- which makes it the most
+		// on-brief dial in the mod for this preset. Unison sets it to zero for
+		// exactly the same reason inverted: a second hue at a distance is a
+		// colour nobody chose, and over there every colour was chosen.
 		//
 		// BRIGHTNESS DEEPEST OF THE THREE TERMS, DELIBERATELY LOW. Reach and
 		// colour move the shape and the hue; brightness moves the LEVEL, and
@@ -3696,25 +4104,25 @@ class GITD_PresetProfile abstract
 		// The first three arguments are the ones with no prose above them, so:
 		// length 1100 is over four times the default because a SHORT wavelength
 		// on a rising shape is a LADDER -- evenly spaced rungs climbing a wall,
-		// which is a regular pattern and the exact thing the lattice was
-		// refused for. One long swell up the whole wall is not. Speed 0.45
-		// rad/s is a fourteen-second period, slower than every clock above it
-		// so it can never be mistaken for one of them. Sharp 2.0 is barely off
-		// the plain sine: the crest is allowed to be a little defined and no
-		// more, for exactly the reason anim_sharp is pinned to 1.0 above.
+		// which is a regular pattern and belongs to the sister preset's ruler.
+		// One long swell up the whole wall is not. Speed 0.45 rad/s is a
+		// fourteen-second period, slower than every clock above it so it can
+		// never be mistaken for one of them. Sharp 2.0 is barely off the plain
+		// sine: the crest is allowed to be a little defined and no more, for
+		// exactly the reason anim_sharp is pinned to 1.0 above.
 		Wave(1100.0, 0.45, 2.0, 5,   // shape 5: rising, the only vertical thing here
 		     0.30,                   // edge: the shape is wrong and stays wrong
 		     0.18,                   // level: kept LOW. This is the throb dial.
-		     0.55,                   // the colour slide -- first use in this file
+		     0.55,                   // the colour slide -- this preset owns it
 		     1.0,                    // detune at maximum: no countable period
 		     1.0,                    // seed at maximum: no two rooms agree
 		     210);
 
-		// The wave's origin, stated because Wave() does not write it and
-		// nothing else in this file ever has. 0 is the map centre. Origin 2
-		// follows you, and a wave centred on the player is the one arrangement
-		// in the whole system that is never surprising -- you would carry the
-		// crest with you and the room would look the same from everywhere.
+		// The wave's origin, stated because Wave() does not write it. 0 is the
+		// map centre. Origin 2 follows you, and a wave centred on the player
+		// is the one arrangement in the whole system that is never surprising
+		// -- you would carry the crest with you and the room would look the
+		// same from everywhere.
 		I("gitd_wave_origin", 0);
 
 		// Wave() forces gitd_seamless off, and that is fortunate rather than a
@@ -3796,7 +4204,9 @@ class GITD_PresetProfile abstract
 		//
 		// Pickup 0 would dodge that and buy something worse: a single flat
 		// tint laid over four disagreeing surfaces is a unison, applied last,
-		// by a system that does not know what it is covering.
+		// by a system that does not know what it is covering. The sister
+		// preset does exactly that on purpose and it is right to -- over there
+		// the air is another member of the family. Here it is a veto.
 		//
 		// So the layer is off -- and everything that rides on it is written
 		// down anyway. The renderer already forces tendrils, banks, the bow
@@ -3814,10 +4224,10 @@ class GITD_PresetProfile abstract
 		FogGradient(0x808080, 0.0);
 
 		// The three the layer owns that no helper touches, for the same reason
-		// as the six above and it is the same promise: Lovecraftian Fog stacks
-		// the layer up a room with a period and puts a roll on it, and neither
-		// of those goes away when the layer is switched off. A player who
-		// re-enables fog here would get somebody else's repeating strata.
+		// as the six above: Lovecraftian Fog stacks the layer up a room with a
+		// period and puts a roll on it, and neither of those goes away when
+		// the layer is switched off. A player who re-enables fog here would
+		// get somebody else's repeating strata.
 		//
 		// -32768 is not an arbitrary number. It is the cvar's own default and
 		// its sentinel for "no bottom", and its slider stops at -512, so this
@@ -3837,51 +4247,155 @@ class GITD_PresetProfile abstract
 
 		// Back to the colour picker. Mode 4 takes the layer's colour from the
 		// nearest liquid and mode 1 from a lane -- both are live inheritances
-		// from Low Power and Red Alert, and both would fire the moment anyone
-		// turned the layer back on. Lane and blend are inert under mode 0 and
-		// are left where the player had them.
+		// from Low Power, Red Alert and Unison, and all would fire the moment
+		// anyone turned the layer back on. Lane and blend are inert under
+		// mode 0 and are left where the player had them.
 		I("gitd_fog_color_mode", 0);
 
-		// ---- NO LATTICE, AND THE OFF SWITCH IS TWO CVARS ------------------
+		// ---- THE DANCE FLOOR ---------------------------------------------
 		//
-		// A laser grid is a REGULAR pattern -- evenly spaced lines on a fixed
-		// rotation, the most predictable thing this mod can draw. In a preset
-		// whose only promise is that you cannot predict the room, it is not a
-		// near miss, it is the opposite.
+		// THE LATTICE IS BACK, AND IT IS BROKEN. This preset used to refuse it
+		// outright, on the argument that a laser grid is a REGULAR pattern --
+		// evenly spaced lines on a fixed rotation, the most predictable thing
+		// this mod can draw -- and that a preset promising you cannot predict
+		// the room has no business drawing one. That argument was correct
+		// about a RULED lattice and it is the sister preset's, which now draws
+		// exactly that: diamonds at 96, every fourth line bolder, nothing
+		// moving, painted flat on the surfaces, in a warm amber that belongs
+		// to the light it lives in.
 		//
-		// NoGrid() ALONE DOES NOT DO IT. It clears gitd_ss_fill_air, the
-		// lattice hanging in the air, and stops there -- but Grid() also
-		// stamps gitd_ss_fill1..8 to 1, and nothing ever puts those back. All
-		// four shipping presets call NoGrid() and not one of them states
-		// gitd_ss_fillN, so any of them following a Grid() preset still paints
-		// a lattice on every band. This one says both.
-		NoGrid();
-		for (int i = 1; i <= 8; i++) I("gitd_ss_fill" .. i, 0);
+		// This is the same eleven cvars saying the opposite thing. Squares
+		// rather than diamonds, at 64 rather than 96 so it is denser and
+		// cheaper-looking. NO RULER -- fill_major stays at zero, because a
+		// bold line every fourth one is the single gesture that says a person
+		// measured this, and nobody measured this. The spacing is knocked out
+		// of true by the jitter, the whole pattern slides, and it hangs in the
+		// AIR as well as landing on the walls.
+		//
+		// One frame tells them apart, which is the entire point of putting the
+		// same system in both.
+		//
+		// THE AIR LATTICE IS THIS PRESET'S ALONE, AND IT IS NOT A PREFERENCE.
+		// SweepAirLattice solves a ray against a plane and cases shapes 2, 3
+		// and 5, then `else continue` -- ring and shell need a quadratic
+		// nobody wrote. Unison's eight bands are ALL shape 1, so its air value
+		// is honestly zero and can never be anything else. Three of the four
+		// bands here are shapes 2, 3 and 5. This is the only preset in the
+		// file that can put lasers in the air at all.
+		//
+		// 0.4 out of a possible 4.0. The console demo runs 3.0 and that is a
+		// screen door; a tenth of it is beams you can see standing in the band
+		// and walk through, which is a party rig, not a security cage.
+		//
+		// AND THE AIR LATTICE IGNORES DRAW MODE. The shader adds it for any
+		// band whose mode is non-zero, so band 3 -- the travelling SHADOW --
+		// carries lit lines through the darkness it is casting. That is not a
+		// bug to route around, it is what a real beam does: the air is lit and
+		// the floor is not. Stated so the next reader does not "fix" it.
+		//
+		// WHITE, and it is the one colour decision in the preset that is a
+		// refusal rather than a clash. Everything else here belongs to a
+		// family that argues with three others; the lattice is the only thing
+		// drawing STRUCTURE, and structure in a colour would be a fifth
+		// opinion about a room that already has four too many. White is also
+		// what an untinted projector throws, which is what the cheap end of a
+		// hire rig actually looks like, and it stays legible over all eight
+		// rolodex hues below.
+		Grid(64.0, 3.0, 1.0, 0xFFFFFF, 0.0, 0.4);
 
-		// ---- the torch, which is the fifth clock -------------------------
+		// NO FLICKER, AND THIS IS THE MOST IMPORTANT REFUSAL IN THE FUNCTION.
 		//
-		// Blackout is the only preset that says nothing about the flashlight
-		// and it is listed as a gap. This one does the opposite and makes the
-		// torch a full participant: eight colours on a 131-second cycle,
-		// coprime with all four lanes, in your hand.
+		// "A third of the lines are out at any moment" is the obvious way to
+		// make a grid read as broken, and it is the one thing in this system
+		// that can hurt somebody. SweepLineAxis re-rolls the drop-out hash on
+		// `floor(t * 8.0)` -- EIGHT TIMES A SECOND, per line, forever. Every
+		// number above this line was chosen to keep the room under three
+		// changes a second, and one call to fill_flicker would have put an
+		// 8 Hz modulation across whatever fraction of the screen the lattice
+		// covers, arriving from a cvar that has nothing to do with the lanes
+		// and would never have been looked at again. Guarded, silent, and a
+		// photosensitivity hazard. Zero, and the reason is written down so
+		// nobody re-derives it as a good idea.
 		//
-		// WHY THAT IS WORTH TWENTY CVARS. Every lane is locked to its own
-		// quarter of the wheel and can only ever be one family of colour. The
-		// torch walks the WHOLE wheel, so whatever you point it at is briefly
-		// lit in a colour that surface is structurally incapable of being --
-		// a green wash on the red wall lane, an amber one on the cyan ceiling.
-		// It is the only thing in the room that can disagree with a surface on
-		// that surface's own terms, and you are carrying it.
+		// The broken read is bought from the two dials that have no rate at
+		// all instead:
+		//
+		// JITTER 0.55 pushes each line off the lattice by a stable hash of its
+		// own index -- up to about seventeen units on a 64 spacing, so lines
+		// nearly touch in places and yawn apart in others. It is computed once
+		// per line and never changes, so it is a broken grid rather than a
+		// blinking one. Unison's is zero, because a ruler with wandering
+		// graduations is not a ruler.
+		//
+		// DRIFT 20 slides the whole pattern along the band at twenty units a
+		// second -- one 64-unit cell every three and a quarter seconds, the
+		// same order as the slowest lane animation and comfortably inside the
+		// budget. This shipped in the plan as 0.6, which on a slider that runs
+		// to 400 is indistinguishable from off: a number that reads as motion
+		// and produces none.
+		//
+		// AND THE DRIFT CLOCK IS NOT ACTUALLY MINE. The shader's `timer` is
+		// the material's own elapsed time scaled by that material's shader
+		// speed, so the lattice drifts at a slightly different rate depending
+		// on which texture is behind it. In any other preset that would be a
+		// defect worth routing around. Here it is free chaos and it is kept,
+		// stated rather than discovered.
+		//
+		// GRADIENT ZERO. A fade along one axis is a COMPOSITION -- it says
+		// somebody decided which end mattered. Nobody decided anything here.
+		// (Grad axis is left unwritten: the shader reads it only inside
+		// `if (grad > 0)`, so zeroing the amount already answers it.)
+		//
+		// MAJOR ZERO and its BOOST left alone, on the same rule -- the boost
+		// is unread while major is zero, and a second write would be noise.
+		F("gitd_ss_fill_flicker", 0.0);
+		F("gitd_ss_fill_jitter", 0.55);
+		F("gitd_ss_fill_drift", 20.0);
+		F("gitd_ss_fill_grad", 0.0);
+		F("gitd_ss_fill_major", 0.0);
+
+		// ---- the torch, WHICH PICKS ITS OWN COLOUR -----------------------
+		//
+		// THE ONLY LIVE RANDOMISER IN THE MOD, IN THE ONE PRESET THAT WANTS
+		// ONE. gitd_rnd_colors and the per-lane _random cannot reach a preset
+		// at all (see the note at the top of this function), so the mod ships
+		// a randomiser page that four presets solemnly switch off and nothing
+		// has ever been able to use. Flashlight.SlotColor has no preset gate:
+		// under fl_random it calls GITD_Palette.RandomColor() directly. That
+		// is the one door, and a disco is the one room where "roll it" is the
+		// correct answer rather than a failure to choose.
+		//
+		// GOVERNOR 3, NEON ONLY -- full saturation, value between 0.85 and
+		// 1.0, any hue. It is the governor's first user in the file's history,
+		// and it answers this preset's own long-standing objection that "a
+		// deep blue or a bottle green would make the torch unplayable": the
+		// unconstrained roll is three independent channels, which averages to
+		// mud, and mode 3 cannot produce a dark or a muddy colour at all.
+		//
+		// THE COST IS REAL AND IT IS AFFORDABLE HERE SPECIFICALLY. Full
+		// saturation means a hue near 240 lights the room in blue only, and
+		// you will read a wall badly for a few seconds. That would be
+		// unshippable in Blackout, where the torch is the only light there is.
+		// This room is LIT -- four lanes at intensity 0.9 to 1.8 under a
+		// gentle Compress -- so the torch is a colour you are adding to a lit
+		// room rather than the only way to see it. That is why this preset can
+		// afford the roll and no other one can.
+		//
+		// HARD CONSTRAINT, AND IT IS THE REASON fl_slots SITS FOUR LINES
+		// ABOVE fl_random RATHER THAN ANYWHERE ELSE: fl_random is only safe
+		// because fl_slots is 8. Flashlight.CurrentColor short-circuits at
+		// `count <= 1` and returns SlotColor(0) -- and that path runs EVERY
+		// FRAME. Under fl_random that is a fresh RandomColor() at 35 Hz, six
+		// inches from the eye, guarded and silent and never once erroring.
+		// ANY EDIT THAT DROPS fl_slots HERE MUST CLEAR fl_random IN THE SAME
+		// EDIT. With eight slots SlotColor is called only at slot transitions,
+		// so it is a fresh colour every 7 to 29 seconds, crossfaded over two.
 		//
 		// FADE, NOT SNAP, and it is the one place the choice is not about
 		// composition. A torch that hard-cuts colour is a strobe held six
 		// inches from your face and pointed wherever you are looking. Speed
 		// 0.014 is a two-second crossfade, so the beam is always mid-journey
 		// between two hues and never once cuts.
-		//
-		// Every one of the eight is at high value. A torch is a navigation
-		// tool before it is a colour, and a deep blue or a bottle green would
-		// make the preset unplayable rather than chaotic.
 		B("fl_enabled", true);
 		I("fl_range", 1400);
 		F("fl_intensity", 1.15);
@@ -3893,11 +4407,26 @@ class GITD_PresetProfile abstract
 		F("fl_dust_scale", 0.05);
 		F("fl_dust_drift", 0.12);
 		B("fl_bounce", false);     // no omnidirectional fill. A torch is a cone.
-		B("fl_random", false);     // the eight below are chosen, not rolled
-		I("fl_slots", 8);
+		I("fl_slots", 8);          // EIGHT, and the next line depends on it
+		B("fl_random", true);      // the mod's only reachable randomiser
+		I("gitd_rnd_governor", 3); // neon only: never dark, never muddy
 		I("fl_pattern", 1);        // Fade. Never a cut, six inches from your eye.
 		F("fl_speed", 0.014);      // ~2s crossfade; also the slot clock
+		B("fl_agitate", false);    // pointing the light at a monster does not
+		                           // wake it. Blackout owns that switch, where
+		                           // the torch is the only way to see and
+		                           // making it dangerous is a real trade. Here
+		                           // it would be a combat modifier arriving
+		                           // from a lighting menu
 
+		// The eight chosen hues are now the FALLBACK rather than what draws:
+		// under fl_random SlotColor never reads them. They stay written for
+		// the same reason every other unused position in this file is stated
+		// -- the moment a player turns the roll off on the Flashlight page
+		// they are what the torch becomes, and inheriting Cold War's eight
+		// near-whites or Blackout's single halogen at that moment is the
+		// leftover this whole file exists to prevent. Eight hues evenly around
+		// the wheel, so the fallback is still a torch that agrees with nothing.
 		I("fl_c1", 0xFF3020);   // ember red
 		I("fl_c2", 0xFFB000);   // amber
 		I("fl_c3", 0xC8FF00);   // lime
@@ -3910,16 +4439,61 @@ class GITD_PresetProfile abstract
 		// 131 seconds, prime, and uneven inside itself so the torch does not
 		// acquire a rhythm you could time a corridor against. HoldFor takes a
 		// bare prefix, and the flashlight's holds are fl_hold1..8, so the lane
-		// helper fits it exactly.
+		// helper fits it exactly. These are also what pace the random roll:
+		// seven seconds at the shortest, twenty-nine at the longest.
 		HoldFor("fl", 13, 19, 11, 23, 17, 29, 7, 12);   // 131
 
-		// ---- THE EVENT: FOUR BANDS THAT CROSS ----------------------------
+		// ---- THE RIG: FOUR BANDS ON A TURNING TRUSS ----------------------
+		//
+		// THIS IS THE PRESET'S BIGGEST SINGLE ADDITION AND IT IS THE USER'S
+		// OWN SPECIFICATION. The note at the end of SECTOR_SWEEP.md reads:
+		// "The rotating effect isn't great, it's too much chaos. It should be
+		// like, standing in the middle of a ferris wheel." That is not an
+		// argument against the spin. It is a spec for it: SLOW and LARGE.
+		//
+		//   spin 5 deg/s      one revolution every 72 seconds
+		//   radius 1024       the slider's ceiling, half a large map
+		//
+		// GITD_Wave.BandOrigin fans the bands to 360/count apart around that
+		// orbit, so with four bands you get four origins at ninety degrees --
+		// four lights on a truss, raking the room from a centre that is
+		// turning. At 1024 and 5 deg/s the origin travels about 89 units a
+		// second, which sits inside the band speeds below rather than
+		// swamping them: the rake and the travel are comparable and neither
+		// reads as the whole story. Faster or tighter is the "too much chaos"
+		// the note rejects -- a small quick orbit reads as WOBBLE, which is
+		// what the previous comment here was really objecting to.
+		//
+		// Band 4 is the rising sheet and BandOrigin passes z through
+		// untouched, so it alone does not orbit. Three lights turn and one
+		// stays put. That is what a real rig looks like and it is free.
+		//
+		// AND THE PALETTE IS ON THE TRUSS. spin_colors 8 hands WaveBandColor
+		// the rolodex: the band's colour is chosen by where the spin currently
+		// is rather than by which band it is, cross-faded between neighbours
+		// so it never clicks. At 72 seconds a revolution that is one colour
+		// step every nine seconds -- SLOWER than the seven-second lane floor,
+		// and a crossfade rather than a cut, so it costs nothing against the
+		// rate budget. It is a rig thumbing through its gels.
+		//
+		// THE CONSEQUENCE, STATED BECAUSE IT IS EASY TO MISS: with
+		// spin_colors > 1 the rolodex OVERRIDES every band's own colour, and
+		// it reads all EIGHT gitd_ss_cN even though only four bands run. The
+		// previous version of this preset wrote four colours and set
+		// spin_colors 0 with a comment explaining that anything above 1 would
+		// delete them. All eight are written below and the four-colour
+		// argument is gone with the four colours.
+		F("gitd_ss_spin", 5.0);
+		F("gitd_ss_spin_radius", 1024.0);
+		I("gitd_ss_spin_colors", 8);
+
+		// ---- and the four bands themselves -------------------------------
 		//
 		// THERE IS NO PER-BAND DIRECTION CVAR. gitd_ss_direction is one value
 		// for the whole train, so "bands going different ways" cannot be built
 		// the obvious way. What stands in for it is per-band SHAPE, and it is
 		// a stronger statement than the sign flip would have been: a ring
-		// leaves the map centre radially, an east/west bar runs along X, a
+		// leaves its origin radially, an east/west bar runs along X, a
 		// north/south bar along Y, and a rising band climbs. Four bands on
 		// four different axes genuinely cross each other. Four bands on one
 		// axis with the sign flipped would only have passed through.
@@ -3927,14 +4501,11 @@ class GITD_PresetProfile abstract
 		// Direction 2, out and back, so each band returns -- at its own speed,
 		// which means the return trip scrambles the order they arrived in.
 		//
-		// ORIGIN 0, THE MAP CENTRE, and this is the counter-intuitive one.
-		// Origin 2 follows you, which sounds like the chaotic choice and is
-		// the most predictable setting in the list: every band would be
-		// centred on you, so every band would look identical from where you
-		// stand no matter where you go. A fixed origin means the crossings
-		// happen in a PLACE, and where you are relative to that place changes
-		// every time you move. The room is different because you moved, which
-		// is the cheapest unpredictability there is.
+		// ORIGIN 0, THE MAP CENTRE, which is now the centre the TRUSS orbits
+		// rather than where the bands leave from. Origin 2 follows you, which
+		// sounds like the chaotic choice and is the most predictable setting
+		// in the list: every band would be centred on you, so every band would
+		// look identical from where you stand no matter where you go.
 		//
 		// THE SPEEDS ARE PRIME AND THEY ARE INTEGERS. Prime for the same
 		// reason the holds are. Integers because the sweep working set moves
@@ -3948,8 +4519,7 @@ class GITD_PresetProfile abstract
 		// is 23, 96, 90 and 76 rather than 23, 71, 53 and 37. The table is the
 		// seed, not the answer. What survives the multiply is the property
 		// that was wanted: no two equal, and none an integer multiple of
-		// another. The primes are how that is guaranteed before drift touches
-		// it, not a claim about the numbers on screen.
+		// another.
 		//
 		// And nothing here is fast. The narrowest band is 90 units thick,
 		// which the shader draws twice as wide, so even at its drifted 96
@@ -3958,7 +4528,7 @@ class GITD_PresetProfile abstract
 		B("gitd_ss_enabled", true);
 		I("gitd_ss_count", 4);
 		I("gitd_ss_shape", 1);        // the shared shape; all four override it
-		I("gitd_ss_origin", 0);       // a place, not you
+		I("gitd_ss_origin", 0);       // a place, not you -- and now the hub
 		I("gitd_ss_direction", 2);    // out and back, at four different speeds
 		I("gitd_ss_trigger", 0);      // free-running: the room is not about you
 		I("gitd_ss_drive", 0);        // time, not kills and not your health
@@ -3973,12 +4543,10 @@ class GITD_PresetProfile abstract
 		F("gitd_ss_drift", 0.35);     // per-band speed spread ON TOP of the
 		                              // table, so even the table is not the
 		                              // whole story
-		F("gitd_ss_health_speed", 0.0);// the sweep does not react to you
-		F("gitd_ss_spin", 0.0);        // a swung origin reads as wobble
-		F("gitd_ss_spin_radius", 0.0);
-		I("gitd_ss_spin_colors", 0);   // above 1 this OVERRIDES every band
-		                               // colour with a rolodex, which would
-		                               // delete the four chosen below
+		F("gitd_ss_health_speed", 0.0);// the sweep does not react to you. Red
+		                               // Alert owns the alternate drive, where
+		                               // a system reading your vitals is the
+		                               // whole idea
 		B("gitd_ss_drop", false);
 		B("gitd_ss_actors", false);
 
@@ -3987,14 +4555,14 @@ class GITD_PresetProfile abstract
 		// so 97, 149 and 191 put the four launches at 0, 2.8, 7.0 and 12.5
 		// seconds into a 267-second traverse. All four inside the first
 		// thirteen seconds, which is fine and is the point: they leave
-		// together and then come apart, because their speeds are 23, 71, 53
-		// and 37 with drift on top. By the time the ring is halfway out, the
-		// east/west bar has been out and come back.
+		// together and then come apart. By the time the ring is halfway out,
+		// the east/west bar has been out and come back.
 		I("gitd_ss_gap1",  97);
 		I("gitd_ss_gap2", 149);
 		I("gitd_ss_gap3", 191);
 
 		// Band 1 -- the ring. Slow, thick, the closest thing to a clock.
+		// Shape 1, so it is the one band with no lasers in the air.
 		F("gitd_ss_speed1", 23.0); I("gitd_ss_shape1", 1);
 		I("gitd_ss_thick1", 160);  I("gitd_ss_draw1", 1);   // add
 
@@ -4006,13 +4574,15 @@ class GITD_PresetProfile abstract
 		// the finished pixel down per fragment, so this is a wide travelling
 		// shadow running at right angles to the bright bar above it. Where
 		// they cross is the image of this preset: light and dark arriving on
-		// the same wall from two directions at once.
+		// the same wall from two directions at once -- and the air lattice
+		// still draws inside it, so the shadow has beams standing in it.
 		F("gitd_ss_speed3", 53.0); I("gitd_ss_shape3", 3);
 		I("gitd_ss_thick3", 300);  I("gitd_ss_draw3", 3);   // crush
 
 		// Band 4 -- rising, and a reveal. It pulls the dark aside rather than
 		// adding light, so what it exposes is whatever the lanes happen to be
 		// doing underneath -- a different room every pass, composed by nobody.
+		// It is also the band that does not orbit.
 		F("gitd_ss_speed4", 37.0); I("gitd_ss_shape4", 5);
 		I("gitd_ss_thick4", 520);  I("gitd_ss_draw4", 2);   // reveal
 
@@ -4023,31 +4593,48 @@ class GITD_PresetProfile abstract
 		// lighting bug rather than as a band -- and running it alongside the
 		// crush band would darken band 3 twice.
 		//
-		// gitd_ss_light_mode has to be said as well, and no preset in this
-		// file has ever said it. gitd_ss_light gates fx 1 and fx 2 ONLY;
-		// fx 3 and fx 4 run whatever it is set to, and with perband off every
-		// band takes its effect from light_mode. So an inherited light_mode of
-		// 3 would have all four bands recolouring the glow they cross --
-		// overwriting the lane colours, which are the preset.
+		// gitd_ss_light_mode has to be said as well. gitd_ss_light gates fx 1
+		// and fx 2 ONLY; fx 3 and fx 4 run whatever it is set to, and with
+		// perband off every band takes its effect from light_mode. So an
+		// inherited light_mode of 3 would have all four bands recolouring the
+		// glow they cross -- overwriting the lane colours, which are the
+		// preset. perband off also means WaveBandAction never resolves
+		// gitd_ss_scriptN, so no inherited script name can fire here.
 		B("gitd_ss_light", false);
 		B("gitd_ss_perband", false);
 		I("gitd_ss_light_mode", 0);
 
-		// Band colours. Three hues that belong to no lane's quarter, so the
-		// bands can never match the surface they are crossing. Band 3 is a
-		// crush and band 4 a reveal -- both ignore rgb -- but they keep
-		// truthful swatches so the menu shows what they are rather than
-		// whatever the last preset left.
-		I("gitd_ss_c1", 0xFF1090);   // the ring: hot magenta
-		I("gitd_ss_c2", 0x60FF20);   // the bar: acid green
-		I("gitd_ss_c3", 0x140A20);   // the shadow, honestly drawn
-		I("gitd_ss_c4", 0xE8F0FF);   // the reveal: the room's own light back
+		// ---- EIGHT COLOURS NOBODY WOULD PUT IN A ROOM TOGETHER ------------
+		//
+		// This is the palette half of the disco and it is deliberately not a
+		// scheme. Magenta, acid green, cyan, gold, orange-red, violet, white
+		// and spring green: no two of them are complements, no three of them
+		// are a family, and there is no arc through the list. That is the
+		// point -- the sister preset's eight bands are an ARCH in one hue
+		// family, chosen so band 8 hands off to band 1 with no seam. These
+		// were chosen so that any two adjacent ones clash, because the truss
+		// is going to cross-fade between neighbours and the fade should be
+		// through a colour nobody wanted either.
+		//
+		// All eight are live because the rolodex reads all eight regardless of
+		// band count -- WaveBandColor indexes gitd_ss_c(N) by spin phase, not
+		// by band. Bands 3 and 4 crush and reveal and ignore rgb entirely, and
+		// under the rolodex even that is moot; the swatches stay truthful so
+		// the menu shows what the rig is loaded with.
+		I("gitd_ss_c1", 0xFF1090);   // hot magenta
+		I("gitd_ss_c2", 0x60FF20);   // acid green
+		I("gitd_ss_c3", 0x00D8FF);   // cyan
+		I("gitd_ss_c4", 0xFFC400);   // gold
+		I("gitd_ss_c5", 0xFF3A18);   // orange-red
+		I("gitd_ss_c6", 0x8A2BFF);   // violet
+		I("gitd_ss_c7", 0xFFFFFF);   // white
+		I("gitd_ss_c8", 0x00FF88);   // spring green
 
 		// ---- the systems this preset refuses ------------------------------
 		//
-		// Its fog, its lattice, its colour keep and its per-pixel darkness are
-		// all stated further up and are NOT restated here. What follows is
-		// only what has not been mentioned yet.
+		// Its fog, its colour keep and its per-pixel darkness are all stated
+		// further up and are NOT restated here. What follows is only what has
+		// not been mentioned yet.
 
 		// A funnel standing on one axis, doing the same thing forever, is the
 		// most predictable object in the mod and also the most expensive term
@@ -4063,6 +4650,29 @@ class GITD_PresetProfile abstract
 		// here that gets worse with time.
 		NoHeat();
 
+		// SHAPES ON THE FLOOR, OFF, AND THIS REVERSES A DECISION.
+		//
+		// This preset used to leave the floor shapes and the numeric engine
+		// alone on the grounds that they are event MARKS -- something died
+		// here -- rather than room composition, and that the preset has no
+		// opinion about how a player wants their own feedback drawn. That is
+		// sound for the NUMBERS and wrong for the SHAPES: gitd_shape_on_death
+		// ships TRUE, so an enabled master paints straight-sided geometry on
+		// the floor of the preset that just refused a straight-sided lattice
+		// for being straight-sided -- and it paints it in a colour nobody
+		// here composed, on a fade timer nobody here set.
+		B("gitd_shape_enabled", false);
+
+		// AND THE NUMBERS, OFF TOO, AND THIS ONE IS NOT A REVERSAL SO MUCH AS
+		// A CORRECTION. gitd_neon_enabled ships TRUE. Its payloads default
+		// off, so a clean install draws nothing -- but a player who ever
+		// switched on the kill counter gets floating figures in a preset whose
+		// own argument two hundred lines up is that unowned colour is noise
+		// rather than chaos. A number with a font on it is unowned colour that
+		// also holds still. Black and White is the one preset that takes this
+		// system and it takes it on purpose.
+		B("gitd_neon_enabled", false);
+
 		// Light and particles off. The ambience layer colours emitters from
 		// what the map's own texture names imply -- green on slime, orange on
 		// fire -- which is a fifth colour source this preset does not compose
@@ -4072,6 +4682,16 @@ class GITD_PresetProfile abstract
 		// on: the ears are the one channel here that is telling the truth.
 		NoAmbienceLight();
 
+		// AND THE SOUND'S REACH, STATED, BECAUSE THE LINE ABOVE CLAIMS IT.
+		// NoAmbienceLight's own comment says a preset that wants silence has
+		// to say so with the range -- and this preset says the opposite, that
+		// the audio is the fixed reference the eye gets to measure against.
+		// That claim was inherited until now: fw_range is the per-emitter
+		// audibility radius, no preset in this file had ever written it, and
+		// "the sound stays on" was therefore a promise about whatever the last
+		// preset happened to leave. 2048 is the shipped value, chosen.
+		F("fw_range", 2048.0);
+
 		// Footsteps at par and occlusion near the default. Deliberately the
 		// most ordinary numbers in the file. The eye is being asked to do a
 		// great deal in this preset, and the audio is the fixed reference it
@@ -4080,51 +4700,59 @@ class GITD_PresetProfile abstract
 		Steps(1.0);
 		Occlude(0.5);
 
-		// ---- THE RANDOMISE MODES, OFF, AND THIS IS THE ONE THAT MATTERS ---
+		// ---- THE RANDOMISE MODES, AND WHY TWO OF THEM STAY OFF -----------
 		//
 		// A preset named Chaos and a page of switches labelled Randomise are
 		// going to end up in the same room eventually, so this has to be
-		// written down rather than assumed.
+		// written down rather than assumed -- and the answer is no longer a
+		// flat no. The torch above takes the roll. These three do not, and
+		// each for its own reason.
 		//
 		// gitd_rnd_times is the dangerous one and it is dangerous SPECIFICALLY
 		// to this preset. It overrides every one of the thirty-two holds above
 		// with frandom(0, 6) seconds, re-rolled on arrival. That deletes the
 		// prime cycles, deletes the seven-second floor, and leaves four lanes
-		// each changing colour every nought to six seconds with no lower
-		// bound -- which is the epilepsy failure mode this whole design is
+		// each changing colour every nought to six seconds with NO LOWER
+		// BOUND -- which is the epilepsy failure mode this whole design is
 		// built around avoiding, arriving through a switch on another page.
+		// The torch's roll is safe because its holds are fixed at 7 to 29
+		// seconds; this one rolls the holds themselves, which is the entire
+		// difference and the reason one is taken and one is refused.
 		//
-		// gitd_rnd_colors replaces the four quarters of the wheel with a fresh
-		// roll per slot, collapsing the structure the palette is made of.
-		// gitd_rnd_patterns overrides the four chosen transitions with a hash,
-		// which can hand every lane the same one.
+		// gitd_rnd_patterns overrides the four chosen transitions with a hash
+		// keyed on lane index, which can hand every lane the same one. Four
+		// lanes changing by four different MEANS is half of what this preset
+		// is; collapsing them to one is a loss with nothing bought.
 		//
-		// All three are MODES rather than rolls -- a value re-rolled every
-		// time it is asked for cannot be composed, and composition is the only
-		// thing separating this preset from static. gitd_rnd_governor is left
-		// alone because it constrains those rolls and is inert without them.
+		// gitd_rnd_colors is written false and cannot currently do anything at
+		// all -- see the lane note at the top. If GITD_Lane.Step is ever
+		// taught to honour it under a preset, THIS is the preset that should
+		// turn it on first, and the governor three lines up in the torch block
+		// is already the right constraint for it.
 		B("gitd_rnd_colors", false);
 		B("gitd_rnd_times", false);
 		B("gitd_rnd_patterns", false);
 
 		// ---- the five glow-texture terms, off -----------------------------
 		//
-		// Seventeen cvars that no preset in this file has ever stated and that
-		// have no helper, so every preset inherits them. Two of them are
-		// actively wrong here and the other three are merely wrong.
+		// Five cvars with no helper, so every preset inherits them, and Cold
+		// War and Red Alert now own four of the five between them -- which
+		// makes these zeroes live protection rather than hygiene.
 		//
-		// gitd_gpulse is the one that would break the preset outright: it is a
-		// global alarm pulse driven by how many monsters are near you, applied
+		// gitd_gpulse is the one that would break the preset outright: a
+		// global alarm swell driven by how many monsters are near you, applied
 		// to EVERY lane at once. That is a synchroniser. It is Neon Unison,
 		// switched on underneath Neon Chaos, on a clock the preset does not
 		// own. gitd_greact rides the fog disturbance slots, which NoReactive
-		// above has already emptied, so it would be a dial pointing at nothing.
+		// above has already emptied, so it would be a dial pointing at nothing
+		// -- Red Alert is the only preset where those slots are full.
 		//
 		// The other three -- veining, a current along the surface, a crawling
-		// cell network -- are DETAIL inside a band. This preset's chaos is at
-		// room scale, and detail added on top of it does not make it more
-		// unpredictable, only busier. Busy is the thing that gets called
-		// chaotic by people who mean unreadable.
+		// cell network -- are DETAIL inside a band, and Cold War's whole image
+		// is built from them. This preset's chaos is at room scale, and detail
+		// added on top of it does not make it more unpredictable, only busier.
+		// Busy is the thing that gets called chaotic by people who mean
+		// unreadable.
 		F("gitd_gpulse", 0.0);
 		F("gitd_greact", 0.0);
 		F("gitd_gtex_noise", 0.0);
@@ -4146,74 +4774,89 @@ class GITD_PresetProfile abstract
 		// inheriting it from a preset that had designed for it would silently
 		// rebalance the fight.
 		B("gitd_law_enabled", false);
-
-		// Shapes on the floor and the numbers in the world are left alone, and
-		// that is the same call Blackout makes about the sweep: they are
-		// event MARKS -- something died here, you did this much damage -- not
-		// room composition, and this preset has no opinion about how a player
-		// wants their own feedback drawn. Nothing in this function fights them
-		// and nothing they do can change what is argued above.
 	}
 
-	// NEON CHAOS'S BLOOM IS WHITE, AND THE WHITE IS THE WHOLE DECISION.
+	// NEON CHAOS'S BLOOM IS WHITE AND ITS LENS DOES NOT AGREE WITH ITSELF.
 	//
 	// Every other bloom in this file is tinted, and every one of them is right
 	// to be: a tint is the lens agreeing with the preset. Low Power's is
 	// sodium, Red Alert's is red, and in both cases the tint is a fifth vote
 	// for the one colour the preset is about.
 	//
-	// This preset is about four colours that refuse to agree, so a tint of any
-	// kind is a unison applied at the last stage of the pipeline, by a system
-	// that cannot see what it is tinting. Pure 1/1/1 is the only honest
+	// This preset is about eight colours that refuse to agree, so a tint of
+	// any kind is a unison applied at the last stage of the pipeline, by a
+	// system that cannot see what it is tinting. Pure 1/1/1 is the only honest
 	// setting: whatever bleeds off a surface bleeds in that surface's own
 	// colour, and the magenta wall and the cyan ceiling smear past each other
 	// still arguing.
 	//
 	// Threshold 0.30 and amount 1.8, both moderate. High threshold would find
 	// only the sweep bands and let the lanes stay matte, which throws away the
-	// slow half of the preset; low threshold and high amount would smear four
+	// slow half of the preset; low threshold and high amount would smear
 	// opposed hues into each other and MIX them, which is the same failure the
 	// fog was refused for -- bloom is just fog made of light.
 	//
-	// No streak and no fringe. An anamorphic streak has an AXIS, and an axis
-	// is an agreement imposed on a room built to have none. Chromatic
-	// fringing invents colour at every edge, and in the one preset where
-	// colour is composed to the degree, invented colour is the lens
-	// contradicting the design rather than serving it.
+	// CHROMATIC FRINGING, AND THIS PRESET IS THE ONLY PLACE IT BELONGS.
+	// It shipped at zero with the reasoning that "in the one preset where
+	// colour is composed to the degree, invented colour contradicts the
+	// design". That is the SISTER preset's argument wearing this one's name.
+	// Over there every colour was chosen and a lens inventing more of them is
+	// vandalism. Here nothing was chosen by anybody, the truss is already
+	// thumbing through eight gels nobody coordinated, and a lens that cannot
+	// decide what colour an edge is belongs in exactly this room. Unison's
+	// clean glass is now a stated contrast rather than a coincidence.
+	//
+	// 0.06 AND NOT MORE, AND THE CEILING IS NOT THE SLIDER'S. gl_bloom_chromatic
+	// is a CUSTOM_CVAR that clamps itself to 0.1 in the engine
+	// (hw_postprocess_cvars.cpp:79), so anything larger written here would be
+	// silently reduced and the file would carry a number that is not the
+	// number that runs -- the exact class of fault this project keeps
+	// shipping. bloomcombine.fp offsets red and blue radially by dir *
+	// Chromatic, and dir reaches 0.5 at a corner, so 0.06 separates the
+	// channels by three percent of the screen width at the edges and by
+	// nothing at all in the middle. That is a visible break-up on the bright
+	// edges out at the sides and a clean centre you can still aim with.
+	//
+	// NO STREAK. An anamorphic streak has an AXIS, and an axis is an agreement
+	// imposed on a room built to have none. It is a bare gate in the engine --
+	// any non-zero value is fully on, and the only strength lever is its
+	// separate ratio -- so 0.0 is the whole statement, and the ratio is left
+	// unwritten because a zero gate makes it unobservable and RestoreEngine
+	// puts it back to the engine's 3.0 on the way out.
 	clearscope static void NeonChaosBloom()
 	{
 		Bloom(1.80, 0.30, 0.50, 1.0, 1.0, 1.0);
 		EF("gl_bloom_anamorphic", 0.0);
-		EF("gl_bloom_chromatic", 0.0);
+		EF("gl_bloom_chromatic", 0.06);
 
 		// THE SLOWEST EYE IN THE FILE, and it is a safety decision before it
 		// is an aesthetic one.
 		//
-		// Red Alert runs speed 3.0 -- about half a second -- so the eye chases
-		// the alarm and the room PUMPS. That is the correct effect there and
-		// it is precisely the nausea failure mode here: a room already
-		// changing on five clocks, with the exposure pass adding a sixth that
-		// tracks all of them. Speed 0.45 is roughly four seconds, slower than
-		// Low Power's, which means the eye AVERAGES this room instead of
-		// chasing it. The bands cross, the lanes cut, and the exposure barely
-		// moves -- so all the motion you see is motion that was composed.
+		// SPEED 0.007 IS ROUGHLY FOUR SECONDS, and both halves of that have to
+		// be here because the number is not seconds. It is the source alpha of
+		// a per-FRAME alpha blend, so the time constant is 1 / (speed * 35) --
+		// 0.007 gives 4.08 s. Red Alert runs 0.03 territory and the room
+		// PUMPS; that is correct there and it is precisely the nausea failure
+		// mode here, in a room already changing on five clocks with a truss
+		// turning over it. At four seconds the eye AVERAGES this room instead
+		// of chasing it: the bands cross, the lanes cut, the rig comes round,
+		// and the exposure barely moves -- so all the motion you see is motion
+		// that was composed.
+		//
+		// This shipped as 0.45, which is 63 milliseconds. Not merely wrong but
+		// actively against the preset: this is the one that has no shared
+		// clock, and an exposure that fast hands the whole screen a luminance
+		// pump at the sweep rate. The preset audited every clock in the room
+		// for exactly that and then let the exposure pass run one it never
+		// looked at. It is also the reason the fringing above is affordable --
+		// a lens artefact on top of a pumping frame would be unreadable.
 		//
 		// Min 0.20 keeps the adaptation from lifting the black back out from
 		// between the neon, which is where the whole palette gets its
-		// contrast. Base 1.0: this room is lit, it is simply lit by things
+		// contrast. Base 1.0 with scale 1.0 means base + light*scale never
+		// drops below 1, so this exposure cannot lift the room at all, only
+		// pull a bright one down. This room is lit; it is simply lit by things
 		// that do not agree.
-		//
-		// NOTE FOR WHOEVER LEAVES THIS PRESET: RestoreEngine() puts nine bloom
-		// cvars back and does not touch gl_exposure_* at all. So switching
-		// Neon Chaos off leaves the eye at 0.45 while the Preset row reads
-		// Off. Low Power and Red Alert already carry that leak; this is the
-		// third, and it should be fixed in RestoreEngine rather than here.
-		// 0.007 for the four seconds the comment asks for. 0.45 was 63
-		// milliseconds, which is not merely wrong here but actively against the
-		// preset: this is the one that has no shared clock, and an exposure
-		// that fast hands the whole screen a luminance pump at the sweep rate.
-		// Chaos audited every clock in the room for exactly this and then let
-		// the exposure pass run one it never looked at.
 		Exposure(1.0, 0.20, 1.0, 0.007);
 	}
 
@@ -4352,6 +4995,16 @@ class GITD_PresetProfile abstract
 		// stare, then three changes inside a minute, then another long
 		// nothing. An even row is a metronome, and a metronome is machinery
 		// working correctly.
+		//
+		// KNOWN AND DELIBERATE: the menu's own Duration slider (gitd_ln_hold1,
+		// MENUDEF:1559) stops at 30, and eleven of the thirty-two values below
+		// are above it. Restore() hands the player's numbers back untouched, so
+		// nothing is damaged -- but a player who opens that page while this
+		// preset is holding cannot reproduce or even reach half of this rhythm,
+		// and dragging the row once snaps a 52 down to 30. That is a menu
+		// defect rather than a preset one and it is reported as such; the
+		// alternative is capping the preset's own design at the widest value
+		// the UI happens to offer, which is the tail wagging the dog.
 		HoldFor("gitd_wb", 41, 12, 33,  8, 27, 19, 44, 13);   // 197
 		HoldFor("gitd_wt",  9, 36, 14, 22,  7, 31, 46, 16);   // 181
 		HoldFor("gitd_cg", 52,  6, 38, 11, 29, 18, 43, 14);   // 211
@@ -4368,7 +5021,13 @@ class GITD_PresetProfile abstract
 		// this preset is not allowed to have is a cut, and that switch puts the
 		// cuts back. gitd_rnd_times replaces every hold above with a roll of
 		// nought to six seconds on arrival, so four prime clocks become four
-		// flickers. gitd_rnd_colors overrides the generated palette outright.
+		// flickers. gitd_rnd_colors is written for completeness and is the one
+		// of the three that currently does NOTHING to a preset at all:
+		// GITD_Lane.Step takes the preset branch (GlowHandler.zs:272) and every
+		// path that reads gitd_rnd_colors lives inside GITD_Lane.SlotColor,
+		// which that branch never calls. It is stated anyway, because the day
+		// that branch is fixed is the day this preset needs the protection and
+		// nobody will remember to come back for it.
 		//
 		// This is not confiscating a toy. F/I/B capture the player's value, so
 		// Restore() hands all three back the moment the preset is switched off:
@@ -4422,6 +5081,16 @@ class GITD_PresetProfile abstract
 		// place that is not you, does not follow you, and does not care which
 		// way you walked. Origin 2 would make the room breathe around your own
 		// head, which is comforting in the precise way this must not be.
+		//
+		// 0 is also the only one of the seven that is SAFE in this preset, and
+		// the reason is worth stating once here because it decides the tornado
+		// as well. OriginFor is shared, and mode 1 -- "where you spawned" --
+		// reads ambient.origin, which is only ever assigned inside
+		// RefreshAmbient AFTER the gitd_ss_enabled check (GlowHandler.zs:1282,
+		// early return). This preset switches the sweep off, so that assignment
+		// never runs, ambient.origin stays (0,0,0) for the whole map, and the
+		// guard at GlowHandler.zs:1223 returns the PLAYER'S POSITION every tic
+		// instead. Under this preset mode 1 is mode 2 wearing another name.
 		I("gitd_wave_origin", 0);
 
 		// ---- the floor it stands on ---------------------------------------
@@ -4488,6 +5157,12 @@ class GITD_PresetProfile abstract
 		// which is the honest cost of a world-space term and the reason the
 		// reference is set low rather than at some average floor: the failure
 		// mode should be "no pooling" and never "the whole level is black".
+		//
+		// The fog top (36) and the tornado's two ends (-96 and 1100) are the
+		// same kind of number and take the same cost. This preset is calibrated
+		// for maps whose walkable floors sit near Z=0, which is most of them,
+		// and degrades toward doing nothing rather than toward doing damage on
+		// the ones where they do not.
 		DeepDark(0.40, 3000.0, 0.90, 32.0, 224.0);
 
 		// ---- WHAT SURVIVES THE DRAIN --------------------------------------
@@ -4717,14 +5392,15 @@ class GITD_PresetProfile abstract
 		// AND NOTHING IS DISPLACED BY WALKING THROUGH IT. Displacers carve a
 		// hole in the mist around each nearby actor, and a hole in fog moving
 		// toward you before you can see what is making it is, on paper, the
-		// most Lovecraftian thing in the engine. It is refused for a specific
-		// reason: the tornado below is already the answer to "where is the
-		// thing", and it answers by standing over it. Two systems both
-		// pointing at monsters means the mist is a targeting aid, and a mist
-		// that reliably tells you where the danger is has stopped hiding
-		// anything. Reactive() does not clear this and only NoReactive() does,
-		// so it is written directly -- the same reason Black and White writes
-		// it directly.
+		// most Lovecraftian thing in the engine. It is refused because it
+		// points at things that are ALIVE. The mist here answers exactly one
+		// event -- something dying -- and it answers it twice, with the gout
+		// above and the column below, which is defensible because both are
+		// describing an aftermath. A displacer describes a present threat, and
+		// a mist that reliably tells you where the danger is has stopped
+		// hiding anything. Reactive() does not clear this and only NoReactive()
+		// does, so it is written directly -- the same reason Black and White
+		// writes it directly.
 		F("gitd_fog_displace", 0.0);
 
 		// NO BOW WAVE, because a bow wave is mist shouldered aside by a
@@ -4757,32 +5433,61 @@ class GITD_PresetProfile abstract
 		// rather than resting on it, and runs to 1100, well through most
 		// ceilings, so it has no top either. A column with two visible ends is
 		// an object in the room. A column with neither is passing through the
-		// room on its way somewhere.
+		// room on its way somewhere. Both are absolute world Z -- the origin's
+		// own Z is discarded by PushTornado, which only takes x and y -- so
+		// this shares the calibration and the failure mode written down in the
+		// DeepDark paragraph above.
 		//
-		// Lean 110 on a 22-second period: it does not stand straight and it
-		// does not sway at any speed you would call swaying. Colour is a
-		// colder blue than the mist it stands in -- it is the same substance
-		// from further down.
+		// ORIGIN 4, WHERE THE LAST THING DIED. IT IS THE LEAST BAD OF SEVEN
+		// AND IT IS NOT CLEAN, SO HERE IS THE WHOLE TABLE RATHER THAN AN
+		// ARGUMENT FOR THE WINNER.
 		//
-		// ORIGIN 4, THE LAST THING THAT DIED, AND ORIGIN 5 IS A TRAP.
+		//   0  a fixed world x/y. Absolute coordinates on an arbitrary map, so
+		//      on most levels the column stands somewhere you never go and on
+		//      many it stands outside the geometry entirely. That is this
+		//      project's signature failure -- guarded, never erroring, silently
+		//      not happening -- and it is the worst option here, not the safest.
+		//   1  where you spawned. THE RIGHT ANSWER AND IT DOES NOT WORK HERE.
+		//      OriginFor reads ambient.origin, which RefreshAmbient only ever
+		//      assigns AFTER its gitd_ss_enabled check (GlowHandler.zs:1282
+		//      returns early). This preset switches the sweep off, so that
+		//      assignment never runs on any map, ambient.origin stays (0,0,0)
+		//      for the whole level, and the "not set yet" guard at
+		//      GlowHandler.zs:1223 hands back the player's own position every
+		//      tic. Under this preset mode 1 IS mode 2. Fixing that is one
+		//      line in GlowHandler and is reported; until it lands, this is a
+		//      tornado worn on the head.
+		//   2  follows you. A tornado on your head is a grey screen, and the
+		//      engine's own comment on mode 6 says so.
+		//   3  your last shot. It relocates on the trigger, which is the most
+		//      frequent event in the game.
+		//   4  the last thing that died.
+		//   5  the nearest live monster. Re-found EVERY TIC, and when the area
+		//      is clear it falls through to the player's position -- so it
+		//      hunts until you win and then lands on you.
+		//   6  in front of you at arm's length, recomputed as you turn. Worn.
 		//
-		// Origin 5 is the nearest live monster and it is the better idea on
-		// paper -- a presence that hunts. The implementation cannot deliver it
-		// slowly, and this is the exact line: OriginFor re-finds the nearest
-		// monster EVERY TIC (GlowHandler.zs:1240) and, finding none, returns
-		// the player's own position (GlowHandler.zs:1245-1246). So the column
-		// teleports across the room every time a closer monster spawns or
-		// dies, which for something this wide is a hard cut, and the instant
-		// you clear the area it snaps onto your head -- and mode 6's own
-		// comment already explains what a tornado on your head looks like.
+		// SO ORIGIN 4, AND ITS TWO COSTS STATED RATHER THAN BURIED. Before the
+		// first kill it stands at the map's geometric centre, which is often
+		// inside rock and which means the level can open with the column not
+		// visible at all. And it HARD-CUTS: PushTornadoAnchor reads the origin
+		// and calls PushTornado with it (GlowHandler.zs:2354-2362) with no
+		// easing of any kind, so every death anywhere on the map moves a
+		// 560-wide volume instantly.
 		//
-		// Origin 4 says the same sentence and can keep it. The column stands
-		// where the last thing died and does not move until the next one does,
-		// which is a movement that already has a cut in it. Before the first
-		// kill it falls back to the map centre, so the level opens with the
-		// thing already somewhere you have not been yet. If anyone wants the
-		// hunt, it is a one-digit change and the two lines above are what they
-		// are buying.
+		// What makes that survivable rather than a bug is that the cut has
+		// cover, and the cover is deliberate. The gout above fires from the
+		// same WorldThingDied, at the same position, on the same frame, at 260
+		// units and swelling for five seconds. So the column does not appear
+		// beside a corpse out of nothing -- it appears inside a billow that is
+		// blooming there anyway, and the two together are one sentence: the
+		// mist gathers over what has died, and it is still there when you come
+		// back. The departure from the previous body is the residual cost and
+		// there is no lever in the shader that softens it.
+		//
+		// This is also why the displacers stay refused above. Two systems on
+		// one event is one too many when they are two ANSWERS; these are a
+		// moment and an aftermath.
 		Tornado(4, -96.0, 1100.0,
 		        180.0, 560.0,       // wide at the base, wider at the top
 		        0.5,                // thin enough to see the room through
@@ -4815,29 +5520,58 @@ class GITD_PresetProfile abstract
 		// for a lot of them -- so it reads as the same substance having soaked
 		// into the floor rather than as blood.
 		//
-		// CEILING 6.0, high on purpose, against Blackout's 0.85 and Red
-		// Alert's 0.6. Those two want a single death to register, because in
-		// both of them the mark is a record of an event. Here it is a
-		// concentration, and a concentration should take a while to build:
-		// one body barely tints the floor, a room you fought through for five
-		// minutes glows. Size 120 is wide and soft so it pools instead of
-		// marking, and it is drawn UNDER the mist, so you find it by walking
-		// over it rather than by seeing it from the door.
+		// SIZE 56, DOWN FROM 120, AND THE OLD NUMBER WAS DEFEATED BY AN
+		// ARGUMENT ALREADY WRITTEN IN THE FILE IT READS FROM. cvarinfo's own
+		// note on gitd_heat_size (lines 1240-1244) settles on 48 and rejects 96
+		// by name: "two kills in a corridor merged into one wash and the map
+		// lost the ability to say WHERE the fighting was, which is the only
+		// thing it is for." This preset shipped 120. Deposit area goes as the
+		// square, so 120 was painting five and a half times the ground per
+		// corpse that the cvar's author had already decided was too much, and
+		// on a long map the floor genuinely does trend to a uniform green --
+		// which destroys this preset's own claim that the blue is the mist and
+		// the green is what is in it. 56 is fractionally wider than the
+		// shipped default, so it still pools rather than marking a point,
+		// which is the one thing this preset wanted from the extra width.
+		//
+		// CEILING 4.0, DOWN FROM 6.0, AND IT HAS TO MOVE WITH THE RADIUS.
+		// The ceiling is the summed total that reaches the high colour, and
+		// the sum at any point is driven by how many deposits OVERLAP there.
+		// At radius 120 two bodies five paces apart overlapped heavily and a
+		// firefight climbed fast; at 56 they do not overlap at all. Left at
+		// 6.0 the floor would need six bodies dying in nearly the same spot to
+		// reach the high colour and would in practice never get there, so the
+		// preset would have swapped an over-painted map for a dead system. 4.0
+		// is a doorway somebody defended.
 		//
 		// Hurt 0.0. It remembers what died, not what happened to you. You are
 		// not the subject of this preset and the floor is not keeping your
 		// score.
-		Heat(0.7, 0x14281E, 0x64C08A, 6.0, 120.0, 0.0);
+		Heat(0.7, 0x14281E, 0x64C08A, 4.0, 56.0, 0.0);
 
-		// Three cvars Heat() does not set and all three matter here. Decay 0
-		// is never forgetting, which is the entire idea and would be quietly
-		// undone by a leftover decay rate. Amount 1.0 is what GATES RECORDING
-		// -- at zero nothing is written down at all and the map stays clean
-		// while every dial reads correctly. Tolerance 96 is the Z difference
-		// that counts as another storey, and it is stated because this is the
-		// preset built around sunken ground: without it a stain in a sump
-		// would bleed onto the walkway above it and the pit would stop being
-		// a separate place.
+		// Three cvars Heat() does not set and all three matter here.
+		//
+		// DECAY STAYS AT ZERO, AND IT WAS RECONSIDERED RATHER THAN INHERITED.
+		// Bounding the accumulation with a slow decay is the obvious fix and
+		// it was rejected twice over. First on the mechanism: HeatDecay is
+		// units of intensity lost per second, subtracted linearly and clamped
+		// (hw_drawinfo.cpp:921-923), so retiring one full deposit over the
+		// several hundred seconds this preset would want means a value around
+		// 0.0025 -- and the menu's own Forgets row runs 0.0 to 2.0 in steps of
+		// 0.05 at two decimal places, so that number cannot be reached from the
+		// menu, cannot be restored after it, and READS AS 0.00 on the page
+		// while it is quietly draining the map. A shipped value that the UI
+		// displays as off is the exact fault this project keeps finding in
+		// itself. Second on the design: "it never forgets" is this preset's own
+		// sentence, and the radius above is where the runaway actually came
+		// from. Fix the cause, not the symptom, and leave the sentence true.
+		//
+		// Amount 1.0 is what GATES RECORDING -- at zero nothing is written down
+		// at all and the map stays clean while every dial reads correctly.
+		// Tolerance 96 is the Z difference that counts as another storey, and
+		// it is stated because this is the preset built around sunken ground:
+		// without it a stain in a sump would bleed onto the walkway above it
+		// and the pit would stop being a separate place.
 		F("gitd_heat_decay", 0.0);
 		F("gitd_heat_amount", 1.0);
 		F("gitd_heat_tolerance", 96.0);
@@ -4857,6 +5591,18 @@ class GITD_PresetProfile abstract
 		// the floor of a preset whose lattice section argues that nothing in
 		// it should have a straight line anywhere.
 		B("gitd_shape_enabled", false);
+
+		// AND NO FLOATING NUMBERS. The Neon Numeric engine draws a kill count
+		// and a damage readout in the world, and gitd_neon_enabled is its
+		// master. Both payloads default off so a clean install draws nothing,
+		// which is exactly why it has never been stated and exactly why it has
+		// to be: a player who ever switched the counter on carries it into
+		// every preset afterwards. A number in a font, hanging over a corpse,
+		// is the room reporting your performance back to you -- and this whole
+		// preset is an argument that nothing here is keeping score or has
+		// noticed you at all. Black and White owns this system; nobody else
+		// should be able to inherit it.
+		B("gitd_neon_enabled", false);
 
 		// ---- NO SWEEP, AND NO LATTICE -------------------------------------
 		//
@@ -4881,39 +5627,98 @@ class GITD_PresetProfile abstract
 		NoGrid();
 		for (int i = 1; i <= 8; i++) I("gitd_ss_fill" .. i, 0);
 
-		// ---- THE LIGHT ITSELF STAYS PLAIN ---------------------------------
+		// AND THE THREE SWEEP CVARS THAT REACH BACK OUT OF THE SWEEP.
+		//
+		// The rule above -- state what a re-enabled sweep would inherit -- is
+		// not a licence to write sixty cvars, so here is the line and the
+		// reason for it. These three are the ones that do not stay inside the
+		// sweep: gitd_ss_light_mode 3 RE-COLOURS THE FOUR GLOW LANES to shades
+		// of the crossing band's colour (cvarinfo:197), which would erase the
+		// upside-down lane hierarchy that is the most-argued section of this
+		// function; gitd_ss_light is the gate on it; and gitd_ss_perband
+		// bypasses that gate entirely and drives every band off the fx table
+		// instead. Anything that only decides WHERE or HOW FAST a band runs --
+		// gitd_ss_drop, the speeds, the gaps -- is the player's business and
+		// stays theirs.
+		B("gitd_ss_light", false);
+		B("gitd_ss_perband", false);
+		I("gitd_ss_light_mode", 0);
+
+		// ---- ONE WRONG THING ON THE SURFACES ------------------------------
 		//
 		// Five glow-texture terms -- veining, a current along the surface, a
 		// crawling cell network, rings off gunfire, and a global alarm pulse
-		// -- and no preset in this file has ever stated one of them, so all
-		// five inherit whatever was last set. Two of those are actively
-		// dangerous here: gitd_greact rides on gitd_fog_react, which this
-		// preset switches ON, so a leftover value would put expanding rings
-		// through every glow in the map off every shot. gitd_gpulse counts
-		// monsters near you and brightens the room accordingly, which is a
-		// HUD element wearing a costume.
+		// -- and no preset in this file had ever stated one of them, so all
+		// five inherited whatever was last set. Two of them are actively
+		// dangerous here and stay at zero for that reason: gitd_greact rides on
+		// gitd_fog_react, which this preset switches ON, so a leftover value
+		// would put expanding rings through every glow in the map off every
+		// shot -- and this preset has already decided at length that gunfire
+		// is not interesting to the air. gitd_gpulse counts monsters near you
+		// and brightens the room accordingly, which is a HUD element wearing a
+		// costume, and it is the one term in the mod that says the building has
+		// noticed you.
 		//
-		// The other three are refused on taste and the taste is the same in
-		// each case. A crawling cell network on the walls is, on its own, the
-		// most Lovecraftian thing this mod can draw, and it was on in three
-		// drafts of this preset. It has to go. The image already has one
-		// texture in it -- banked mist, a moving surface, and a forest of
-		// wisps -- and putting a second one on the surfaces means the eye has
-		// two things to resolve and settles on neither. Dread is one wrong
-		// thing observed carefully, and this preset's one wrong thing is the
-		// air. The light in it is allowed to be nothing but light.
+		// gitd_gtex_noise and gitd_gflow stay at zero on taste. Noise ages a
+		// material and nothing here is old; flow is a current running along the
+		// surface, and Cold War owns that read, where it is mains hum in a
+		// fluorescent bank. Two presets making the same statement with the same
+		// cvar is how a system stops meaning anything.
+		//
+		// AND THE VEINS GO ON, AT A FIFTH OF COLD WAR'S WEIGHT AND IN A
+		// DIFFERENT VOLUME.
+		//
+		// This was refused for three drafts on a one-texture rule -- the image
+		// already has banked mist, a moving surface and a forest of wisps, and
+		// a second texture means the eye has two things to resolve and settles
+		// on neither. That rule is right about VOLUME and wrong about
+		// SURFACES. All three of those things are in the AIR and the eye
+		// resolves them as one substance; the walls and the floor have nothing
+		// on them at all, and they are where you spend most of a frame looking.
+		// The preset was carrying its whole argument in the air and leaving the
+		// room it stands in blank.
+		//
+		// Lovecraft is geometry that should not exist, on something you are
+		// standing next to. A hairline vein network is the only thing in this
+		// mod that draws that. Scale 256 makes the cells larger than a doorway,
+		// so it is a structure rather than a texture and you cannot see enough
+		// of it at once to work out the pattern. Speed 0.2 against the default
+		// 1.2 crawls it slower than you walk, so it is never moving when you
+		// look at it and is not where it was when you look back. Width 0.03 is
+		// hairlines against the default 0.08.
+		//
+		// Amount 0.20 -- the lowest setting the menu's own step will reach
+		// above nothing -- is deliberately at the edge of visible. The floor
+		// lane is the brightest in this preset, so the veins land mostly on the
+		// ground and the lower walls, seen through the mist rather than over
+		// it, which is the correct place for something you are not sure you
+		// saw. If it ever competes with the air, it is too strong.
 		F("gitd_gtex_noise", 0.0);
 		F("gitd_gflow", 0.0);
-		F("gitd_gcell", 0.0);
+		F("gitd_gcell", 0.20);
+		F("gitd_gcell_scale", 256.0);   // larger than a doorway: a structure
+		F("gitd_gcell_speed", 0.2);     // slower than you walk
+		F("gitd_gcell_width", 0.03);    // hairlines
 		F("gitd_greact", 0.0);
 		F("gitd_gpulse", 0.0);
 
-		// AND THE COLOUR LAW IS OFF, which no preset has ever said either.
-		// It reads the conductor lane's hold times as game phases -- and the
-		// holds above run to forty and fifty seconds. Left on, a player who
-		// had it configured would get monsters buffed or debuffed in
-		// fifty-second blocks by a preset that never mentioned combat, and
-		// every symptom of it would look like a balance bug.
+		// AND THE COLOUR LAW IS OFF, and it was weighed rather than skipped.
+		//
+		// It is the only system in the mod where the room's colour is a rule in
+		// force rather than a picture, and on theme alone it is the most
+		// Lovecraftian thing available: a house rule you did not agree to,
+		// running while you fight. It is refused on a principle that costs
+		// something here. A player choosing an entry from a LIGHTING menu has
+		// not consented to a combat modifier, and Neon Unison and Neon Chaos
+		// both turn it away on exactly that ground. A rule that only holds when
+		// it is cheap is not a rule.
+		//
+		// It also has to be said out loud rather than left alone. The law reads
+		// the conductor lane's hold times as game phases -- and the holds above
+		// run to fifty-two seconds. Left on, a player who had it configured
+		// would get monsters buffed or debuffed in fifty-second blocks by a
+		// preset that never mentioned combat, and every symptom of it would
+		// look like a balance bug.
 		B("gitd_law_enabled", false);
 
 		// ---- the torch ----------------------------------------------------
@@ -4952,6 +5757,38 @@ class GITD_PresetProfile abstract
 		I("fl_slots", 1);       // one colour. A torch is not a mood ring
 		I("fl_pattern", 0);
 
+		// AND THE COLOUR IS STATED, AT THE SHIPPED DEFAULT, BECAUSE ONE SLOT
+		// MEANS IT IS THE ONLY COLOUR IN THE FRAME THAT IS NOT THE MIST.
+		// fl_slots 1 reads fl_c1 and nothing else, and nothing here has ever
+		// written fl_c1 -- so selecting this preset after Neon Chaos (0xFF3020,
+		// its ember red) put a red cone in the water, and after Cold War or
+		// Neon Unison an arctic blue-white one. 0xFFF1E0 is the cvar's own
+		// shipped default, a plain warm human white, and
+		// it is doing the same job ddz_desat 110 is doing: wrongness needs one
+		// correct thing beside it, and the correct thing is the torch you
+		// brought.
+		I("fl_c1", 0xFFF1E0);
+
+		// AND fl_random IS FALSE, WHICH IS A SAFETY REQUIREMENT IN THIS PRESET
+		// AND NOT A PREFERENCE. Flashlight.CurrentColor short-circuits at
+		// fl_slots <= 1 and returns SlotColor(0) directly (Flashlight.zs:106),
+		// and SlotColor under fl_random returns a fresh RandomColor() on every
+		// single call (Flashlight.zs:88). With one slot there is no hold and no
+		// crossfade between them to slow it down, so fl_random inherited into
+		// this preset is a full-rate colour strobe six inches from the eye --
+		// guarded, never erroring, and a photosensitivity hazard. Any future
+		// edit that wants a coloured torch here must raise fl_slots in the same
+		// block.
+		//
+		// AGITATE FALSE. Pointing the light at a monster waking it is the
+		// sharpest sentence in the flashlight rig and it belongs to Blackout,
+		// where the torch is the only way to see anything and using it is
+		// therefore a cost. Here the torch is one reveal among several and the
+		// preset's entire claim is that what is in this room is not reacting to
+		// you. A beam that wakes things is the room paying attention.
+		B("fl_random", false);
+		B("fl_agitate", false);
+
 		// ---- the ambience layer -------------------------------------------
 		//
 		// LIGHTS ON, PARTICLES OFF, and the split is deliberate.
@@ -4971,6 +5808,18 @@ class GITD_PresetProfile abstract
 		// Particles at zero for the same reason the torch has no dust: the fog
 		// is this preset's particle system and a second one competes with it.
 		Ambience(1, 0.55, 0.0);
+
+		// AND THE EMITTER RADIUS IS STATED, AT THE SHIPPED 2048.
+		// NoAmbienceLight's own comment says a preset that wants the ambience
+		// layer silent "has to say so with the range", and no preset in this
+		// file has ever said anything about it -- so FancyWorld's scan sounds
+		// and reaches identically under all eight, which is a system nobody has
+		// ever made a decision about. This preset's decision is to keep it
+		// where it ships: the ambient sound is the one layer here that is
+		// honestly reporting the room, and Occlude(0.55) below is already
+		// making it arrive from slightly the wrong place. Cutting the radius as
+		// well would silence the map, and a silent map is a different preset.
+		F("fw_range", 2048.0);
 
 		// LOUD FEET, because in a layer this deep you cannot see them. Your
 		// own footsteps are the only confirmation that the ground under the
@@ -5013,11 +5862,13 @@ class GITD_PresetProfile abstract
 	// state the palette outright. Anything bright enough to bleed here bleeds
 	// the colour of the air, so even a muzzle flash comes back wrong.
 	//
-	// No anamorphic streak and no chromatic fringing, both stated. Fringing is
-	// a lens failing to agree with itself, and Red Alert earns it because
-	// there the image being slightly wrong says the same thing the alarm says.
-	// Here it would blame the CAMERA, and the entire preset depends on the
-	// wrongness being in the room rather than in the equipment.
+	// No anamorphic streak and no chromatic fringing, both stated. The streak
+	// is a gate rather than a dial -- any non-zero value is fully on, and the
+	// only strength lever is the separate ratio -- so 0.0 is the whole of that
+	// decision. Fringing is a lens failing to agree with itself, and Neon Chaos
+	// earns it because there nothing in the room agrees with anything. Here it
+	// would blame the CAMERA, and the entire preset depends on the wrongness
+	// being in the room rather than in the equipment.
 	clearscope static void LovecraftianFogBloom()
 	{
 		Bloom(1.90, 0.18, 0.75, 0.62, 1.0, 0.86);
@@ -5029,8 +5880,7 @@ class GITD_PresetProfile abstract
 		// Low Power owns the slow eye -- the three-second blackout on stepping
 		// out of a lit doorway is the best thing in that preset -- and taking
 		// it here would be borrowing its idea and blunting both. This wants
-		// something else. (What Low Power's number actually does is the next
-		// paragraph, and it is not what its comment claims.)
+		// something else.
 		//
 		// AND THE SPEED CVAR IS NOT A DURATION, WHICH IS WORTH WRITING DOWN
 		// ONCE BECAUSE TWO SHIPPING PRESETS HAVE IT BACKWARDS. gl_exposure_speed
@@ -5038,14 +5888,14 @@ class GITD_PresetProfile abstract
 		// last frame's exposure (hw_postprocess.cpp, PPCameraExposure::Render
 		// -> SetAlphaBlend; exposurecombine.fp puts it in FragColor.a). So it
 		// is a per-frame WEIGHT in 0..1: bigger means FASTER, 1.0 snaps in a
-		// frame, and anything above 1 overshoots the target every frame and
-		// rings. The engine's own default is 0.05 and the slider stops at 1.0.
-		// This draft asked for 1.1, which is out of range in the direction that
-		// breaks; Low Power's 0.6 and Red Alert's 3.0 are the same fault, and
-		// Low Power's "three seconds" is a no-op at that value.
+		// frame, and anything above 1 drives the destination factor negative
+		// so the meter overshoots and rings instead of converging. The engine's
+		// own default is 0.05 and the slider stops at 1.0.
 		//
-		// 0.02 is what the sentence below actually wants: a little under a
-		// second at sixty frames, which is normal. Nothing about your vision is
+		// 0.02 IS ABOUT ONE AND A HALF SECONDS: the time constant is
+		// 1 / (speed * framerate), which at the file's 35 fps convention is
+		// 1 / (0.02 * 35) = 1.43 s. That is what the sentence below wants and
+		// it is deliberately unremarkable. Nothing about your vision is
 		// impaired, nothing takes a dramatic moment to arrive, and you adapt to
 		// each room about as fast as you would in life. And the room is still
 		// illegible, because what is between you and it is not an absence of
@@ -5057,13 +5907,6 @@ class GITD_PresetProfile abstract
 		// capable of lifting a dark room back up and undoing everything above
 		// it -- the floor is what stops the auto-exposure arguing with the
 		// darkness curve.
-		//
-		// NOTE, AND IT IS A KNOWN LEAK RATHER THAN A CHOICE: RestoreEngine()
-		// puts nine bloom cvars back and does not touch gl_exposure_* at all.
-		// Leaving this preset leaves all four of these written while the
-		// Preset row reads Off. Low Power and Red Alert already have the same
-		// hole; this makes three, and the fix belongs in RestoreEngine rather
-		// than in any of them.
 		Exposure(0.72, 0.20, 1.0, 0.02);
 	}
 
