@@ -1402,7 +1402,17 @@ server float gitd_fog_follow_bottom = 0.0;
 // are separated in hue rather than in brightness alone.
 //
 // Applies to the layer; the tornado has its own, on its own page.
+// 0 the picker, 1 match a lane, 2 complement a lane, 3 random per slot,
+// 4 THE LIQUID YOU ARE NEAREST -- the one source that comes from the map
+// rather than from this mod. FancyWorld read every flat in the level to place
+// its emitters, so it already knows which sectors are nukage, blood, lava or
+// water; this borrows that. Falls back to the lane sources where there is no
+// pool in reach.
 server int   gitd_fog_color_mode = 0;
+
+// How far a pool can be and still colour the air. Standing in one wins
+// outright regardless.
+server float gitd_fog_color_liquid_range = 900.0;
 server int   gitd_fog_color_lane = 3;    // 0 wb, 1 wt, 2 ceiling, 3 floor
 server float gitd_fog_color_blend = 1.0; // how far toward it, 0..1
 

@@ -75,9 +75,77 @@ class SpawnEnvActorHandler : EventHandler
 		SpawnCeilingActors();
 		SpawnWallActors();
 
+		IndexLiquids();
+
 		// Nothing below needs it again, and on a big map it is the largest
 		// thing this handler ever allocated.
 		claim.Clear();
+	}
+
+	// ---- the liquid index ------------------------------------------------
+	//
+	// Which sectors hold liquid, and what colour mist belongs over each. Built
+	// here because this handler is already walking every sector at load and
+	// the answer never changes afterwards.
+	//
+	// This is the surviving half of FancyWorld's fog director. The other half
+	// wrote SetFogSlab every tic, which is why it was left out of the merge --
+	// Render.zs owns that layer and two writers on one scene-global slab fight
+	// every frame. What was worth keeping is the QUESTION it answered: which
+	// liquid is the player nearest. That belongs on Render's existing tint
+	// parameter, the same way GITD_Handler already feeds it what the lanes are
+	// showing.
+	private Array<int> liqSec;
+	private Array<int> liqTint;
+
+	private void IndexLiquids()
+	{
+		liqSec.Clear();
+		liqTint.Clear();
+
+		let fog = FancyTexTable.BuildFog();
+		for (int i = 0; i < level.Sectors.Size(); i++)
+		{
+			int row = fog.Find(level.Sectors[i].GetTexture(Sector.floor));
+			if (row == 0) continue;
+			liqSec.Push(i);
+			liqTint.Push(fog.RowTint(row));
+		}
+	}
+
+	// The nearest liquid to a point, and the colour its mist should take.
+	//
+	// Standing in it wins outright regardless of distance -- without that,
+	// wading a narrow channel could hand the answer to a larger pool whose
+	// CENTRE happens to be closer than the channel's is.
+	//
+	// Centre-spot distance for everything else, which is approximate and
+	// deliberately so: this picks a hue for the air in a room, and a hue does
+	// not need to know exactly where the edge of a pool is.
+	bool, Color NearestLiquid(Vector2 p, double range)
+	{
+		let sec = Sector.PointInSector(p);
+		if (sec)
+		{
+			for (int i = 0; i < liqSec.Size(); i++)
+			{
+				if (level.Sectors[liqSec[i]] != sec) continue;
+				return true, liqTint[i];
+			}
+		}
+
+		double best = range * range;
+		int hit = -1;
+		for (int i = 0; i < liqSec.Size(); i++)
+		{
+			double d2 = (level.Sectors[liqSec[i]].centerspot - p).LengthSquared();
+			if (d2 >= best) continue;
+			best = d2;
+			hit = i;
+		}
+
+		if (hit < 0) return false, 0;
+		return true, liqTint[hit];
 	}
 
 	// ---- the claim lattice ----------------------------------------------

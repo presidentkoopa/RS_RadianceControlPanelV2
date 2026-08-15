@@ -2253,6 +2253,38 @@ class GITD_Handler : StaticEventHandler
 		if (mode <= 0) return;
 		if (!GITD_Render.GetB("gitd_fog_enabled", false)) return;
 
+		// MODE 4 -- THE LIQUID YOU ARE NEAREST.
+		//
+		// The one colour source that comes from the MAP rather than from this
+		// mod: green over nukage, dark red over blood, orange over lava, pale
+		// blue over water. FancyWorld already knows which sectors are which,
+		// because it read every flat in the level to place its emitters, so
+		// this costs a walk over the liquid sectors and nothing else.
+		//
+		// Falls through to the lane sources when there is no liquid in reach,
+		// rather than returning -- a room with no pool in it should still get
+		// whatever the fog was already doing, not suddenly lose its tint.
+		if (mode == 4)
+		{
+			// EventHandler.Find rather than StaticEventHandler.Find, which is
+			// what the rest of this file uses: SpawnEnvActorHandler is a
+			// per-level handler, and the static lookup searches a different
+			// list. Null is a legitimate answer -- FancyWorld may not be
+			// loaded, or fw_enabled may have been off when the map loaded.
+			let scan = SpawnEnvActorHandler(EventHandler.Find("SpawnEnvActorHandler"));
+			if (scan && playeringame[consoleplayer])
+			{
+				let pmo = players[consoleplayer].mo;
+				if (pmo)
+				{
+					bool found; Color lc;
+					[found, lc] = scan.NearestLiquid(pmo.pos.xy,
+						GITD_Render.GetF("gitd_fog_color_liquid_range", 900.0));
+					if (found) { GITD_Render.PushFog(true, lc); return; }
+				}
+			}
+		}
+
 		int which = clamp(GITD_Render.GetI("gitd_fog_color_lane", 3), 0, 3);
 		GITD_Lane src = (which == 0) ? wb : (which == 1) ? wt : (which == 2) ? cg : fg;
 		if (!src) return;

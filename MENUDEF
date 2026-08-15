@@ -745,6 +745,10 @@ OptionMenu "GITDFloorFog"
 
 	StaticText "Its colour, from the room", gold
 	Option "Colour source",			"gitd_fog_color_mode", "GITDFogColorMode"
+	Slider "  Liquid reach",		"gitd_fog_color_liquid_range", 256, 2048, 64, 0
+	StaticText "Only used by \"the liquid you are nearest\".", darkgray
+	StaticText "Green over nukage, red over blood, orange over", darkgray
+	StaticText "lava. Standing in one wins whatever the reach.", darkgray
 	Option "  Which lane",			"gitd_fog_color_lane", "GITDFogColorLane"
 	Slider "  How far toward it",	"gitd_fog_color_blend", 0.0, 1.0, 0.05, 2
 	StaticText "A fixed fog colour while four lanes cycle", darkgray
@@ -2158,6 +2162,7 @@ OptionValue "GITDFogColorMode"
 	1, "Match a lane"
 	2, "Complement a lane"
 	3, "Random, per slot change"
+	4, "The liquid you are nearest"
 }
 
 OptionValue "GITDFogColorLane"
