@@ -1879,6 +1879,13 @@ OptionMenu "GITDFogReact"
 	Slider "    Size",				"gitd_fog_react_death_size", 16, 512, 8, 0
 	StaticText "Still legible with six other things going on,", darkgray
 	StaticText "which a sound is not.", darkgray
+	Slider "  From an explosion",	"gitd_fog_react_ignite", 0.0, 3.0, 0.05, 2
+	Slider "    Size",				"gitd_fog_react_ignite_size", 32, 512, 8, 0
+	StaticText "This one adds LIGHT rather than mist, so it", darkgray
+	StaticText "works even with the fog layer switched off --", darkgray
+	StaticText "an explosion lighting air that is not there is", darkgray
+	StaticText "still a burning cloud. It ignores What it does", darkgray
+	StaticText "above; a detonation is never a ripple.", darkgray
 	Slider "  Travel speed",		"gitd_fog_react_speed", 0.0, 1200.0, 20.0, 0
 	Slider "  Lasts",				"gitd_fog_react_life", 0.1, 8.0, 0.1, 1
 	StaticText "Eight at once, oldest recycled, each fading", darkgray

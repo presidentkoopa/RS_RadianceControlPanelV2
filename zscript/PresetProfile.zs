@@ -1174,7 +1174,7 @@ class GITD_PresetProfile abstract
 		// Ceiling 3 so a single death already registers -- one is meant to
 		// mean something here -- and the spread wide and soft so it pools
 		// rather than marks.
-		Heat(0.55, 0x3C3C3C, 0xDCDCDC, 3.0, 150.0, 0.0);
+		Heat(0.55, 0x3C3C3C, 0xDCDCDC, 3.0, 72.0, 0.0);
 
 		// The torch is hard and clean. NO DUST: motes are texture, and this
 		// preset has no texture in it anywhere. A cone with an edge.
@@ -1553,7 +1553,7 @@ class GITD_PresetProfile abstract
 		// THE FLOOR KEEPS SCORE. An alert that ends with no trace of what
 		// happened during it is a light show; this leaves the room marked by
 		// the fight afterwards.
-		Heat(0.55, 0x200000, 0xFF3018, 0.6, 110.0, 0.4);
+		Heat(0.55, 0x200000, 0xFF3018, 0.6, 52.0, 0.4);
 
 		NoKeepColor();
 
@@ -1730,7 +1730,7 @@ class GITD_PresetProfile abstract
 		// THE FLOOR REMEMBERS, because in a black room it is the only thing
 		// that can. Every other preset can show you where you have been by
 		// lighting it; this one can only show you where you have KILLED.
-		Heat(0.9, 0x0A0000, 0xFF2810, 0.85, 160.0, 0.25);
+		Heat(0.9, 0x0A0000, 0xFF2810, 0.85, 80.0, 0.25);
 
 		// Nothing passive glows -- that is the entire preset -- so the
 		// ambience layer keeps its sound and loses its light and particles.

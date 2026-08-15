@@ -1097,7 +1097,8 @@ server float gitd_fog_react_shot = 0.55;   // ring from your own gunfire
 server float gitd_fog_react_shot_size = 88;
 server float gitd_fog_react_death = 0.8;   // burst where a monster dies
 server float gitd_fog_react_death_size = 130;
-server float gitd_fog_react_ignite = 1.4;  // explosions LIGHT the mist
+server float gitd_fog_react_ignite = 1.4;  // explosions LIGHT the mist (mode 2)
+server float gitd_fog_react_ignite_size = 140.0; // radius of that flash
 server int   gitd_fog_react_mode = 1;      // 0 disc, 1 ripple, 2 ignite, 3 gout
 server float gitd_fog_react_speed = 320.0; // how fast a ring travels outward
 server float gitd_fog_react_life = 1.6;    // seconds before it has faded out
@@ -1159,7 +1160,12 @@ server float gitd_fog_color2_mix = 0.0;
 // ===========================================================================
 server bool  gitd_heat_enabled = false;
 server float gitd_heat_scale = 0.8;      // how strongly it tints the floor
-server float gitd_heat_size = 96.0;      // world radius of one deposit
+// Radius of ONE deposit, in world units. 96 was a 6-metre stain per corpse --
+// two kills in a corridor merged into one wash and the map lost the ability to
+// say WHERE the fighting was, which is the only thing it is for. 48 is about
+// the width of a door: still unmistakable underfoot, still legible from across
+// a room, and two bodies a few paces apart read as two.
+server float gitd_heat_size = 48.0;      // world radius of one deposit
 server float gitd_heat_amount = 1.0;     // how much one death contributes
 server float gitd_heat_ceiling = 8.0;    // total that reaches the high colour
 server color gitd_heat_low = "20 40 ff"; // one death

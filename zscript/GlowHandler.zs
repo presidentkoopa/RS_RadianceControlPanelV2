@@ -1956,6 +1956,49 @@ class GITD_Handler : StaticEventHandler
 			clamp(GITD_Render.GetI("gitd_fog_react_mode", 1), 0, 3));
 	}
 
+	// EXPLOSIONS LIGHT THE MIST, which is what gitd_fog_react_ignite has said
+	// on the tin since it was declared and never once done -- the cvar existed,
+	// carried a default of 1.4 and a comment, and appeared nowhere in the
+	// codebase.
+	//
+	// Ignite is mode 2, and it is the odd one of the four: it adds LIGHT
+	// rather than density. That has two consequences worth stating, because
+	// both look like bugs from the outside.
+	//
+	// It is NOT routed through FogEvent. FogEvent applies the single global
+	// gitd_fog_react_mode to everything, so an explosion would arrive as
+	// whatever ripples and gunfire are currently set to -- which is a ripple,
+	// and a ripple is exactly the wrong shape for a detonation.
+	//
+	// And it deliberately does NOT require the fog layer to be on. An
+	// explosion lighting mist that is not there is still a burning cloud, and
+	// the engine's own note on the disturbance array says the same. It is
+	// gated on gitd_fog_react like everything else, and on nothing further.
+	void FogIgnite(Vector3 pos)
+	{
+		if (!GITD_Render.GetB("gitd_fog_react", false)) return;
+
+		double stren = GITD_Render.GetF("gitd_fog_react_ignite", 1.4);
+		if (stren <= 0.0) return;
+
+		// Speed 0: a sphere that expands on its own clock rather than a ring
+		// travelling outward, and a short life, because a flash that lingers
+		// is a light source and this is supposed to be an event.
+		level.FogDisturb(pos.x, pos.y, pos.z,
+			GITD_Render.GetF("gitd_fog_react_ignite_size", 140.0),
+			stren, 0.0, 0.55, 2);
+	}
+
+	// A missile being destroyed is the cleanest "something just went off here"
+	// the playsim offers without guessing at damage types -- a rocket, a
+	// cacodemon ball and a revenant tracer all end this way, and all three
+	// should light the air.
+	override void WorldThingDestroyed(WorldEvent e)
+	{
+		if (!e.Thing || !e.Thing.bMissile) return;
+		FogIgnite(e.Thing.pos);
+	}
+
 	// A ring recoiling from your own muzzle, and this is the one that sells
 	// the whole idea -- it proves the mist is BETWEEN you and the wall rather
 	// than painted over the picture. Fired on the rising edge of the trigger
