@@ -160,8 +160,19 @@ OptionValue "GITDPreset"
 	1,  "Blackout"
 	2,  "Low Power"
 	3,  "Red Alert"
+	4,  "Cold War"
+	6,  "Neon Unison"
+	7,  "Neon Chaos"
+	9,  "Lovecraftian Fog"
 	11, "Black and White"
 }
+// The numbers skip 5, 8 and 10 on purpose. Toxic, Ember and Monochrome have a
+// name and a palette in GITD_Presets and no profile behind them, so listing
+// them would offer a row that changes the colours and nothing else -- which is
+// how a preset gets reported as broken rather than as absent. They go in when
+// they have a profile. HasProfile() is the list that decides, and this block
+// must agree with it: a row here for a preset it refuses is a row that silently
+// does half of what it says.
 
 // DarkDoom's own mode names, restored. They were briefly all labelled "Use
 // the How dark dial" because all four genuinely behaved identically once the

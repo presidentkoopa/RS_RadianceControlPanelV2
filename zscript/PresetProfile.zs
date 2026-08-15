@@ -1493,16 +1493,21 @@ class GITD_PresetProfile abstract
 		// six Bloom() cvars AND all four gl_exposure_*, and 4 additionally writes
 		// gl_bloom_anamorphic_ratio.
 		//
-		// WHICH IS ALSO WHERE THIS ANSWER IS STILL ONLY HALF TRUE, and it is
-		// worth knowing before it looks like a bug in one of the new presets.
-		// Saying yes here calls RestoreEngine, and RestoreEngine puts back nine
-		// gl_bloom_* cvars and NOTHING else -- not gl_bloom_anamorphic_ratio,
-		// not any of the four gl_exposure_*. So leaving any preset that writes
-		// exposure leaves the exposure curve standing with the Preset row
-		// reading Off. Low Power and Red Alert have leaked that way since they
-		// shipped; the four new ones make it six. The fix is five EF() lines in
-		// RestoreEngine (ratio 1.0, and the engine's own exposure defaults
-		// 1.0 / 0.0 / 1.0 / 0.05), not a false answer here.
+		// THIS USED TO SAY THE ANSWER WAS ONLY HALF TRUE, because RestoreEngine
+		// put back nine gl_bloom_* cvars and nothing else -- not the anamorphic
+		// ratio, not any of the four gl_exposure_*. Leaving a preset therefore
+		// left its exposure curve standing while the Preset row read Off, which
+		// Low Power and Red Alert had done since they shipped.
+		//
+		// RestoreEngine now restores all five, so this is a whole answer. The
+		// note is kept rather than deleted because the numbers it named were
+		// WRONG and the wrong ones are worth recording: it proposed ratio 1.0
+		// and exposure 1.0 / 0.0 / 1.0 / 0.05, guessed as the round values any
+		// engine would use. The real defaults, read out of
+		// hw_postprocess_cvars.cpp, are ratio 3.0 and 0.35 / 0.35 / 1.3 / 0.05.
+		// Shipping the guess would have handed a brighter, flatter eye than
+		// stock to everyone who ever turned a preset off -- a new bug wearing
+		// the shape of a fix.
 		return preset == 1 || preset == 2 || preset == 3 || preset == 4
 		    || preset == 6 || preset == 7 || preset == 9;
 	}

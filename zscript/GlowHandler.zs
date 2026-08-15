@@ -396,7 +396,7 @@ class GITD_Presets : Object
 			case 6:  return "Neon Unison";
 			case 7:  return "Neon Chaos";
 			case 8:  return "Ember";
-			case 9:  return "Deep Sea";
+			case 9:  return "Lovecraftian Fog";
 			case 10: return "Monochrome";
 			case 11: return "Black and White";
 			default: return "Off";
@@ -456,9 +456,18 @@ class GITD_Presets : Object
 			case 8:  // Ember -- banked fire, deep red to yellow
 				baseHue = 10;  hueSpread = 45;
 				satBase = 0.90; satVar = 0.10; valBase = 0.55; valVar = 0.40; return;
-			case 9:  // Deep Sea -- teal through deep blue
+			// Lovecraftian Fog. THE PALETTE IS UNCHANGED FROM DEEP SEA, and that
+			// is a decision rather than an oversight. The profile's own header
+			// argues at length that this preset is not green -- teal through
+			// deep blue with no green in it -- because the green arrives twice
+			// already, from FogGradient and from KeepColor's green-only hue.
+			// A proposal to push this toward 152 was made and refused for
+			// exactly that reason: it would be the third green source and
+			// triple-count the one effect the preset says comes from elsewhere.
+			// The value dropped slightly, because an abyss is darker than a sea.
+			case 9:  // Lovecraftian Fog -- teal through deep blue, and no green
 				baseHue = 175; hueSpread = 70;
-				satBase = 0.80; satVar = 0.18; valBase = 0.45; valVar = 0.30; return;
+				satBase = 0.80; satVar = 0.18; valBase = 0.38; valVar = 0.30; return;
 			case 10: // Monochrome -- saturation taken to zero, brightness does the work
 				baseHue = 0;   hueSpread = 0;
 				satBase = 0.0;  satVar = 0.0;  valBase = 0.55; valVar = 0.45; return;
