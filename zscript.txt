@@ -9,3 +9,35 @@ version "4.14"
 #include "zscript/DarkDoomZ.zs"
 #include "zscript/NeonNumeric.zs"
 #include "zscript/ColorLaw.zs"
+
+// ============================================================
+//  FancyWorld -- ambience read off the map's own textures.
+//
+//  At load it matches every sector flat and every wall texture
+//  against a table and places emitters where they belong: a
+//  looping ambient sound, a dynamic light in the colour the
+//  texture name implies, and particles. Plus footsteps that
+//  match the flat under you, and sight-line occlusion so a
+//  waterfall behind a sealed door stops being as loud as one
+//  in open air.
+//
+//  Works on any WAD with no patch.
+//
+//  NOT INCLUDED: FancyWorld's own fog director. This project
+//  already owns the fog slab in Render.zs, and two things
+//  writing one scene-global layer would fight every frame --
+//  the exact problem GITD_Composite exists to solve. The part
+//  worth keeping from it is knowing WHICH LIQUID the player is
+//  nearest, which belongs on Render's existing tint parameter
+//  rather than in a second writer.
+//
+//  ORDER: the emitter base and the tables must parse before
+//  anything that inherits from them.
+// ============================================================
+#include "zscript/fw/fancy_common.zs"
+#include "zscript/fw/fancy_tables.zs"
+#include "zscript/fw/fancy_steps.zs"
+#include "zscript/fw/fancy_floors.zs"
+#include "zscript/fw/fancy_ceilings.zs"
+#include "zscript/fw/fancy_walls.zs"
+#include "zscript/fw/fw_scan.zs"
