@@ -665,7 +665,6 @@ class GITD_Handler : StaticEventHandler
 	// instead of snapping off the moment the band clears it.
 	Array<double> sonarGlow;
 
-
 	// Anything a mod hangs off the wavefront.
 	Array<GITD_SweepEffect> ssEffects;
 
@@ -674,7 +673,6 @@ class GITD_Handler : StaticEventHandler
 	// be absurd, so each name is instantiated once and kept.
 	Array<string> ssActName;
 	Array<GITD_SweepAction> ssActObj;
-
 
 	override void WorldLoaded(WorldEvent e)
 	{
@@ -895,7 +893,6 @@ class GITD_Handler : StaticEventHandler
 		Color mixed = GITD_Palette.Lerp(a, b, 0.5);
 		return GITD_Palette.Lerp(base, mixed, 0.35);
 	}
-
 
 	// ---- Sector Sweep ---------------------------------------------------
 	//
@@ -2704,8 +2701,8 @@ class GITD_ResetHandler : EventHandler
 			"gitd_dd_enabled", "gitd_dd_noflash", "gitd_bloom_forced",
 			"ddz_mode", "ddz_preset", "ddz_desat", "ddz_skymode", "ddz_lighting",
 			"ddz_minlight", "ddz_pregain", "ddz_postgain",
-			"ddz_fl_pos", "ddz_fl_quality", "ddz_fl_type",
-			"fl_enabled", "fl_mount", "fl_range", "fl_intensity", "fl_inner",
+
+			"fl_enabled", "fl_mount", "fl_range", "fl_lag", "fl_intensity", "fl_inner",
 			"fl_outer", "fl_falloff", "fl_density", "fl_dust", "fl_dust_scale",
 			"fl_dust_drift", "fl_slots", "fl_random", "fl_pattern", "fl_speed",
 			"fl_bounce", "fl_allowflip", "fl_agitate", "fl_model",
@@ -2826,7 +2823,6 @@ class GITD_ResetHandler : EventHandler
 			.. "touched -- reset those from the Bloom page.");
 	}
 }
-
 
 // ---------------------------------------------------------------------------
 // Preset customisation.

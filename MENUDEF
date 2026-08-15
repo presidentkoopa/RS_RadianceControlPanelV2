@@ -193,27 +193,6 @@ OptionValue "GITDDarkLevel"
 	8, "Pure"
 }
 
-OptionValue "Nice_Flashlight_Quality"
-{
-	0, "Simple"
-	1, "Fancy"
-}
-
-OptionValue "Nice_Flashlight_Type"
-{
-	0, "Incandescent"
-	1, "Halogen"
-	2, "LED"
-	3, "Red Filter"
-}
-
-OptionValue "Nice_Flashlight_Position"
-{
-	0, "Handheld"
-	1, "Left Shoulder"
-	2, "Right Shoulder"
-	3, "Helmet"
-}
 
 // ---------------------------------------------------------------------------
 // Root
@@ -696,9 +675,10 @@ OptionMenu "GITDSweepFill"
 // ---------------------------------------------------------------------------
 // Floor fog -- mist with a top.
 //
-// The Fog page's ddz_fog is SECTOR fog: a distance tint applied to surfaces,
-// uniform from floor to ceiling, simulating nothing in the air. It cannot have
-// a ceiling, a thickness, or a bright patch where a torch sweeps it.
+// DarkDoom shipped SECTOR fog: a distance tint applied to surfaces, uniform
+// from floor to ceiling, simulating nothing in the air. It could not have a
+// ceiling, a thickness, or a bright patch where a torch sweeps it. It has been
+// removed -- this is what replaced it.
 //
 // This is a horizontal slab of participating medium with a world-space top,
 // solved analytically rather than raymarched -- how much of the ray from your
@@ -1739,7 +1719,8 @@ OptionMenu "GITDColorLaw"
 
 // ---------------------------------------------------------------------------
 // FOG -- pulled off the root page into its own submenu. gl_fogmode is the
-// engine's own setting, reached by name; ddz_fog is DarkDoom's density.
+// engine's own setting, reached by name. DarkDoom's own sector fog is gone --
+// this page drives the volumetric slab and nothing else.
 // ---------------------------------------------------------------------------
 
 OptionMenu "GITDFog"

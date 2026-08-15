@@ -820,8 +820,9 @@ server float gitd_dd_height_range = 256.0;// how far below that to reach full
 
 // ---- Floor fog -------------------------------------------------------------
 //
-// FOG WITH A TOP. ddz_fog is sector fog: a distance tint on surfaces, uniform
-// floor to ceiling, simulating nothing in the air. It cannot have a ceiling, a
+// FOG WITH A TOP. DarkDoom shipped SECTOR fog -- a distance tint on surfaces,
+// uniform floor to ceiling, simulating nothing in the air. It is gone; this
+// replaced it. It cannot have a ceiling, a
 // thickness you stand in, or a bright patch where a torch sweeps it -- you
 // cannot be knee deep in it, because it has no knees.
 //
