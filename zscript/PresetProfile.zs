@@ -1664,6 +1664,23 @@ class GITD_PresetProfile abstract
 		I("ddz_preset", 8);    // Pure
 		I("ddz_desat", 255);   // no colour survives here either
 
+		// NO FLOOR. Low Power sets this to 0 and Blackout never did, so the
+		// darkest preset in the mod was inheriting whatever light floor was
+		// left behind -- and a floor of even 16 means it never actually
+		// reaches black, which is the one thing it is for.
+		I("ddz_minlight", 0);
+
+		// AND VANILLA'S OWN LIGHT EFFECTS HAVE TO GO. No preset had ever said
+		// anything about this either.
+		//
+		// Doom's blinking and pulsing sectors are thinkers that rewrite light
+		// every tic from the map's authored value. They do not know anything
+		// has been darkened, so in a crushed map they periodically shove a
+		// room back up to its original brightness -- the "washout" the cvar
+		// note describes. Everywhere else that is a flicker; here it is the
+		// void switching itself off several times a minute.
+		B("ddz_lighting", false);
+
 		// PER SECTOR, EXPLICITLY, and it is the only preset of the four that
 		// wants it that way.
 		//
