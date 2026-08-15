@@ -32,7 +32,7 @@ Everything lives under **Options → Glow In The Dark**.
 | **Glow waves** | the *edge* of a glow rises and falls along a wall |
 | **Sector Sweep** | up to eight bands of light travelling through the map |
 | **Laser grid** | a wall of lasers standing inside a sweep, floor to ceiling |
-| **Beams** | segment lasers, continuous, visible in the air, no dynamic lights |
+| **Beams** | segment lasers, continuous, visible in the air, lighting what they pass |
 | **Darkness** | per room, or per pixel — with distance and height falloff |
 | **Selective colour** | a grey world that still has blood in it |
 | **Fog** | mist with a *top*, on the floor or the ceiling, that reacts to what happens in it |
