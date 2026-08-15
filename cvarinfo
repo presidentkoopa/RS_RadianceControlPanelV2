@@ -536,6 +536,59 @@ server int    gitd_sw_amount = 48;
 server string gitd_sw_script = "";
 
 
+// ---- The lane working set --------------------------------------------------
+// The same problem one size larger. Four lanes x thirty-two settings is a
+// hundred and twenty-eight menu rows spread over four pages that differ in
+// nothing but their cvar prefix -- four pages nobody can diff by eye, and four
+// places to forget when a setting is added. So the menu edits ONE lane's worth
+// of controls and gitd_ln_sel decides which lane those map to. Changing the
+// selector writes the working set back to the lane you were editing and loads
+// the next one.
+//
+// These are a VIEW. gitd_wb_*, gitd_wt_*, gitd_cg_* and gitd_fg_* remain the
+// storage, so presets, the reset button, the colour law and the engine are all
+// untouched by this -- nothing downstream knows the view exists.
+//
+// Every default below is gitd_wb_'s default, and deliberately so: the working
+// set is loaded from a real lane on the first tic, so what these say only ever
+// shows before a map is up. Matching wall bottom means the numbers a player
+// glimpses in that window are numbers the mod actually ships with.
+server int   gitd_ln_sel = 0;            // 0 wall bottom, 1 wall top,
+                                         // 2 ceiling glow, 3 floor glow
+server bool  gitd_ln_enabled = true;
+server color gitd_ln_c1 = "ff 00 c8";
+server color gitd_ln_c2 = "00 dc ff";
+server color gitd_ln_c3 = "8c 00 ff";
+server color gitd_ln_c4 = "ff 50 a0";
+server color gitd_ln_c5 = "ff 00 c8";
+server color gitd_ln_c6 = "00 dc ff";
+server color gitd_ln_c7 = "8c 00 ff";
+server color gitd_ln_c8 = "ff 50 a0";
+server int   gitd_ln_slots = 4;
+server bool  gitd_ln_random = false;
+server int   gitd_ln_pattern = 1;
+server float gitd_ln_speed = 0.004;
+server bool  gitd_ln_bleed = true;
+server int   gitd_ln_coverage = 128;
+server int   gitd_ln_falloff = 1;
+server float gitd_ln_intensity = 1.0;
+server float gitd_ln_saturation = 1.0;
+server int   gitd_ln_anim = 0;
+server float gitd_ln_anim_speed = 0.6;
+server float gitd_ln_anim_length = 512.0;
+server float gitd_ln_anim_depth = 0.6;
+server float gitd_ln_anim_sharp = 1.0;
+server float gitd_ln_anim_phase = 0.5;
+server float gitd_ln_hold1 = 0.0;
+server float gitd_ln_hold2 = 0.0;
+server float gitd_ln_hold3 = 0.0;
+server float gitd_ln_hold4 = 0.0;
+server float gitd_ln_hold5 = 0.0;
+server float gitd_ln_hold6 = 0.0;
+server float gitd_ln_hold7 = 0.0;
+server float gitd_ln_hold8 = 0.0;
+
+
 // ---- Per-colour hold times -------------------------------------------------
 // Each colour slot may linger before its transition begins, in seconds.
 // 0 = the old behaviour exactly: continuous cycling at the lane's speed.
@@ -613,6 +666,26 @@ server int  gitd_rnd_governor = 0;      // what constrains the randomness
                                         // 2 complementary, 3 neon only
 server bool gitd_rnd_times = false;     // randomise each colour's hold time
 server bool gitd_rnd_patterns = false;  // each lane picks its own transition
+
+// ---- The rolled bloom, waiting for a keystroke -----------------------------
+// gitd_roll_bloom cannot write its own result. Bloom is gl_* -- ENGINE cvars,
+// and ZScript refuses to write one unless DMenu::InMenu is set, which it is
+// around MenuEvent, OnUIEvent and OnInputEvent and NOT around a netevent. The
+// roll runs in play scope, so writing gl_bloom_amount there is the same abort
+// that once killed the whole reset handler (see GlowHandler.zs, "BLOOM AND
+// EXPOSURE ARE NOT RESET HERE").
+//
+// So the roll lands HERE, in cvars this mod owns and may write from anywhere,
+// and GITD_RollMenu pushes them into the engine on the next menu keystroke.
+// _pending is the whole handshake: non-zero means a roll is waiting, and the
+// menu clears it once it has been spent, so a roll applies exactly once.
+server bool  gitd_bloom_roll_pending = false;
+server float gitd_bloom_roll_amount = 1.0;
+server float gitd_bloom_roll_threshold = 0.8;
+server float gitd_bloom_roll_knee = 1.0;
+server float gitd_bloom_roll_tint_r = 1.0;
+server float gitd_bloom_roll_tint_g = 1.0;
+server float gitd_bloom_roll_tint_b = 1.0;
 
 // ---- Numeric engine: one choice instead of two switches --------------------
 // gitd_neon_killcount and gitd_neon_damage are the underlying switches and

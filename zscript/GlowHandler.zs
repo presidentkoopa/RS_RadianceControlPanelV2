@@ -2626,8 +2626,265 @@ class GITD_ResetHandler : EventHandler
 		if (c) c.SetFloat(0.0);
 	}
 
+	// ---- ONE-SHOT RANDOMISE ------------------------------------------------
+	//
+	// The _random cvars this mod already has are a MODE. They make a colour
+	// random every time it is ASKED for, so the room never settles and there is
+	// nothing to tune -- the value you liked is gone before you can read it.
+	// The rolls below are the opposite: they pick concrete values ONCE, write
+	// them into the real cvars, and stop. What comes out is a fixed look you
+	// can then hand-tune, which is the thing a person actually means when they
+	// press "randomise".
+	//
+	// Two rules hold everywhere in here.
+	//
+	// SENSIBLE RANGES, NOT SLIDER RANGES. Every roll sits well inside the
+	// bounds MENUDEF offers, and the comments say which slider each one is
+	// pulling in from. A randomiser that can hand back an unusable room is a
+	// randomiser people press exactly once.
+	//
+	// NO MASTER SWITCHES. gitd_enabled, gitd_fog_enabled, gitd_ss_enabled,
+	// gitd_dd_enabled and every other on/off stay precisely where the player
+	// left them. Randomising WHETHER a system runs is not what the button
+	// means, and it makes a bad roll indistinguishable from a system that was
+	// silently switched off.
+	//
+	// All of this runs in NetworkProcess, which every peer executes off the
+	// same synchronised RNG, so a netgame rolls the same room everywhere
+	// without any of it needing to be sent.
+
+	static void PutF(string name, double v) { let c = CVar.FindCVar(name); if (c) c.SetFloat(v); }
+	static void PutI(string name, int v)    { let c = CVar.FindCVar(name); if (c) c.SetInt(v); }
+
+	// Round to a slider's own step. Every rolled number goes through this or is
+	// built as a multiple of its step already, because a value that landed
+	// between two notches reads as a bug the first time somebody nudges the
+	// slider and watches it jump somewhere else.
+	static double Snap(double v, double step)
+	{
+		return floor(v / step + 0.5) * step;
+	}
+
+	// Colour cvars hold PACKED 24-bit RGB and are read back with GetInt --
+	// see GITD_Lane.SlotColor. Pack the bytes by hand rather than casting the
+	// Color: a Color carries alpha in its top byte, and handing that to SetInt
+	// stores a negative number that reads back as a colour nobody chose.
+	static void PutC(string name, Color col)
+	{
+		let c = CVar.FindCVar(name);
+		if (c) c.SetInt((col.r << 16) | (col.g << 8) | col.b);
+	}
+
+	// WHAT "RANDOM" IS ALLOWED TO MEAN, borrowed rather than reinvented:
+	// gitd_rnd_governor already says it in this mod's own words -- 1 one hue
+	// family, 2 complementary, 3 neon only.
+	//
+	// Its 0, "anything", is the single value a one-shot roll cannot honour.
+	// Three independent RGB channels average to grey, and grey is survivable
+	// as a live mode that keeps moving on to the next colour; it is not
+	// survivable as the look you are handed and expected to keep. 0 rolls neon
+	// here, deliberately and visibly.
+	static int RollScheme()
+	{
+		let g = CVar.FindCVar("gitd_rnd_governor");
+		int mode = g ? g.GetInt() : 0;
+		return (mode >= 1 && mode <= 3) ? mode : 3;
+	}
+
+	// ONE base hue for the whole roll, with everything else hung off it.
+	// Eight independent colours is what "random" naively means and it reads as
+	// noise; a room wants to look DECIDED, which is one decision with
+	// variations. This is the same reasoning behind the shipped presets giving
+	// each lane its own quarter of a single range.
+	static Color RollColor(double baseHue, int slot, int scheme)
+	{
+		double h = baseHue;
+		if (scheme == 1)      h += slot * frandom(5, 13);                 // one family
+		else if (scheme == 2) h += (slot % 2) * 180.0 + frandom(-14, 14); // two, opposed
+		else                  h += slot * 41.0 + frandom(-9, 9);          // neon, spread
+		return GITD_Presets.FromHSV(h, frandom(0.82, 1.0), frandom(0.74, 1.0));
+	}
+
+	// The four lanes: eight colour slots each, transition, speed, hold times.
+	static void RollGlow(double baseHue, int scheme)
+	{
+		static const string lanes[] = { "gitd_wb", "gitd_wt", "gitd_cg", "gitd_fg" };
+
+		// Snap and Flash are left out on purpose. Both are legal and a player
+		// can still choose either by hand; neither is something to hand
+		// somebody who did not ask, because a whole room snapping or flashing
+		// is the one roll that gets the mod switched off instead of re-rolled.
+		static const int patterns[] = { 1, 3, 4 };   // Fade, Breathe, Ping-Pong
+
+		for (int i = 0; i < 4; i++)
+		{
+			string p = lanes[i];
+
+			// The lanes are small offsets from one hue rather than four
+			// separate rolls, so floor and ceiling stay related instead of
+			// arguing across the room.
+			double h = baseHue + i * frandom(12, 28);
+			for (int c = 1; c <= 8; c++) PutC(p .. "_c" .. c, RollColor(h, c - 1, scheme));
+
+			PutI(p .. "_pattern", patterns[random(0, 2)]);
+
+			// Slider is 0.001..0.05, step 0.001. This takes the slow half: much
+			// past 0.02 the rotation stops reading as colour and starts
+			// reading as strobe.
+			PutF(p .. "_speed", random(2, 12) * 0.001);
+
+			// Slider is 0..30 seconds, rolled into 0..6 and quantised to the
+			// slider's own half-second step so the numbers look chosen rather
+			// than computed. Roughly one slot in four is left at 0, because a
+			// rotation where every slot lingers has no rhythm, only pauses.
+			for (int c = 1; c <= 8; c++)
+				PutF(p .. "_hold" .. c, (random(0, 3) == 0) ? 0.0 : random(0, 12) * 0.5);
+		}
+	}
+
+	// The mist: colour, density, top height, what it follows, its surface, and
+	// how unevenly it banks.
+	static void RollFog(double baseHue, int scheme)
+	{
+		// Mist is the thing you look THROUGH, so it gets the same hue
+		// vocabulary as everything else and a far lower VALUE. A bright fog
+		// colour at any usable density is not fog, it is a wall.
+		PutC("gitd_fog_color",
+			GITD_Presets.FromHSV(baseHue, frandom(0.55, 0.9), frandom(0.34, 0.62)));
+		PutC("gitd_fog_color2",
+			GITD_Presets.FromHSV(baseHue + (scheme == 2 ? 180.0 : frandom(18, 52)),
+				frandom(0.45, 0.85), frandom(0.28, 0.55)));
+		// gitd_fog_color2_mix is NOT rolled -- it is the second layer's master
+		// in everything but name, and it is in the reset button's zeros[] list
+		// for that reason. Rolling the colour of a layer that is switched off
+		// costs nothing and is there the moment the player turns it on.
+
+		// Every number below is quantised to its own slider's step, so what the
+		// menu shows after a roll is a value the menu could itself have
+		// produced -- a roll that lands between two notches reads as a bug the
+		// first time somebody nudges the slider and watches it jump.
+		PutF("gitd_fog_density", random(6, 24) * 0.1);     // slider 0..8, step 0.1
+		PutI("gitd_fog_top", random(6, 40) * 4);           // slider -256..512, step 4
+		PutI("gitd_fog_soft", random(8, 48));
+
+		// Slider is -1..1 each. Kept small and quantised to the slider's own
+		// 0.05: a fog lid that tracks a moving ceiling one-for-one is a lid
+		// that clips through it.
+		PutF("gitd_fog_follow_top",    random(-7, 7) * 0.05);
+		PutF("gitd_fog_follow_bottom", random(-7, 7) * 0.05);
+
+		// Swell: 0..64 on the slider, and a third of rolls leave it flat --
+		// still air is a legitimate look and a randomiser that never produces
+		// it is just an oscillator.
+		if (random(0, 2) == 0) PutF("gitd_fog_surf", 0.0);
+		else                   PutF("gitd_fog_surf", random(3, 18));
+		PutF("gitd_fog_surf_len", random(12, 40) * 16);    // slider 32..1024, step 16
+		PutF("gitd_fog_surf_speed", random(3, 18) * 0.1);  // slider 0..6, step 0.1
+		PutF("gitd_fog_surf_cross", random(4, 18) * 0.05); // slider 0..2, step 0.05
+
+		// Banks: uniform mist is the boring answer, so this always rolls some
+		// unevenness, but never past the point where the banks read as edges.
+		PutF("gitd_fog_noise", random(3, 13) * 0.05);        // slider 0..1, step 0.05
+		PutF("gitd_fog_noise_scale", random(4, 16) * 0.0005); // slider 0.0005..0.02
+		PutF("gitd_fog_noise_drift", random(2, 14));         // slider 0..40, step 1
+	}
+
+	// The bloom, which cannot be applied from here -- see the cvarinfo block on
+	// gitd_bloom_roll_*. This stages the numbers and raises the flag;
+	// GITD_RollMenu spends it on the next keystroke, in the only scope the
+	// engine will accept a gl_* write from.
+	static void RollBloom(double baseHue)
+	{
+		PutF("gitd_bloom_roll_amount",    random(6, 18) * 0.1);   // slider 0.1..4, step 0.1
+		PutF("gitd_bloom_roll_threshold", random(8, 32) * 0.05);  // slider 0.05..4, step 0.05
+		PutF("gitd_bloom_roll_knee",      random(5, 30) * 0.1);   // slider 0..8, step 0.1
+
+		// Tint is a per-channel MULTIPLIER, 1.0 meaning untouched. Rolled as a
+		// gentle lean toward the roll's own hue rather than three free numbers
+		// between 0 and 2: bloom tint washes the entire screen, and anything
+		// strong there stops looking like a light and starts looking like a
+		// broken monitor.
+		Color t = GITD_Presets.FromHSV(baseHue, 1.0, 1.0);
+		double lean = random(2, 6) * 0.05;   // slider 0..2, step 0.05
+		PutF("gitd_bloom_roll_tint_r", Snap(1.0 - lean + (t.r / 255.0) * lean * 2.0, 0.05));
+		PutF("gitd_bloom_roll_tint_g", Snap(1.0 - lean + (t.g / 255.0) * lean * 2.0, 0.05));
+		PutF("gitd_bloom_roll_tint_b", Snap(1.0 - lean + (t.b / 255.0) * lean * 2.0, 0.05));
+		PutI("gitd_bloom_roll_pending", 1);
+	}
+
+	// The sweep's eight bands: colour, speed, shape and what each one does.
+	static void RollSweep(double baseHue, int scheme)
+	{
+		// One shape for the set with the odd band breaking ranks. Eight
+		// independent shapes is not a sweep, it is eight sweeps that happen to
+		// share a clock, and it reads as the system being broken.
+		int dominant = random(1, 5);   // GITDSweepShapeB 1..5; 0 means "as the master"
+
+		// Add light is the shape of the feature and gets the weight. Reveal,
+		// shadow and recolour are all worth meeting, just not three times each.
+		static const int draws[] = { 1, 1, 1, 2, 3, 4 };
+
+		for (int b = 1; b <= 8; b++)
+		{
+			PutC("gitd_ss_c" .. b, RollColor(baseHue, b - 1, scheme));
+
+			// Slider is 5..2000, step 5. Below roughly 60 a band crawls for
+			// minutes; past 600 it is gone before the eye finds it.
+			PutI("gitd_ss_speed" .. b, random(16, 104) * 5);
+
+			PutI("gitd_ss_shape" .. b, (random(0, 3) == 0) ? random(1, 5) : dominant);
+			PutI("gitd_ss_draw" .. b, draws[random(0, 5)]);
+		}
+	}
+
 	override void NetworkProcess(ConsoleEvent e)
 	{
+		// The rolls, before the reset guard below. Each one is complete on its
+		// own, so gitd_roll_all is the list rather than a fifth implementation.
+		bool rollGlowNow  = (e.name == "gitd_roll_glow");
+		bool rollFogNow   = (e.name == "gitd_roll_fog");
+		bool rollBloomNow = (e.name == "gitd_roll_bloom");
+		bool rollSweepNow = (e.name == "gitd_roll_sweep");
+		if (e.name == "gitd_roll_all")
+		{
+			rollGlowNow = true;
+			rollFogNow = true;
+			rollBloomNow = true;
+			rollSweepNow = true;
+		}
+
+		if (rollGlowNow || rollFogNow || rollBloomNow || rollSweepNow)
+		{
+			// ONE hue for the whole press, shared by every part of it. That is
+			// what makes gitd_roll_all produce a room rather than four
+			// unrelated rolls stacked on each other.
+			double baseHue = frandom(0, 360);
+			int scheme = RollScheme();
+
+			if (rollGlowNow)  RollGlow(baseHue, scheme);
+			if (rollFogNow)   RollFog(baseHue, scheme);
+			if (rollBloomNow) RollBloom(baseHue);
+			if (rollSweepNow) RollSweep(baseHue, scheme);
+
+			// The lane and sweep menus are editing a VIEW of what was just
+			// overwritten. Without this their next tic writes the pre-roll
+			// values back over one lane and one band, and the roll appears to
+			// have skipped whichever page was open.
+			GITD_PresetCustomiser.ResyncViews();
+
+			string done = "";
+			if (rollGlowNow)  { if (done.Length() > 0) done = done .. ", "; done = done .. "the four lanes"; }
+			if (rollFogNow)   { if (done.Length() > 0) done = done .. ", "; done = done .. "the floor fog"; }
+			if (rollBloomNow) { if (done.Length() > 0) done = done .. ", "; done = done .. "the bloom"; }
+			if (rollSweepNow) { if (done.Length() > 0) done = done .. ", "; done = done .. "the sweep bands"; }
+			Console.Printf("\c[Gold]Rolled: %s. One set of values, written and left alone -- "
+				.. "tune from here.", done);
+			if (rollBloomNow)
+				Console.Printf("\c[DarkGray]The bloom is an engine setting and lands on the "
+					.. "next menu keystroke -- open the Bloom page to see it.");
+			return;
+		}
+
 		if (e.name != "gitd_reset") return;
 
 		// Remembered across the wipe below, then put back and re-applied.
@@ -2798,6 +3055,22 @@ class GITD_ResetHandler : EventHandler
 		};
 		for (int i = 0; i < zeros.Size(); i++) Zero(zeros[i]);
 
+		// ---- the two working sets are NOT reset, they are re-read ---------
+		//
+		// gitd_sw_* and gitd_ln_* are absent from every list above on purpose,
+		// and the sweep set has always been absent for the same reason: they
+		// are a VIEW of the bands and the lanes, not storage. Resetting a view
+		// to its own defaults would be meaningless at best -- gitd_ln_*'s
+		// defaults are wall bottom's, so resetting it and letting CommitLane
+		// run would stamp wall bottom's numbers onto whichever lane the
+		// selector was pointing at.
+		//
+		// What they need instead is to be told their storage moved. Without
+		// this line CommitLane and CommitSweep run on the very next tic and
+		// write the pre-reset view back over one lane and one band -- so
+		// "reset the 4x8 lanes" would visibly reset three of them.
+		GITD_PresetCustomiser.ResyncViews();
+
 		// ---- and the preset comes back ------------------------------------
 		//
 		// Re-applied rather than merely re-selected. The backup record is
@@ -2848,6 +3121,7 @@ class GITD_PresetCustomiser : StaticEventHandler
 	{
 		lastPreset = -1;    // force the working set to load on the first tick
 		lastSweepSel = -1;  // and the sweep working set with it
+		lastLaneSel = -1;   // and the lane working set with that
 	}
 
 	// The menu offers 0..11. A console user can type anything, and every
@@ -2920,8 +3194,127 @@ class GITD_PresetCustomiser : StaticEventHandler
 		SaveSweep(clamp(GetI("gitd_sw_sel", 1), 1, 8));
 	}
 
+	// ---- The lane working set ---------------------------------------------
+	//
+	// The same trick one size larger. Four lanes x thirty-two settings is a
+	// hundred and twenty-eight menu rows on four pages that differ in nothing
+	// but their prefix -- unreadable, and four places to forget whenever a
+	// lane grows a setting. So the menu edits ONE lane and a selector says
+	// which.
+	//
+	// The gitd_wb_/wt_/cg_/fg_ cvars stay the storage. These are a view onto
+	// them, so presets, the colour law, the reset button and the engine see no
+	// change at all.
+
+	int lastLaneSel;
+
+	// 0 wall bottom, 1 wall top, 2 ceiling, 3 floor -- the SAME order as
+	// GITD_ResetHandler's lanes[] and gitd_fog_color_lane. A lane index that
+	// means one thing here and another thing there is the kind of bug that
+	// only shows up as "the wrong page saved".
+	static string LnKey(string suffix, int lane)
+	{
+		static const string pre[] = { "gitd_wb_", "gitd_wt_", "gitd_cg_", "gitd_fg_" };
+		return pre[clamp(lane, 0, 3)] .. suffix;
+	}
+
+	// Working set -> lane N. Called before the selector moves away from N, so
+	// edits are never silently dropped.
+	void SaveLane(int lane)
+	{
+		if (lane < 0 || lane > 3) return;
+		SetI(LnKey("enabled", lane), GetB("gitd_ln_enabled") ? 1 : 0);
+		for (int c = 1; c <= 8; c++)
+		{
+			let s = CVar.FindCVar("gitd_ln_c" .. c);
+			if (s) { let d = CVar.FindCVar(LnKey("c" .. c, lane)); if (d) d.SetInt(s.GetInt()); }
+		}
+		SetI(LnKey("slots",       lane), GetI("gitd_ln_slots",    4));
+		SetI(LnKey("random",      lane), GetB("gitd_ln_random") ? 1 : 0);
+		SetI(LnKey("pattern",     lane), GetI("gitd_ln_pattern",  1));
+		SetF(LnKey("speed",       lane), GetF("gitd_ln_speed",      0.004));
+		SetI(LnKey("bleed",       lane), GetB("gitd_ln_bleed") ? 1 : 0);
+		SetI(LnKey("coverage",    lane), GetI("gitd_ln_coverage", 128));
+		SetI(LnKey("falloff",     lane), GetI("gitd_ln_falloff",    1));
+		SetF(LnKey("intensity",   lane), GetF("gitd_ln_intensity",  1.0));
+		SetF(LnKey("saturation",  lane), GetF("gitd_ln_saturation", 1.0));
+		SetI(LnKey("anim",        lane), GetI("gitd_ln_anim",       0));
+		SetF(LnKey("anim_speed",  lane), GetF("gitd_ln_anim_speed",   0.6));
+		SetF(LnKey("anim_length", lane), GetF("gitd_ln_anim_length", 512.0));
+		SetF(LnKey("anim_depth",  lane), GetF("gitd_ln_anim_depth",   0.6));
+		SetF(LnKey("anim_sharp",  lane), GetF("gitd_ln_anim_sharp",   1.0));
+		SetF(LnKey("anim_phase",  lane), GetF("gitd_ln_anim_phase",   0.5));
+		for (int c = 1; c <= 8; c++)
+			SetF(LnKey("hold" .. c, lane), GetF("gitd_ln_hold" .. c, 0.0));
+	}
+
+	// Lane N -> working set.
+	void LoadLane(int lane)
+	{
+		if (lane < 0 || lane > 3) return;
+		SetI("gitd_ln_enabled", GetB(LnKey("enabled", lane)) ? 1 : 0);
+		for (int c = 1; c <= 8; c++)
+		{
+			let s = CVar.FindCVar(LnKey("c" .. c, lane));
+			if (s) { let d = CVar.FindCVar("gitd_ln_c" .. c); if (d) d.SetInt(s.GetInt()); }
+		}
+		SetI("gitd_ln_slots",       GetI(LnKey("slots",    lane),   4));
+		SetI("gitd_ln_random",      GetB(LnKey("random",   lane)) ? 1 : 0);
+		SetI("gitd_ln_pattern",     GetI(LnKey("pattern",  lane),   1));
+		SetF("gitd_ln_speed",       GetF(LnKey("speed",    lane),   0.004));
+		SetI("gitd_ln_bleed",       GetB(LnKey("bleed",    lane)) ? 1 : 0);
+		SetI("gitd_ln_coverage",    GetI(LnKey("coverage", lane), 128));
+		SetI("gitd_ln_falloff",     GetI(LnKey("falloff",  lane),   1));
+		SetF("gitd_ln_intensity",   GetF(LnKey("intensity",   lane), 1.0));
+		SetF("gitd_ln_saturation",  GetF(LnKey("saturation",  lane), 1.0));
+		SetI("gitd_ln_anim",        GetI(LnKey("anim",        lane), 0));
+		SetF("gitd_ln_anim_speed",  GetF(LnKey("anim_speed",  lane),   0.6));
+		SetF("gitd_ln_anim_length", GetF(LnKey("anim_length", lane), 512.0));
+		SetF("gitd_ln_anim_depth",  GetF(LnKey("anim_depth",  lane),   0.6));
+		SetF("gitd_ln_anim_sharp",  GetF(LnKey("anim_sharp",  lane),   1.0));
+		SetF("gitd_ln_anim_phase",  GetF(LnKey("anim_phase",  lane),   0.5));
+		for (int c = 1; c <= 8; c++)
+			SetF("gitd_ln_hold" .. c, GetF(LnKey("hold" .. c, lane), 0.0));
+	}
+
+	// Live edits go straight through to the selected lane, so the room changes
+	// as you drag the slider rather than when you next move the selector. The
+	// selector handler below covers the case where you move away mid-edit.
+	void CommitLane()
+	{
+		SaveLane(clamp(GetI("gitd_ln_sel", 0), 0, 3));
+	}
+
+	// Drop both views on the floor and rebuild them from storage on the next
+	// tic. Anything that writes the LANES or the SWEEP BANDS from outside the
+	// menu -- the reset button, the randomise rolls -- has to call this, or
+	// CommitLane/CommitSweep will write the stale view straight back over the
+	// one lane and the one band the selectors happen to be pointing at, and
+	// undo exactly the change that was just made. Setting the watchers to -1
+	// rather than saving first is the point: -1 fails the range guard below,
+	// so the stale view is discarded instead of committed.
+	static void ResyncViews()
+	{
+		let h = GITD_PresetCustomiser(StaticEventHandler.Find("GITD_PresetCustomiser"));
+		if (!h) return;
+		h.lastLaneSel = -1;
+		h.lastSweepSel = -1;
+	}
+
 	override void WorldTick()
 	{
+		// The lane selector, first and for the same reason the sweep one comes
+		// before the preset block: moving it must write the outgoing lane
+		// before the incoming one overwrites the fields.
+		int lane = clamp(GetI("gitd_ln_sel", 0), 0, 3);
+		if (lane != lastLaneSel)
+		{
+			if (lastLaneSel >= 0 && lastLaneSel <= 3) SaveLane(lastLaneSel);
+			lastLaneSel = lane;
+			LoadLane(lane);
+		}
+		else CommitLane();
+
 		// The sweep selector, before the preset block: moving it must write
 		// the outgoing band before the incoming one overwrites the fields.
 		int sel = clamp(GetI("gitd_sw_sel", 1), 1, 8);
@@ -2956,6 +3349,7 @@ class GITD_PresetCustomiser : StaticEventHandler
 	// same native dereference as SetInt().
 	static bool GetB(string name)   { let c = CVar.FindCVar(name); return c ? c.GetBool()  : false; }
 	static int  GetI(string name, int def) { let c = CVar.FindCVar(name); return c ? c.GetInt() : def; }
+	static double GetF(string name, double def) { let c = CVar.FindCVar(name); return c ? c.GetFloat() : def; }
 
 	// Pull a preset into the working set: your saved version if you have one,
 	// otherwise whatever GITD_Presets ships.
@@ -3022,5 +3416,80 @@ class GITD_PresetCustomiser : StaticEventHandler
 			LoadWorkingSet(preset);
 			Console.Printf("Restored preset defaults: %s", GITD_Presets.Name(preset));
 		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// THE ROLLED BLOOM, SPENT ON A KEYSTROKE.
+//
+// gitd_roll_bloom rolls its numbers in play scope, where they cannot be
+// applied: bloom is gl_* -- ENGINE cvars -- and ZScript refuses to write one
+// unless DMenu::InMenu is set. That flag is set around MenuEvent, OnUIEvent
+// and OnInputEvent, and around nothing a netevent ever touches. Writing
+// gl_bloom_amount from NetworkProcess is the same abort that once took the
+// whole reset handler down with it; see the long note in GITD_ResetHandler.
+//
+// So the roll leaves its result in gitd_bloom_roll_* and raises _pending, and
+// this menu spends it the next time the player presses a key or moves the
+// mouse on a page that uses this class. It is the same bargain
+// DarkDoomZ_OptionMenu already struck for a preset's bloom half -- stated
+// plainly rather than papered over, because a silent half-apply is worse than
+// a known one.
+//
+// A page opts in by naming this instead of DarkDoomZ_OptionMenu, from which it
+// inherits the live preview and everything else unchanged.
+// ---------------------------------------------------------------------------
+
+class GITD_RollMenu : DarkDoomZ_OptionMenu
+{
+	// Cleared BEFORE the writes, not after. A roll applies exactly once, and
+	// clearing first means that stays true even if one of the gl_* names has
+	// gone missing in a future engine and the write below quietly no-ops --
+	// otherwise the flag would sit raised forever and re-push the same numbers
+	// on every keystroke, making the Bloom page impossible to edit.
+	private void SpendBloomRoll()
+	{
+		let p = CVar.FindCVar("gitd_bloom_roll_pending");
+		if (!p || !p.GetBool()) return;
+		p.SetInt(0);
+
+		PushEngine("gl_bloom_amount",    "gitd_bloom_roll_amount");
+		PushEngine("gl_bloom_threshold", "gitd_bloom_roll_threshold");
+		PushEngine("gl_bloom_knee",      "gitd_bloom_roll_knee");
+		PushEngine("gl_bloom_tint_r",    "gitd_bloom_roll_tint_r");
+		PushEngine("gl_bloom_tint_g",    "gitd_bloom_roll_tint_g");
+		PushEngine("gl_bloom_tint_b",    "gitd_bloom_roll_tint_b");
+		// gl_bloom itself is deliberately absent. It is the master switch, and
+		// no roll in this mod moves one.
+	}
+
+	// Guarded on both sides. gl_bloom_knee did not exist in every GZDoom that
+	// can load this, and an unguarded FindCVar().SetFloat on a name that does
+	// not resolve is a native dereference rather than a catchable abort.
+	private void PushEngine(string engineName, string rolledName)
+	{
+		let d = CVar.FindCVar(engineName);
+		if (!d) return;
+		let s = CVar.FindCVar(rolledName);
+		if (!s) return;
+		d.SetFloat(s.GetFloat());
+	}
+
+	override bool MenuEvent(int mkey, bool fromcontroller)
+	{
+		bool handled = super.MenuEvent(mkey, fromcontroller);
+		SpendBloomRoll();
+		return handled;
+	}
+
+	// Mouse movement counts too, and it is what makes this feel immediate
+	// rather than delayed: pressing the roll button is itself a MenuEvent, but
+	// the netevent it fires does not run until the next tic, so the press that
+	// caused the roll can never be the press that spends it.
+	override bool OnUIEvent(UIEvent ev)
+	{
+		bool handled = super.OnUIEvent(ev);
+		SpendBloomRoll();
+		return handled;
 	}
 }

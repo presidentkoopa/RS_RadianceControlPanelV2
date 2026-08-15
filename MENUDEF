@@ -1,7 +1,10 @@
 // === GLOW IN THE DARK ===
-// Every lane gets the same options, four times over. The four lane submenus
-// are deliberately identical in shape -- if a control exists for one lane it
-// exists for all of them.
+// Every lane gets the same options, so there is ONE lane page and a selector
+// at the top of it rather than four identical pages. Same trick as Edit One
+// Band: a working set of cvars the handler swaps in and out.
+//
+// The front page is five doors and little else -- Light, Darkness, Air,
+// Reaction, World. Anything specific lives behind one of them.
 
 OptionValue "GITDGovernor"
 {
@@ -44,6 +47,17 @@ OptionValue "GITDSlots"
 	6, "6"
 	7, "7"
 	8, "8"
+}
+
+// Which surface the single lane page is currently editing. The order is the
+// order the working set uses, and matches GITDLawLane and GITDFogColorLane so
+// "lane 2" means the same thing everywhere in this file.
+OptionValue "GITDLaneSel"
+{
+	0, "Wall bottom"
+	1, "Wall top"
+	2, "Ceiling"
+	3, "Floor"
 }
 
 OptionValue "GITDAnim"
@@ -286,6 +300,12 @@ OptionMenu "GITDNeon"
 	StaticText "The engine draws numbers in the world.", darkgray
 	StaticText "These decide which numbers exist.", darkgray
 	StaticText ""
+	Option "Draw",					"gitd_neon_draw", "GITDNeonDraw"
+	StaticText "The simple picker: one readout or the other.", darkgray
+	StaticText "The two blocks below reach the same two", darkgray
+	StaticText "readouts separately, so you can run both at", darkgray
+	StaticText "once instead of choosing.", darkgray
+	StaticText ""
 	Option "Damage numbers",		"gitd_neon_damage", "OnOff"
 	Option "Count",					"gitd_neon_dmg_mode", "GITDNeonDmgMode"
 	Slider "Resets after",			"gitd_neon_dmg_window", 5, 210, 5, 0
@@ -305,28 +325,31 @@ OptionMenu "GITDNeon"
 
 OptionMenu "GITDOptions"
 {
-	Class "DarkDoomZ_OptionMenu"
+	// GITD_RollMenu, NOT DarkDoomZ_OptionMenu, and only because bloom is an
+	// engine cvar. ZScript refuses to write gl_bloom_* unless DMenu::InMenu is
+	// set, and it is not set during a netevent -- so "Randomise Bloom" cannot
+	// apply its own result. It stages the numbers into seven mod cvars it does
+	// own, and this subclass spends them on the next menu event. Take this line
+	// back to the parent class and the bloom roll stages forever and never
+	// lands, silently, while the other four rolls keep working. Same reason the
+	// reset handler cannot reset bloom either.
+	Class "GITD_RollMenu"
 	Title "Glow In The Dark"
-	StaticText ""
 	StaticText ""
 
 	Option "Glow In The Dark",		"gitd_enabled", "OnOff"
-	Option "Seamless Corners",		"gitd_seamless", "OnOff", "gitd_enabled"
-	StaticText "Where a wall meets a floor, both glows", darkgray
-	StaticText "already reach the join at full strength --", darkgray
-	StaticText "they just disagree about the colour there.", darkgray
-	StaticText "This makes them agree AT the join and ramp", darkgray
-	StaticText "back to their own colour away from it, so", darkgray
-	StaticText "the corner is one gradient -- floor colour,", darkgray
-	StaticText "blend, wall colour -- with no hard edge.", darkgray
-	StaticText "Width and falloff are matched to suit.", darkgray
+	StaticText ""
 	StaticText ""
 
 	StaticText "Presets  (override every glow setting)", gold
 	Option "  Preset",				"gitd_preset", "GITDPreset"
+	Submenu "  Customise this preset","GITDPresetOptions"
 	Command "  Disable Preset",		"gitd_preset 0"
 	StaticText "A preset REPLACES your settings and hands", darkgray
 	StaticText "them back on Disable, so nothing is lost.", darkgray
+	StaticText "Disable puts back exactly what you had when", darkgray
+	StaticText "you chose it -- including anything you changed", darkgray
+	StaticText "while it was on.", darkgray
 	StaticText "", darkgray
 	StaticText "Black and White refuses almost every system", darkgray
 	StaticText "here -- no sweep, no lattice, no wisps, no", darkgray
@@ -337,153 +360,75 @@ OptionMenu "GITDOptions"
 	StaticText "", darkgray
 	StaticText "It leaves bloom alone. A preset that fights", darkgray
 	StaticText "your Bloom page is a preset you cannot use.", darkgray
-	StaticText "A preset REPLACES your settings. Disable", darkgray
-	StaticText "puts back exactly what you had when you", darkgray
-	StaticText "chose it -- including anything you changed", darkgray
-	StaticText "while it was on.", darkgray
-	StaticText ""
-	Submenu "  Customise this preset","GITDPresetOptions"
-	StaticText "That page generates a palette from a hue", darkgray
+	StaticText "", darkgray
+	StaticText "Customise generates a palette from a hue", darkgray
 	StaticText "range. Every preset here is written out", darkgray
 	StaticText "colour by colour instead, so it has nothing", darkgray
 	StaticText "to alter on any of them.", darkgray
 	StaticText ""
 	StaticText ""
 
+	StaticText "Randomise", gold
+	SafeCommand "  Randomise Glow",	"netevent gitd_roll_glow"
+	SafeCommand "  Randomise Fog",	"netevent gitd_roll_fog"
+	SafeCommand "  Randomise Bloom",	"netevent gitd_roll_bloom"
+	SafeCommand "  Randomise Sweep",	"netevent gitd_roll_sweep"
+	SafeCommand "  Randomise Everything","netevent gitd_roll_all"
+	StaticText "These ROLL ONCE AND STOP. The room lands on", darkgray
+	StaticText "one look and holds it, so you can then tune", darkgray
+	StaticText "it row by row like any other set of values.", darkgray
+	StaticText "", darkgray
+	StaticText "NOT the same as the Random switches inside", darkgray
+	StaticText "the menu -- those are a MODE. They keep", darkgray
+	StaticText "re-rolling while they are on and the room", darkgray
+	StaticText "never settles on anything. Both are wanted;", darkgray
+	StaticText "one gives you a look, the other gives you", darkgray
+	StaticText "weather.", darkgray
+	StaticText ""
+	StaticText ""
+
+	StaticText "Darkness", gold
 	Option "DarkDoom",				"gitd_dd_enabled", "OnOff"
 	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
 	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
-	Slider "  Light floor",			"ddz_minlight", 0, 128, 4, 0
-	Slider "  Gain before the curve","ddz_pregain", -128, 128, 4, 0
-	Slider "  Gain after the curve","ddz_postgain", -128, 128, 4, 0
-	Submenu "  Per-pixel darkness...","GITDDarkPixel"
-	StaticText ""
-
-	Submenu "Volumetric Flashlight Options...","GITDFlashlight"
-	Submenu "Bloom Options...",		"GITDBloom"
-	Submenu "Fog Options...",		"GITDFog"
-	Submenu "World Ambience...",	"GITDFancyWorld"
+	Submenu "  More darkness...",	"GITDDarkness"
+	StaticText "The two dials that decide how dark the game", darkgray
+	StaticText "is, up here because they are the ones you", darkgray
+	StaticText "reach for first. Gains, the light floor, the", darkgray
+	StaticText "per-pixel curves, the colour drain and bloom", darkgray
+	StaticText "are all behind the door.", darkgray
 	StaticText ""
 	StaticText ""
 
-	StaticText "Customize Glows", gold
-	Option "Random Colours",		"gitd_rnd_colors", "OnOff"
-	Option "Random Colour Governor","gitd_rnd_governor", "GITDGovernor"
-	Option "Random Times",			"gitd_rnd_times", "OnOff"
-	Option "Random Patterns",		"gitd_rnd_patterns", "OnOff"
-	Submenu "Wall Bottom Glow...",	"GITDWallBottom"
-	Submenu "Wall Top Glow...",		"GITDWallTop"
-	Submenu "Ceiling Glow...",		"GITDCeilingGlow"
-	Submenu "Floor Glow...",		"GITDFloorGlow"
+	StaticText "Everything else", gold
+	Submenu "Light...",				"GITDLight"
+	StaticText "The four glow lanes, corners, waves and the", darkgray
+	StaticText "texture inside a glow.", darkgray
 	StaticText ""
-
-	StaticText "Sector Sweep", gold
-	Option "Sector Sweep",			"gitd_ss_enabled", "OnOff"
-	Submenu "Visual Options...",	"GITDSweepVisual"
-	Submenu "  Edit one band...",	"GITDSweepBand"
-	Submenu "Gameplay Options...",	"GITDSweepPlay"
+	Submenu "Air...",				"GITDAir"
+	StaticText "Fog, the floor mist, the tornado and the", darkgray
+	StaticText "flashlight that lights them.", darkgray
 	StaticText ""
-
-	StaticText "Numeric Controls", gold
-	Option "Draw Numbers",			"gitd_neon_enabled", "OnOff"
+	Submenu "Reaction...",			"GITDReaction"
+	StaticText "Everything that answers what you do: the", darkgray
+	StaticText "sweep, the laser grid, floor marks, numbers", darkgray
+	StaticText "in the world and the heatmap.", darkgray
 	StaticText ""
-	Option "Style",					"gitd_neon_style", "GITDNeonStyle"
-	StaticText ""
-	Option "Draw",					"gitd_neon_draw", "GITDNeonDraw"
-	Option "Where",					"gitd_neon_kc_place", "GITDNeonPlace"
-	StaticText ""
-	ColorPicker "Fallback colour",	"gitd_neon_color"
-	Slider "Radial size",			"gitd_neon_scale", 0.10, 3.0, 0.05, 2
-	Slider "Display time",			"gitd_neon_life", 0.25, 20.0, 0.25, 2
-	Option "Removal",				"gitd_neon_kc_linger", "GITDNeonLinger"
-	Submenu "More number options...","GITDNeon"
+	Submenu "World...",				"GITDFancyWorld"
+	StaticText "Ambience read out of the map's own textures", darkgray
+	StaticText "-- lights, mist, footsteps, muffled sound.", darkgray
 	StaticText ""
 	StaticText ""
 
-	StaticText "Laser Grid", gold
-	Slider "Fire lasers into the air","gitd_ss_fill_air", 0.0, 4.0, 0.1, 1
-	Command "  The Hallway",		"gitd_hallway"
-	Submenu "  Grid options...",	"GITDSweepFill"
-	StaticText "THE GRID IS WHAT A SWEEP FIRES. Turn this up", darkgray
-	StaticText "and the band stops being a wash and becomes a", darkgray
-	StaticText "wall of laser light standing in the room --", darkgray
-	StaticText "floor to ceiling, wall to wall, coming down", darkgray
-	StaticText "the hall at you. Needs the sweep on.", darkgray
-	StaticText ""
-	StaticText "Density is free: it is a pattern, not a set of", darkgray
-	StaticText "lines, so a screen door costs what four lines", darkgray
-	StaticText "cost. The Hallway sets the whole look at once.", darkgray
-	StaticText ""
+	Command "The Hallway",			"gitd_hallway"
+	StaticText "One command that sets a whole corridor at", darkgray
+	StaticText "once: dense diagonal cyan lattice, dark room,", darkgray
+	StaticText "haze to catch the light. It WRITES the values", darkgray
+	StaticText "rather than borrowing them, so it is a", darkgray
+	StaticText "starting point and not a mode.", darkgray
 	StaticText ""
 
-	StaticText "Floor Fog", gold
-	Option "Floor fog",				"gitd_fog_enabled", "OnOff"
-	StaticText "Mist with a TOP, so you can stand in it and", darkgray
-	StaticText "look down at its surface. The fog on the Fog", darkgray
-	StaticText "page is a distance tint on walls and fills a", darkgray
-	StaticText "room floor to ceiling; this is a slab of air.", darkgray
-	Submenu "  Floor fog options...","GITDFloorFog"
-	StaticText ""
-	StaticText ""
-
-	StaticText "Tornado", gold
-	Option "Tornado",				"gitd_tornado_enabled", "OnOff"
-	StaticText "The same mist gathered around a vertical axis", darkgray
-	StaticText "instead of spread under a plane -- a funnel", darkgray
-	StaticText "you can walk into and stand inside. Its centre", darkgray
-	StaticText "is hollow, so from within you are looking out", darkgray
-	StaticText "through the far wall of it.", darkgray
-	StaticText ""
-	StaticText "FULLY INDEPENDENT OF THE FLOOR FOG. Run either,", darkgray
-	StaticText "or both at once with different colours -- they", darkgray
-	StaticText "share the maths, not the settings.", darkgray
-	StaticText ""
-	StaticText "This is the expensive one. Off costs nothing.", darkgray
-	Submenu "  Tornado options...",	"GITDTornado"
-	Submenu "  Reactive fog...",	"GITDFogReact"
-	Submenu "  Heatmap...",			"GITDHeatmap"
-	StaticText "Where the fighting happened, drawn on the", darkgray
-	StaticText "floor and accumulated over the whole map.", darkgray
-	StaticText ""
-	StaticText ""
-
-	StaticText "Texture in the Glow", gold
-	Submenu "  Texture options...",	"GITDGlowTex"
-	StaticText "The wave moves a glow's EDGE, which does", darkgray
-	StaticText "nothing once coverage is so high that the", darkgray
-	StaticText "edge is off screen -- a maxed lane is a solid", darkgray
-	StaticText "card of colour. These five happen INSIDE the", darkgray
-	StaticText "lit area instead: noise for material, flow for", darkgray
-	StaticText "current, veins that crawl, gunfire crossing the", darkgray
-	StaticText "walls, and a pulse when the room is in trouble.", darkgray
-	StaticText ""
-	StaticText ""
-
-	StaticText "Shapes on the Floor", gold
-	Option "Shapes",				"gitd_shape_enabled", "OnOff"
-	Submenu "  Shape options...",	"GITDShapes"
-	StaticText "Marks drawn where things happen -- a ring", darkgray
-	StaticText "where something died, splitting open to show", darkgray
-	StaticText "another colour underneath.", darkgray
-	StaticText ""
-	StaticText "Maths, not geometry. No model and no actor,", darkgray
-	StaticText "so it stays sharp at any distance and wraps a", darkgray
-	StaticText "step without a seam.", darkgray
-	StaticText ""
-	StaticText ""
-
-	StaticText "Glow Waves", gold
-	Option "Waves",					"gitd_wave_enabled", "OnOff"
-	StaticText "A glow fades smoothly UP a wall and was", darkgray
-	StaticText "one flat value along it -- a dead straight", darkgray
-	StaticText "edge from one end of a room to the other.", darkgray
-	StaticText "This gives it the other axis: the edge", darkgray
-	StaticText "itself rises and falls as it travels.", darkgray
-	Submenu "  Wave options...",	"GITDWaves"
-	StaticText ""
-	StaticText ""
-
-	SafeCommand "Back to a clean room",		"netevent gitd_reset"
+	SafeCommand "Back to a clean room",	"netevent gitd_reset"
 	StaticText "Every value back to its default, and every", darkgray
 	StaticText "system switched OFF except the four lanes --", darkgray
 	StaticText "including the ones that ship on, like the", darkgray
@@ -497,6 +442,260 @@ OptionMenu "GITDOptions"
 	StaticText "are not touched -- reset those from the Bloom", darkgray
 	StaticText "page.", darkgray
 }
+
+// ---------------------------------------------------------------------------
+// LIGHT -- the glow itself.
+//
+// The four lanes, what happens at the join between two of them, and the two
+// systems that put movement and substance INSIDE a lit area rather than at
+// its edge.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDLight"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Light"
+	StaticText ""
+
+	Submenu "The four glow lanes...","GITDLanes"
+	StaticText "Wall bottom, wall top, ceiling and floor.", darkgray
+	StaticText "One page with a selector at the top -- every", darkgray
+	StaticText "lane has the same controls, so four copies of", darkgray
+	StaticText "the same page bought nothing.", darkgray
+	StaticText ""
+
+	Option "Seamless Corners",		"gitd_seamless", "OnOff", "gitd_enabled"
+	StaticText "Where a wall meets a floor, both glows", darkgray
+	StaticText "already reach the join at full strength --", darkgray
+	StaticText "they just disagree about the colour there.", darkgray
+	StaticText "This makes them agree AT the join and ramp", darkgray
+	StaticText "back to their own colour away from it, so", darkgray
+	StaticText "the corner is one gradient -- floor colour,", darkgray
+	StaticText "blend, wall colour -- with no hard edge.", darkgray
+	StaticText "Width and falloff are matched to suit.", darkgray
+	StaticText ""
+
+	StaticText "Colours that keep changing", gold
+	Option "Random Colours",		"gitd_rnd_colors", "OnOff"
+	Option "Random Colour Governor","gitd_rnd_governor", "GITDGovernor"
+	Option "Random Times",			"gitd_rnd_times", "OnOff"
+	Option "Random Patterns",		"gitd_rnd_patterns", "OnOff"
+	StaticText "A MODE, not a button. While these are on the", darkgray
+	StaticText "lanes keep re-rolling and the room never", darkgray
+	StaticText "settles. The Randomise buttons on the front", darkgray
+	StaticText "page roll once and stop -- use those if you", darkgray
+	StaticText "want a look you can then tune.", darkgray
+	StaticText ""
+	StaticText "The governor is what stops a random palette", darkgray
+	StaticText "turning muddy: it holds the eight colours to", darkgray
+	StaticText "a family, a complement pair, or neon only.", darkgray
+	StaticText ""
+
+	StaticText "Glow Waves", gold
+	Option "Waves",					"gitd_wave_enabled", "OnOff"
+	Submenu "  Wave options...",	"GITDWaves"
+	StaticText "A glow fades smoothly UP a wall and was", darkgray
+	StaticText "one flat value along it -- a dead straight", darkgray
+	StaticText "edge from one end of a room to the other.", darkgray
+	StaticText "This gives it the other axis: the edge", darkgray
+	StaticText "itself rises and falls as it travels.", darkgray
+	StaticText ""
+	StaticText "Turning it on turns Seamless Corners off.", darkgray
+	StaticText "They want opposite things at a corner.", darkgray
+	StaticText ""
+
+	StaticText "Texture in the Glow", gold
+	Submenu "  Texture options...",	"GITDGlowTex"
+	StaticText "The wave moves a glow's EDGE, which does", darkgray
+	StaticText "nothing once coverage is so high that the", darkgray
+	StaticText "edge is off screen -- a maxed lane is a solid", darkgray
+	StaticText "card of colour. These five happen INSIDE the", darkgray
+	StaticText "lit area instead: noise for material, flow for", darkgray
+	StaticText "current, veins that crawl, gunfire crossing the", darkgray
+	StaticText "walls, and a pulse when the room is in trouble.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// DARKNESS -- how far the light is taken away, and what is left of colour.
+//
+// DarkDoom's own naming is kept deliberately: ddz_preset is How dark,
+// ddz_mode is the Darkness curve, and the Lite/Classic/Black entries are the
+// ones long-time DarkDoomZ users will be looking for.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDDarkness"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Darkness"
+	StaticText ""
+
+	Option "DarkDoom",				"gitd_dd_enabled", "OnOff"
+	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
+	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
+	StaticText "The four dial modes read How dark. The three", darkgray
+	StaticText "DarkDoom modes ignore it and are fixed looks.", darkgray
+	StaticText ""
+	Slider "  Light floor",			"ddz_minlight", 0, 128, 4, 0
+	Slider "  Gain before the curve","ddz_pregain", -128, 128, 4, 0
+	Slider "  Gain after the curve","ddz_postgain", -128, 128, 4, 0
+	StaticText "The light floor is how dark a room is allowed", darkgray
+	StaticText "to get at all. Pre-gain moves the room before", darkgray
+	StaticText "the curve reads it; post-gain moves the result.", darkgray
+	StaticText ""
+
+	Submenu "Per-pixel darkness...","GITDDarkPixel"
+	StaticText "The same curves asked about each PIXEL's own", darkgray
+	StaticText "light rather than each room's -- which is what", darkgray
+	StaticText "lets dark deepen with distance and pool on the", darkgray
+	StaticText "floor. A sector multiplier cannot do either.", darkgray
+	StaticText ""
+
+	Submenu "Colour drain...",		"GITDDrain"
+	StaticText "Colour vision fails in low light, and draining", darkgray
+	StaticText "it reads as dark rather than merely dim. Also", darkgray
+	StaticText "holds the rules for what SURVIVES the drain,", darkgray
+	StaticText "the sky, Doom's own blinking lights and the", darkgray
+	StaticText "muzzle flash.", darkgray
+	StaticText ""
+
+	Submenu "Bloom Options...",		"GITDBloom"
+	StaticText "Engine settings, reached by name. Bloom is", darkgray
+	StaticText "what makes a glow read as EMISSIVE rather", darkgray
+	StaticText "than as paint, so it belongs with the dark", darkgray
+	StaticText "even though the mod does not own it.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// AIR -- everything that happens in the space between surfaces.
+//
+// The engine's distance fog, the volumetric slab, the funnel, what disturbs
+// them, and the torch that is the only thing which lights any of it.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDAir"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Air"
+	StaticText ""
+
+	Option "$GLPREFMNU_FOGMODE",	gl_fogmode, "FogMode"
+	StaticText "The engine's own distance tint on surfaces.", darkgray
+	StaticText "It fills a room floor to ceiling and has no", darkgray
+	StaticText "top, which is why everything below exists.", darkgray
+	StaticText ""
+
+	StaticText "Floor Fog", gold
+	Option "Floor fog",				"gitd_fog_enabled", "OnOff"
+	Submenu "  Floor fog options...","GITDFloorFog"
+	Submenu "  Reactive fog...",	"GITDFogReact"
+	StaticText "Mist with a TOP, so you can stand in it and", darkgray
+	StaticText "look down at its surface. A slab of air rather", darkgray
+	StaticText "than a tint on the walls.", darkgray
+	StaticText ""
+	StaticText "Reactive fog is the same slab made to behave", darkgray
+	StaticText "like a substance: banked up unevenly, pushed", darkgray
+	StaticText "aside by what walks through it, and rung like", darkgray
+	StaticText "a bell by gunfire.", darkgray
+	StaticText ""
+
+	StaticText "Tornado", gold
+	Option "Tornado",				"gitd_tornado_enabled", "OnOff"
+	Submenu "  Tornado options...",	"GITDTornado"
+	StaticText "The same mist gathered around a vertical axis", darkgray
+	StaticText "instead of spread under a plane -- a funnel", darkgray
+	StaticText "you can walk into and stand inside. Its centre", darkgray
+	StaticText "is hollow, so from within you are looking out", darkgray
+	StaticText "through the far wall of it.", darkgray
+	StaticText ""
+	StaticText "FULLY INDEPENDENT OF THE FLOOR FOG. Run either,", darkgray
+	StaticText "or both at once with different colours -- they", darkgray
+	StaticText "share the maths, not the settings.", darkgray
+	StaticText ""
+	StaticText "This is the expensive one. Off costs nothing.", darkgray
+	StaticText ""
+
+	StaticText "Flashlight", gold
+	Option "Flashlight",			"fl_enabled", "OnOff"
+	Submenu "  Flashlight options...","GITDFlashlight"
+	StaticText "The beam is volumetric -- visible in the air,", darkgray
+	StaticText "not just where it lands. It is on this page", darkgray
+	StaticText "because it is the only thing in the mod that", darkgray
+	StaticText "lights mist from inside, and a funnel alone in", darkgray
+	StaticText "clear air needs it to be seen at all.", darkgray
+}
+
+// ---------------------------------------------------------------------------
+// REACTION -- the room answering what happens in it.
+//
+// A sweep is weather until you trigger it off a kill; a floor mark, a number
+// burned into the ground and a heatmap are all the same idea carried further.
+// Grouped by what they ARE FOR rather than by which shader draws them.
+// ---------------------------------------------------------------------------
+
+OptionMenu "GITDReaction"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Reaction"
+	StaticText ""
+
+	StaticText "Sector Sweep", gold
+	Option "Sector Sweep",			"gitd_ss_enabled", "OnOff"
+	Submenu "  Visual options...",	"GITDSweepVisual"
+	Submenu "  Edit one band...",	"GITDSweepBand"
+	Submenu "  Gameplay options...","GITDSweepPlay"
+	Submenu "  Laser grid...",		"GITDSweepFill"
+	StaticText "A train of thin bands travelling through the", darkgray
+	StaticText "world, each wrapping across floor, wall and", darkgray
+	StaticText "ceiling as one unbroken line.", darkgray
+	StaticText ""
+	StaticText "THE GRID IS WHAT A SWEEP FIRES. Turn it up and", darkgray
+	StaticText "the band stops being a wash and becomes a wall", darkgray
+	StaticText "of laser light standing in the room -- floor to", darkgray
+	StaticText "ceiling, wall to wall, coming down the hall at", darkgray
+	StaticText "you. Density is free: it is a pattern, not a", darkgray
+	StaticText "set of lines, so a screen door costs what four", darkgray
+	StaticText "lines cost.", darkgray
+	StaticText ""
+
+	StaticText "Shapes on the Floor", gold
+	Option "Shapes",				"gitd_shape_enabled", "OnOff"
+	Submenu "  Shape options...",	"GITDShapes"
+	StaticText "Marks drawn where things happen -- a ring", darkgray
+	StaticText "where something died, splitting open to show", darkgray
+	StaticText "another colour underneath.", darkgray
+	StaticText ""
+	StaticText "Maths, not geometry. No model and no actor,", darkgray
+	StaticText "so it stays sharp at any distance and wraps a", darkgray
+	StaticText "step without a seam.", darkgray
+	StaticText ""
+
+	StaticText "Numeric Violence Engine", gold
+	Option "Numbers and text",		"gitd_neon_enabled", "OnOff"
+	Submenu "  Number options...",	"GITDNeon"
+	StaticText "Damage and kill counts drawn IN THE WORLD --", darkgray
+	StaticText "floating, or burned into the floor. The segment", darkgray
+	StaticText "styles build their glyphs out of arithmetic and", darkgray
+	StaticText "need no font file at all.", darkgray
+	StaticText ""
+
+	StaticText "Heatmap", gold
+	Option "Show the heatmap",		"gitd_heat_enabled", "OnOff"
+	Submenu "  Heatmap options...",	"GITDHeatmap"
+	StaticText "Where the fighting happened, drawn on the", darkgray
+	StaticText "floor and accumulated over the whole map.", darkgray
+	StaticText "Marks are recorded whether the display is on", darkgray
+	StaticText "or off, so switching it on after a fight shows", darkgray
+	StaticText "you that fight rather than an empty floor.", darkgray
+	StaticText ""
+
+	Submenu "Colours Change the Fight...","GITDColorLaw"
+	StaticText "One lane conducts. Whichever colour it is", darkgray
+	StaticText "wearing is a PHASE, and each of the eight can", darkgray
+	StaticText "carry a rule that holds while it shows -- so", darkgray
+	StaticText "the room announces a danger phase entirely by", darkgray
+	StaticText "its own light.", darkgray
+}
+
 
 // ---------------------------------------------------------------------------
 // Per-pixel darkness.
@@ -992,7 +1191,12 @@ OptionMenu "GITDWaves"
 
 OptionMenu "GITDBloom"
 {
-	Class "DarkDoomZ_OptionMenu"
+	// GITD_RollMenu for the same reason as GITDOptions -- see the note there.
+	// This page is the second one that has to be able to spend a staged bloom
+	// roll, because opening Bloom to look at the result is the obvious thing to
+	// do after pressing Randomise, and if this page were still the parent class
+	// the sliders would show the OLD numbers and quietly discard the roll.
+	Class "GITD_RollMenu"
 	Title "Bloom Options"
 	StaticText ""
 	StaticText "Makes bright surfaces bleed light past", darkgray
@@ -1195,71 +1399,27 @@ OptionMenu "GITDSweepVisual"
 	Class "DarkDoomZ_OptionMenu"
 	Title "Sector Sweep -- Visual"
 	StaticText ""
+	Option "Sector Sweep",			"gitd_ss_enabled", "OnOff"
+	StaticText ""
+
+	StaticText "The train", gold
 	Option "Shape",					"gitd_ss_shape", "GITDSweepShape"
 	Option "Starts from",			"gitd_ss_origin", "GITDSweepOrigin"
 	Slider "  Distance ahead of you","gitd_origin_ahead", 64, 1024, 32, 0
 	StaticText "Only used by the \"in front of you\" origin.", darkgray
 	Option "Number of sweeps",		"gitd_ss_count", "GITDSweepCount"
+	Option "Travels",				"gitd_ss_direction", "GITDSweepDir"
 	StaticText ""
-	ColorPicker "Sweep 1 colour",	"gitd_ss_c1"
-	Slider "  Speed",				"gitd_ss_speed1", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape1", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw1", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick1", 0, 2048, 4, 0
-	Slider "  Time to sweep 2",		"gitd_ss_gap1", 1, 210, 1, 0
-	ColorPicker "Sweep 2 colour",	"gitd_ss_c2"
-	Slider "  Speed",				"gitd_ss_speed2", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape2", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw2", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick2", 0, 2048, 4, 0
-	Slider "  Time to sweep 3",		"gitd_ss_gap2", 1, 210, 1, 0
-	ColorPicker "Sweep 3 colour",	"gitd_ss_c3"
-	Slider "  Speed",				"gitd_ss_speed3", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape3", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw3", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick3", 0, 2048, 4, 0
-	Slider "  Time to sweep 4",		"gitd_ss_gap3", 1, 210, 1, 0
-	ColorPicker "Sweep 4 colour",	"gitd_ss_c4"
-	Slider "  Speed",				"gitd_ss_speed4", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape4", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw4", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick4", 0, 2048, 4, 0
-	Slider "  Time to sweep 5",		"gitd_ss_gap4", 1, 210, 1, 0
-	ColorPicker "Sweep 5 colour",	"gitd_ss_c5"
-	Slider "  Speed",				"gitd_ss_speed5", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape5", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw5", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick5", 0, 2048, 4, 0
-	Slider "  Time to sweep 6",		"gitd_ss_gap5", 1, 210, 1, 0
-	ColorPicker "Sweep 6 colour",	"gitd_ss_c6"
-	Slider "  Speed",				"gitd_ss_speed6", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape6", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw6", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick6", 0, 2048, 4, 0
-	Slider "  Time to sweep 7",		"gitd_ss_gap6", 1, 210, 1, 0
-	ColorPicker "Sweep 7 colour",	"gitd_ss_c7"
-	Slider "  Speed",				"gitd_ss_speed7", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape7", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw7", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick7", 0, 2048, 4, 0
-	Slider "  Time to sweep 8",		"gitd_ss_gap7", 1, 210, 1, 0
-	ColorPicker "Sweep 8 colour",	"gitd_ss_c8"
-	Slider "  Speed",				"gitd_ss_speed8", 5, 2000, 5, 0
-	Option "  Shape",				"gitd_ss_shape8", "GITDSweepShapeB"
-	Option "  Does",				"gitd_ss_draw8", "GITDSweepDraw"
-	Slider "  Thickness (0 = shared)","gitd_ss_thick8", 0, 2048, 4, 0
+
+	Submenu "Edit one band...",		"GITDSweepBand"
+	StaticText "Colour, speed, shape, what it draws, its own", darkgray
+	StaticText "thickness, the gap to the next band, its", darkgray
+	StaticText "effect and its script are all PER BAND, and", darkgray
+	StaticText "that page is a selector plus one set of rows", darkgray
+	StaticText "-- which is fifty-six rows this page used to", darkgray
+	StaticText "spell out longhand and no longer needs.", darkgray
 	StaticText ""
-	StaticText ""
-	Option "Sweep affects light level","gitd_ss_light", "YesNo"
-	Slider "  Amount per sweep 1",	"gitd_ss_amount1", 0, 128, 4, 0
-	Slider "  Amount per sweep 2",	"gitd_ss_amount2", 0, 128, 4, 0
-	Slider "  Amount per sweep 3",	"gitd_ss_amount3", 0, 128, 4, 0
-	Slider "  Amount per sweep 4",	"gitd_ss_amount4", 0, 128, 4, 0
-	Slider "  Amount per sweep 5",	"gitd_ss_amount5", 0, 128, 4, 0
-	Slider "  Amount per sweep 6",	"gitd_ss_amount6", 0, 128, 4, 0
-	Slider "  Amount per sweep 7",	"gitd_ss_amount7", 0, 128, 4, 0
-	Slider "  Amount per sweep 8",	"gitd_ss_amount8", 0, 128, 4, 0
-	StaticText ""
+
 	StaticText "Shape of each band", gold
 	Slider "Brightness",			"gitd_ss_intensity", 0.0, 3.0, 0.1, 1
 	Slider "Thickness",				"gitd_ss_thickness", 1, 2048, 4, 0
@@ -1267,6 +1427,10 @@ OptionMenu "GITDSweepVisual"
 	StaticText "over speed is how many seconds it takes", darkgray
 	StaticText "to pass you. 1024 at slow speed is a", darkgray
 	StaticText "corridor of light, not a line.", darkgray
+	StaticText ""
+	StaticText "A band with its OWN thickness set on the Edit", darkgray
+	StaticText "One Band page overrides this; 0 there means", darkgray
+	StaticText "share this one.", darkgray
 	Slider "Edge hardness",			"gitd_ss_softness", 0.5, 8.0, 0.25, 2
 	Slider "Travel distance",		"gitd_ss_range", 128, 8192, 128, 0
 	Slider "Wake behind it",		"gitd_ss_trail", 0, 512, 8, 0
@@ -1274,8 +1438,14 @@ OptionMenu "GITDSweepVisual"
 	StaticText "A one-slider way to make the sweeps", darkgray
 	StaticText "disagree without setting eight speeds.", darkgray
 	StaticText ""
-	Option "Travels",				"gitd_ss_direction", "GITDSweepDir"
+
+	StaticText "Light level", gold
+	Option "Sweep affects light level","gitd_ss_light", "YesNo"
+	StaticText "The master for it. How much each band moves", darkgray
+	StaticText "the light is that band's own Amount, over on", darkgray
+	StaticText "the Edit One Band page.", darkgray
 	StaticText ""
+
 	StaticText "The spin", gold
 	Slider "Orbit speed (deg/s)",	"gitd_ss_spin", -180, 180, 5, 0
 	Slider "Orbit radius",			"gitd_ss_spin_radius", 0, 1024, 16, 0
@@ -1356,241 +1526,92 @@ OptionMenu "GITDSweepPlay"
 }
 
 // ---------------------------------------------------------------------------
-// Lane menus -- identical in shape, four times over.
+// THE LANE PAGE.
+//
+// Wall bottom, wall top, ceiling and floor were four pages carrying exactly
+// the same thirty-two rows against four sets of cvar names -- a hundred and
+// twenty-eight rows to say one page's worth of thing, and four places to edit
+// whenever a lane grew a setting.
+//
+// This is the Edit One Band trick applied to the lanes: a working set named
+// gitd_ln_*, a selector, and the handler writing the outgoing lane and loading
+// the incoming one as the selector moves. Ranges here are the old wall bottom
+// page's, unchanged -- the four lanes always shared them.
 // ---------------------------------------------------------------------------
 
-OptionMenu "GITDWallBottom"
+OptionMenu "GITDLanes"
 {
 	Class "DarkDoomZ_OptionMenu"
-	Title "Wall Bottom Glow"
+	Title "Glow Lanes"
 	StaticText ""
-	Option "Enabled",				"gitd_wb_enabled", "OnOff"
-	Option "Random colour",			"gitd_wb_random", "OnOff", "gitd_wb_enabled"
-	StaticText ""
-	Slider "Coverage",				"gitd_wb_coverage", 0, 512, 8, 0
-	Slider "Saturation",			"gitd_wb_saturation", 0.0, 2.0, 0.05, 2
-	Option "Falloff",				"gitd_wb_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_wb_intensity", 0.0, 3.0, 0.05, 2
-	StaticText ""
-	StaticText ""
-	Option "Colours in rotation",	"gitd_wb_slots", "GITDSlots"
-	StaticText "Duration 0 = keep cycling, never hold.", darkgray
-	StaticText ""
-	ColorPicker "Colour 1",		"gitd_wb_c1"
-	Slider "  Duration",			"gitd_wb_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_wb_c2"
-	Slider "  Duration",			"gitd_wb_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_wb_c3"
-	Slider "  Duration",			"gitd_wb_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_wb_c4"
-	Slider "  Duration",			"gitd_wb_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_wb_c5"
-	Slider "  Duration",			"gitd_wb_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_wb_c6"
-	Slider "  Duration",			"gitd_wb_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_wb_c7"
-	Slider "  Duration",			"gitd_wb_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_wb_c8"
-	Slider "  Duration",			"gitd_wb_hold8", 0.0, 30.0, 0.5, 1
-	StaticText ""
-	Option "Transition",			"gitd_wb_pattern", "GITDPattern"
-	Slider "  Transition speed",	"gitd_wb_speed", 0.001, 0.05, 0.001, 3
-	StaticText ""
-	Option "Can bleed into other lanes","gitd_wb_bleed", "YesNo"
-	StaticText "Pulls this lane's colour partway toward", darkgray
-	StaticText "the lanes it physically meets, so a corner", darkgray
-	StaticText "reads as one light rather than two.", darkgray
-	StaticText ""
-	StaticText "Animation", gold
-	StaticText ""
-	Option "Travels",				"gitd_wb_anim", "GITDAnim"
-	Slider "Speed",					"gitd_wb_anim_speed", 0.0, 4.0, 0.1, 1
-	Slider "Distance between pulses","gitd_wb_anim_length", 32.0, 2048.0, 32.0, 0
-	Slider "Depth",					"gitd_wb_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "Sharpness",				"gitd_wb_anim_sharp", 0.25, 4.0, 0.25, 2
-	Slider "Offset from other lanes","gitd_wb_anim_phase", 0.0, 1.0, 0.05, 2
-	StaticText "Shifts this lane's animation in time so", darkgray
-	StaticText "lanes chase each other instead of pulsing", darkgray
-	StaticText "together. 0.5 puts it exactly opposite.", darkgray
-}
 
-OptionMenu "GITDWallTop"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Wall Top Glow"
+	Option "Which surface",			"gitd_ln_sel", "GITDLaneSel"
+	StaticText "Everything below edits THIS lane. Move the", darkgray
+	StaticText "selector and the rows reload for the next one;", darkgray
+	StaticText "the lane you were on is written first.", darkgray
 	StaticText ""
-	Option "Enabled",				"gitd_wt_enabled", "OnOff"
-	Option "Random colour",			"gitd_wt_random", "OnOff", "gitd_wt_enabled"
-	StaticText ""
-	Slider "Coverage",				"gitd_wt_coverage", 0, 512, 8, 0
-	Slider "Saturation",			"gitd_wt_saturation", 0.0, 2.0, 0.05, 2
-	Option "Falloff",				"gitd_wt_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_wt_intensity", 0.0, 3.0, 0.05, 2
-	StaticText ""
-	StaticText ""
-	Option "Colours in rotation",	"gitd_wt_slots", "GITDSlots"
-	StaticText "Duration 0 = keep cycling, never hold.", darkgray
-	StaticText ""
-	ColorPicker "Colour 1",		"gitd_wt_c1"
-	Slider "  Duration",			"gitd_wt_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_wt_c2"
-	Slider "  Duration",			"gitd_wt_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_wt_c3"
-	Slider "  Duration",			"gitd_wt_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_wt_c4"
-	Slider "  Duration",			"gitd_wt_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_wt_c5"
-	Slider "  Duration",			"gitd_wt_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_wt_c6"
-	Slider "  Duration",			"gitd_wt_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_wt_c7"
-	Slider "  Duration",			"gitd_wt_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_wt_c8"
-	Slider "  Duration",			"gitd_wt_hold8", 0.0, 30.0, 0.5, 1
-	StaticText ""
-	Option "Transition",			"gitd_wt_pattern", "GITDPattern"
-	Slider "  Transition speed",	"gitd_wt_speed", 0.001, 0.05, 0.001, 3
-	StaticText ""
-	Option "Can bleed into other lanes","gitd_wt_bleed", "YesNo"
-	StaticText "Pulls this lane's colour partway toward", darkgray
-	StaticText "the lanes it physically meets, so a corner", darkgray
-	StaticText "reads as one light rather than two.", darkgray
-	StaticText ""
-	StaticText "Animation", gold
-	StaticText ""
-	Option "Travels",				"gitd_wt_anim", "GITDAnim"
-	Slider "Speed",					"gitd_wt_anim_speed", 0.0, 4.0, 0.1, 1
-	Slider "Distance between pulses","gitd_wt_anim_length", 32.0, 2048.0, 32.0, 0
-	Slider "Depth",					"gitd_wt_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "Sharpness",				"gitd_wt_anim_sharp", 0.25, 4.0, 0.25, 2
-	Slider "Offset from other lanes","gitd_wt_anim_phase", 0.0, 1.0, 0.05, 2
-	StaticText "Shifts this lane's animation in time so", darkgray
-	StaticText "lanes chase each other instead of pulsing", darkgray
-	StaticText "together. 0.5 puts it exactly opposite.", darkgray
-}
 
-OptionMenu "GITDCeilingGlow"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Ceiling Glow"
+	Option "Enabled",				"gitd_ln_enabled", "OnOff"
+	Option "Random colour",			"gitd_ln_random", "OnOff", "gitd_ln_enabled"
 	StaticText ""
-	Option "Enabled",				"gitd_cg_enabled", "OnOff"
-	Option "Random colour",			"gitd_cg_random", "OnOff", "gitd_cg_enabled"
-	StaticText ""
-	Slider "Coverage",				"gitd_cg_coverage", 0, 512, 8, 0
-	Slider "Saturation",			"gitd_cg_saturation", 0.0, 2.0, 0.05, 2
-	Option "Falloff",				"gitd_cg_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_cg_intensity", 0.0, 3.0, 0.05, 2
-	StaticText "Intensity is brightness, and Coverage is", darkgray
-	StaticText "reach -- the same as on the wall lanes. It", darkgray
-	StaticText "used to widen this glow instead; if a set-up", darkgray
+	Slider "Coverage",				"gitd_ln_coverage", 0, 512, 8, 0
+	Slider "Saturation",			"gitd_ln_saturation", 0.0, 2.0, 0.05, 2
+	Option "Falloff",				"gitd_ln_falloff", "GITDFalloff"
+	Slider "Intensity",				"gitd_ln_intensity", 0.0, 3.0, 0.05, 2
+	StaticText "Intensity is brightness and Coverage is reach,", darkgray
+	StaticText "on every lane. Coverage used to widen the", darkgray
+	StaticText "ceiling and floor glows instead; if a set-up", darkgray
 	StaticText "from before looks tighter, raise Coverage.", darkgray
 	StaticText ""
 	StaticText ""
-	Option "Colours in rotation",	"gitd_cg_slots", "GITDSlots"
+
+	Option "Colours in rotation",	"gitd_ln_slots", "GITDSlots"
 	StaticText "Duration 0 = keep cycling, never hold.", darkgray
 	StaticText ""
-	ColorPicker "Colour 1",		"gitd_cg_c1"
-	Slider "  Duration",			"gitd_cg_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_cg_c2"
-	Slider "  Duration",			"gitd_cg_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_cg_c3"
-	Slider "  Duration",			"gitd_cg_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_cg_c4"
-	Slider "  Duration",			"gitd_cg_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_cg_c5"
-	Slider "  Duration",			"gitd_cg_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_cg_c6"
-	Slider "  Duration",			"gitd_cg_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_cg_c7"
-	Slider "  Duration",			"gitd_cg_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_cg_c8"
-	Slider "  Duration",			"gitd_cg_hold8", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 1",		"gitd_ln_c1"
+	Slider "  Duration",			"gitd_ln_hold1", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 2",		"gitd_ln_c2"
+	Slider "  Duration",			"gitd_ln_hold2", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 3",		"gitd_ln_c3"
+	Slider "  Duration",			"gitd_ln_hold3", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 4",		"gitd_ln_c4"
+	Slider "  Duration",			"gitd_ln_hold4", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 5",		"gitd_ln_c5"
+	Slider "  Duration",			"gitd_ln_hold5", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 6",		"gitd_ln_c6"
+	Slider "  Duration",			"gitd_ln_hold6", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 7",		"gitd_ln_c7"
+	Slider "  Duration",			"gitd_ln_hold7", 0.0, 30.0, 0.5, 1
+	ColorPicker "Colour 8",		"gitd_ln_c8"
+	Slider "  Duration",			"gitd_ln_hold8", 0.0, 30.0, 0.5, 1
 	StaticText ""
-	Option "Transition",			"gitd_cg_pattern", "GITDPattern"
-	Slider "  Transition speed",	"gitd_cg_speed", 0.001, 0.05, 0.001, 3
+	Option "Transition",			"gitd_ln_pattern", "GITDPattern"
+	Slider "  Transition speed",	"gitd_ln_speed", 0.001, 0.05, 0.001, 3
 	StaticText ""
-	Option "Can bleed into other lanes","gitd_cg_bleed", "YesNo"
+
+	Option "Can bleed into other lanes","gitd_ln_bleed", "YesNo"
 	StaticText "Pulls this lane's colour partway toward", darkgray
 	StaticText "the lanes it physically meets, so a corner", darkgray
 	StaticText "reads as one light rather than two.", darkgray
 	StaticText ""
+
 	StaticText "Animation", gold
 	StaticText ""
-	Option "Travels",				"gitd_cg_anim", "GITDAnim"
-	Slider "Speed",					"gitd_cg_anim_speed", 0.0, 4.0, 0.1, 1
-	Slider "Distance between pulses","gitd_cg_anim_length", 32.0, 2048.0, 32.0, 0
-	Slider "Depth",					"gitd_cg_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "Sharpness",				"gitd_cg_anim_sharp", 0.25, 4.0, 0.25, 2
-	Slider "Offset from other lanes","gitd_cg_anim_phase", 0.0, 1.0, 0.05, 2
+	Option "Travels",				"gitd_ln_anim", "GITDAnim"
+	Slider "Speed",					"gitd_ln_anim_speed", 0.0, 4.0, 0.1, 1
+	Slider "Distance between pulses","gitd_ln_anim_length", 32.0, 2048.0, 32.0, 0
+	Slider "Depth",					"gitd_ln_anim_depth", 0.0, 1.0, 0.05, 2
+	Slider "Sharpness",				"gitd_ln_anim_sharp", 0.25, 4.0, 0.25, 2
+	Slider "Offset from other lanes","gitd_ln_anim_phase", 0.0, 1.0, 0.05, 2
 	StaticText "Shifts this lane's animation in time so", darkgray
 	StaticText "lanes chase each other instead of pulsing", darkgray
 	StaticText "together. 0.5 puts it exactly opposite.", darkgray
 }
 
-OptionMenu "GITDFloorGlow"
-{
-	Class "DarkDoomZ_OptionMenu"
-	Title "Floor Glow"
-	StaticText ""
-	Option "Enabled",				"gitd_fg_enabled", "OnOff"
-	Option "Random colour",			"gitd_fg_random", "OnOff", "gitd_fg_enabled"
-	StaticText ""
-	Slider "Coverage",				"gitd_fg_coverage", 0, 512, 8, 0
-	Slider "Saturation",			"gitd_fg_saturation", 0.0, 2.0, 0.05, 2
-	Option "Falloff",				"gitd_fg_falloff", "GITDFalloff"
-	Slider "Intensity",				"gitd_fg_intensity", 0.0, 3.0, 0.05, 2
-	StaticText "Intensity is brightness, and Coverage is", darkgray
-	StaticText "reach -- the same as on the wall lanes. It", darkgray
-	StaticText "used to widen this glow instead; if a set-up", darkgray
-	StaticText "from before looks tighter, raise Coverage.", darkgray
-	StaticText ""
-	StaticText ""
-	Option "Colours in rotation",	"gitd_fg_slots", "GITDSlots"
-	StaticText "Duration 0 = keep cycling, never hold.", darkgray
-	StaticText ""
-	ColorPicker "Colour 1",		"gitd_fg_c1"
-	Slider "  Duration",			"gitd_fg_hold1", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 2",		"gitd_fg_c2"
-	Slider "  Duration",			"gitd_fg_hold2", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 3",		"gitd_fg_c3"
-	Slider "  Duration",			"gitd_fg_hold3", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 4",		"gitd_fg_c4"
-	Slider "  Duration",			"gitd_fg_hold4", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 5",		"gitd_fg_c5"
-	Slider "  Duration",			"gitd_fg_hold5", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 6",		"gitd_fg_c6"
-	Slider "  Duration",			"gitd_fg_hold6", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 7",		"gitd_fg_c7"
-	Slider "  Duration",			"gitd_fg_hold7", 0.0, 30.0, 0.5, 1
-	ColorPicker "Colour 8",		"gitd_fg_c8"
-	Slider "  Duration",			"gitd_fg_hold8", 0.0, 30.0, 0.5, 1
-	StaticText ""
-	Option "Transition",			"gitd_fg_pattern", "GITDPattern"
-	Slider "  Transition speed",	"gitd_fg_speed", 0.001, 0.05, 0.001, 3
-	StaticText ""
-	Option "Can bleed into other lanes","gitd_fg_bleed", "YesNo"
-	StaticText "Pulls this lane's colour partway toward", darkgray
-	StaticText "the lanes it physically meets, so a corner", darkgray
-	StaticText "reads as one light rather than two.", darkgray
-	StaticText ""
-	StaticText "Animation", gold
-	StaticText ""
-	Option "Travels",				"gitd_fg_anim", "GITDAnim"
-	Slider "Speed",					"gitd_fg_anim_speed", 0.0, 4.0, 0.1, 1
-	Slider "Distance between pulses","gitd_fg_anim_length", 32.0, 2048.0, 32.0, 0
-	Slider "Depth",					"gitd_fg_anim_depth", 0.0, 1.0, 0.05, 2
-	Slider "Sharpness",				"gitd_fg_anim_sharp", 0.25, 4.0, 0.25, 2
-	Slider "Offset from other lanes","gitd_fg_anim_phase", 0.0, 1.0, 0.05, 2
-	StaticText "Shifts this lane's animation in time so", darkgray
-	StaticText "lanes chase each other instead of pulsing", darkgray
-	StaticText "together. 0.5 puts it exactly opposite.", darkgray
-}
 
 // ---------------------------------------------------------------------------
-// DarkDoomZ: darkens the room's base light. Separate from the glow lanes --
-// glow is added on top, so floor and ceiling glow stay visible even in a
-// room this has crushed to near black.
+// The one hook into the engine's own options menu. Everything this mod adds
+// hangs off the single front page below it.
 // ---------------------------------------------------------------------------
 
 AddOptionMenu "OptionsMenu"
@@ -1718,21 +1739,19 @@ OptionMenu "GITDColorLaw"
 }
 
 // ---------------------------------------------------------------------------
-// FOG -- pulled off the root page into its own submenu. gl_fogmode is the
-// engine's own setting, reached by name. DarkDoom's own sector fog is gone --
-// this page drives the volumetric slab and nothing else.
+// COLOUR DRAIN -- what is left of colour once the light is gone.
+//
+// This page was called Fog Options and carried exactly one fog row, gl_fogmode,
+// with seven darkness rows behind it; the volumetric slab that replaced
+// DarkDoom's sector fog has had pages of its own for a long time. gl_fogmode
+// has gone to the Air page where the rest of the fog lives, and what was left
+// is what this page was always actually about.
 // ---------------------------------------------------------------------------
 
-OptionMenu "GITDFog"
+OptionMenu "GITDDrain"
 {
 	Class "DarkDoomZ_OptionMenu"
-	Title "Fog Options"
-	StaticText ""
-	Option "$GLPREFMNU_FOGMODE",	gl_fogmode, "FogMode"
-	StaticText ""
-	Slider "Sky brightness",		"ddz_skymode", 0.0, 1.0, 0.1, 1
-	StaticText "How much of the darkening reaches sky", darkgray
-	StaticText "sectors. Some skyboxes resist it anyway.", darkgray
+	Title "Colour Drain"
 	StaticText ""
 	Slider "Colour drain",			"ddz_desat", 0, 255, 15, 0
 	StaticText "Colour vision fails in low light --", darkgray
@@ -1764,6 +1783,14 @@ OptionMenu "GITDFog"
 	StaticText "and nothing else -- a green nukage pool at full", darkgray
 	StaticText "saturation drains away with the walls.", darkgray
 	StaticText ""
+
+	StaticText "The sky", gold
+	Slider "Sky brightness",		"ddz_skymode", 0.0, 1.0, 0.1, 1
+	StaticText "How much of the darkening reaches sky", darkgray
+	StaticText "sectors. Some skyboxes resist it anyway.", darkgray
+	StaticText ""
+
+	StaticText "Doom's own lights", gold
 	Option "Sector effects",		"ddz_lighting", "OnOff"
 	StaticText "Doom's own blinking and flickering lights.", darkgray
 	StaticText "Turning them OFF applies at once; ON needs", darkgray
@@ -1774,7 +1801,6 @@ OptionMenu "GITDFog"
 	StaticText "Vanilla brightens the whole view while a", darkgray
 	StaticText "weapon fires. Unnoticeable when lit,", darkgray
 	StaticText "ruinous in the dark.", darkgray
-	StaticText ""
 }
 
 // ---------------------------------------------------------------------------
