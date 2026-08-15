@@ -935,7 +935,11 @@ class GITD_PresetProfile abstract
 
 		// Its fog is already stated further up and is not touched here. What
 		// follows is only the systems that did not exist to be refused.
-		NoTendrils();
+		//
+		// NOT NoTendrils(). This preset takes them, above, and is the only one
+		// that does -- a blanket "refuse the new systems" block appended after
+		// the fog was written turned that nine-line argument off on the very
+		// next screen.
 		NoTornado();
 		NoReactive();     // nothing here reacts; that IS the preset
 		NoHeat();
@@ -1607,7 +1611,6 @@ class GITD_PresetProfile abstract
 
 		// Its fog is already stated further up, pickup and all, and is not
 		// touched here. What follows is only what did not exist to be refused.
-		NoTendrils();
 		NoTornado();
 
 		// Gunfire and death push the mist around. In a room already pulsing
@@ -1727,7 +1730,9 @@ class GITD_PresetProfile abstract
 		B("gitd_dd_enabled", true);
 		I("ddz_mode", 4);      // Crush
 		I("ddz_preset", 8);    // Pure
-		I("ddz_desat", 255);   // no colour survives here either
+		// The drain itself is set further down, where there is room to say why
+		// it is 235 and not 255. Setting it twice in one function is how the
+		// first draft of this ended up contradicting its own comment.
 
 		// NO FLOOR. Low Power sets this to 0 and Blackout never did, so the
 		// darkest preset in the mod was inheriting whatever light floor was

@@ -278,6 +278,20 @@ class FancyTexTable play
 			"DEM1_1 DEM1_2 DEM1_3 DEM1_4 DEM1_5 DEM1_6 "
 			"SFLR6_1 SFLR6_4 SFLR7_1 SFLR7_4");
 
+		// CARPET AND SNOW SHIP BUT ARE NOT BOUND, deliberately, and this note
+		// is here so the next person does not conclude the samples are junk.
+		//
+		// fancy_steps.zs has switch arms for both and sndinfo.txt declares
+		// both $random groups, but vanilla Doom has no carpet flat and no snow
+		// flat, so there is nothing honest to bind them to. They are here for
+		// texture packs that do -- Eviternity, Ancient Aliens, anything with a
+		// winter set. Adding one is a single Define line:
+		//
+		//     t.Define('carpet', 0, "SOMEFLAT ANOTHERFLAT");
+		//
+		// Nine lumps sit unused until someone does. That is a few kilobytes
+		// against having the material ready the day a WAD needs it.
+
 		// Everything liquid. Wading is its own sound whatever is in the pool.
 		t.Define('splash', 0,
 			"NUKAGE1 NUKAGE2 NUKAGE3 NUKAGE4 "
