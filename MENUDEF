@@ -1079,6 +1079,11 @@ OptionMenu "GITDFlashlight"
 	StaticText ""
 	StaticText "Shape", gold
 	Slider "Range",					"fl_range", 128, 4096, 64, 0
+	Slider "Beam drag",				"fl_lag", 0.0, 0.9, 0.05, 2
+	StaticText "0 welds the beam to your aim. Higher and it", darkgray
+	StaticText "settles in after you, the way a torch held at", darkgray
+	StaticText "the end of an arm does. The far end drags about", darkgray
+	StaticText "three times as much as the origin.", darkgray
 	Slider "Brightness",			"fl_intensity", 0.0, 3.0, 0.1, 1
 	Slider "Inner angle",			"fl_inner", 1, 60, 1, 0
 	Slider "Outer angle",			"fl_outer", 2, 90, 1, 0

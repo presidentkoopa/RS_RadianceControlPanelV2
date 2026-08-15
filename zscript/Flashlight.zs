@@ -26,6 +26,32 @@ class GITD_Flashlight : Thinker
 	double phase;
 	int holdLeft;   // tics parked on the current colour, per-slot fl_holdN
 
+	// ---- THE BEAM LAGS ---------------------------------------------------
+	//
+	// It used to snap. Position and direction were resolved from the mount and
+	// published the same tic, so the cone was welded to your aim and arrived
+	// wherever you were looking on the frame you looked there.
+	//
+	// That is correct for a laser and wrong for a torch. A real one has mass
+	// and is held in a hand at the end of an arm: you turn, and it catches up.
+	// Snapping reads as a light glued to the camera rather than a thing you
+	// are carrying -- and in VR, where your head and the torch move
+	// independently, it is the difference between holding a torch and wearing
+	// one.
+	//
+	// Smoothed exponentially toward the target rather than sprung, and
+	// deliberately so: a spring OVERSHOOTS, and a torch beam that swings past
+	// what you aimed at and comes back is a torch on a rope. This only ever
+	// approaches.
+	//
+	// Both ends lag, and they lag DIFFERENTLY. The origin is your hand and
+	// barely moves relative to you, so it is nearly rigid; the far end sweeps
+	// metres for the same wrist turn, which is where the whole sense of weight
+	// lives. Lagging only the direction is what makes it read as the beam
+	// bending rather than the whole torch sliding.
+	private Vector3 smPos, smDir;
+	private bool smPrimed;
+
 	static GITD_Flashlight Get()
 	{
 		ThinkerIterator it = ThinkerIterator.Create("GITD_Flashlight");
@@ -228,6 +254,7 @@ class GITD_Flashlight : Thinker
 
 		Vector3 pos, dir;
 		[pos, dir] = ResolveMount(PlayerPawn(pmo));
+		[pos, dir] = Settle(pos, dir);
 
 		Color col = CurrentColor();
 		double range = CVar.FindCVar("fl_range").GetInt();
@@ -294,6 +321,49 @@ class GITD_Flashlight : Thinker
 	// Pointing the light at something wakes it. Deliberately cheap: a cone
 	// test against monsters already near enough to matter, not a trace per
 	// monster per tic.
+	// Eases the published aim toward where the mount actually is.
+	//
+	// fl_lag is 0..1 as "how much it drags": 0 publishes the mount unchanged
+	// and is the old behaviour exactly, 1 is treacle. The response is
+	// FRAMERATE-INDEPENDENT in the only sense that matters here -- this runs
+	// on the 35Hz tic, not per frame, so the same number means the same
+	// settling time on any machine.
+	//
+	// The direction is renormalised after the blend. Lerping two unit vectors
+	// gives a shorter one, and feeding an unnormalised direction to
+	// SetVolumetricBeam scales the cone's own length term -- the beam would
+	// visibly shorten while turning and stretch back as it settled.
+	//
+	// A jump cut has to arrive instantly. On the first tic, and any time the
+	// mount moves further in one tic than a person could have (a teleport, a
+	// map change, a level's opening frame), the smoothing is abandoned and the
+	// target adopted whole -- otherwise the beam spends a second sweeping
+	// across the map from wherever you used to be standing.
+	private Vector3, Vector3 Settle(Vector3 pos, Vector3 dir)
+	{
+		double lag = clamp(CVar.FindCVar("fl_lag") ? CVar.FindCVar("fl_lag").GetFloat() : 0.55, 0.0, 0.95);
+
+		if (!smPrimed || lag <= 0.001 || (pos - smPos).Length() > 192.0)
+		{
+			smPos = pos; smDir = dir; smPrimed = true;
+			return pos, dir;
+		}
+
+		// The origin is nearly rigid -- it is your hand, and it does not move
+		// much relative to you. Two thirds of the drag goes to the far end.
+		double aPos = 1.0 - (lag * 0.35);
+		double aDir = 1.0 - lag;
+
+		smPos += (pos - smPos) * aPos;
+		smDir += (dir - smDir) * aDir;
+
+		double len = smDir.Length();
+		if (len < 0.0001) { smDir = dir; }
+		else smDir /= len;
+
+		return smPos, smDir;
+	}
+
 	void AgitateLitMonsters(Actor pmo, Vector3 pos, Vector3 dir, double range, double outer)
 	{
 		double cosOuter = cos(outer);

@@ -219,6 +219,19 @@ server bool fl_bounce = false;    // OFF by default. It is a PointLight at the l
 server bool fl_agitate = false;   // pointing the light at monsters wakes them
 server bool fl_model = false;     // show the flashlight model -- requires the offhand mount
 
+// How much the beam DRAGS behind your aim. 0 publishes the mount unchanged --
+// a torch welded to the camera, which is what it did before this existed.
+// Higher and it settles in after you, the way a thing held at the end of an
+// arm does. Above about 0.8 it reads as treacle.
+//
+// The far end lags roughly three times as much as the origin: your hand barely
+// moves relative to you, while the spot sweeps metres for the same wrist turn,
+// and that difference is where the sense of weight actually lives.
+//
+// Smoothed rather than sprung, deliberately. A spring overshoots, and a beam
+// that swings past what you aimed at and comes back is a torch on a rope.
+server float fl_lag = 0.55;
+
 // Shape.
 server int fl_range = 1024;
 server float fl_intensity = 1.0;
