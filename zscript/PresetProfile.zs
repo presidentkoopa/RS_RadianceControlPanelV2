@@ -365,13 +365,18 @@ class GITD_PresetProfile abstract
 	// wavelength is world units PER RADIAN, so the visible period is about 2pi
 	// times it. This is the easiest number in the whole fog API to get wrong by
 	// a factor of six.
+	// The last parameter is crossSwell and NOT "cross": `cross` is the vector
+	// cross-product operator and a reserved word, so naming anything after it
+	// fails to parse -- and the error points at the declaration rather than at
+	// anything resembling a vector, which is why it is worth a line here.
+	// `dot` is reserved the same way.
 	clearscope static void Surface(double amp, double wavelength,
-	                               double speed, double cross)
+	                               double speed, double crossSwell)
 	{
 		F("gitd_fog_surf", amp);
 		F("gitd_fog_surf_len", wavelength);
 		F("gitd_fog_surf_speed", speed);
-		F("gitd_fog_surf_cross", cross);
+		F("gitd_fog_surf_cross", crossSwell);
 	}
 
 	clearscope static void NoSurface() { F("gitd_fog_surf", 0.0); }
