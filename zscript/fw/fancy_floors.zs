@@ -109,7 +109,7 @@ class FancySectorXWaterCore : FancyEmitter
 	override int FancyLightTier() { return 2; }
 }
 
-// ---- Slime and blood -------------------------------------------------------
+// ---- Slime -----------------------------------------------------------------
 
 class FancySectorSlimeCore : FancyEmitter
 {
@@ -120,6 +120,46 @@ class FancySectorSlimeCore : FancyEmitter
 	override int FancyLightRadius() { return 80; }
 	override int FancyLightRadius2() { return 58; }
 	override double FancyLightParam() { return 3.4; }
+	override int FancyLightTier() { return 2; }
+}
+
+// ---- Blood -----------------------------------------------------------------
+//
+// BLOOD1-4 USED TO BE FOLDED INTO SLIME, and the result was a blood pool lit
+// bright green, pulsing, and gurgling like a sewer. The fog table two hundred
+// lines away had it right the whole time -- 0x7A1414, dark red -- so a pool of
+// blood under correctly red mist was throwing green light up onto it.
+//
+// The tell was that no other liquid shares a row. Nukage, water, xwater and
+// lava each have their own class and their own colour, because the whole point
+// of the rewrite was that the map has been telling us what the liquid is and
+// the old code answered every question the same way. Blood was the one that
+// got left in somebody else's bucket.
+//
+// SO IT IS ITS OWN, and it is deliberately the quietest liquid in the set.
+// Blood does not flow, boil or bubble; a pool of it is still. The light is
+// FlickerLight rather than Pulse -- the irregular one, not the breathing one,
+// because a pulsing blood pool reads as alive and that is a different and much
+// sillier idea. The radius is the smallest here, so in a room that also holds
+// lava or nukage this is the light that yields.
+//
+// TIER 2, NOT 3. Tier is compared against fw_light_detail, and that cvar's
+// menu offers 0, 1 and 2 with 2 labelled "Everything" -- so a tier 3 light is
+// one no setting can reach, and it would sit dark behind an option promising
+// the opposite. Blood is flavour, which is what tier 2 means, and it belongs
+// with the slime and the computers it was wrongly filed under anyway.
+class FancySectorBloodCore : FancyEmitter
+{
+	// Not gooflow. That is the sewer gurgle and it is what gave this away.
+	// bloodfall is the wettest thing in the set that is not moving water, at a
+	// tenth of its volume in sndinfo, which for a still pool is about right.
+	override Sound FancySound() { return "world/bloodfall"; }
+
+	override int FancyLightType() { return DynamicLight.FlickerLight; }
+	override Color FancyLightColor() { return 0x7A1414; }  // matches the fog exactly
+	override int FancyLightRadius() { return 56; }
+	override int FancyLightRadius2() { return 40; }
+	override double FancyLightParam() { return 0.18; }     // flicker chance, not a period
 	override int FancyLightTier() { return 2; }
 }
 

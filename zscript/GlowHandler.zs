@@ -3048,11 +3048,28 @@ class GITD_ResetHandler : EventHandler
 			"gitd_fog_wake_stretch",
 			"gitd_tornado_density",
 			"gitd_dd_keep",           // selective desaturation
-			"gitd_glowtex_noise",     // texture in the glow, all five
-			"gitd_glowtex_flow",
-			"gitd_glowtex_cell",
-			"gitd_glowtex_react",
-			"gitd_glowtex_alarm"
+
+			// TEXTURE IN THE GLOW, ALL FIVE -- and these five spent their whole
+			// life here misspelled. They read gitd_glowtex_noise / _flow /
+			// _cell / _react / _alarm, which is what the cvars were called
+			// before the page was built and its names shortened. Not one of the
+			// five has existed since.
+			//
+			// Nothing complained, because Zero() guards on FindCVar and returns
+			// quietly when the name does not resolve -- which is the correct
+			// behaviour and is exactly what made this invisible. "Reset
+			// EVERYTHING" reported success and left every glow-texture effect
+			// running, and the only way to notice was to reset and then look at
+			// the page.
+			//
+			// The guard stays. The lesson is that a guarded write is not a
+			// verified one, and a list of bare strings has no compiler behind
+			// it. If a sixth is added, grep cvarinfo for it first.
+			"gitd_gtex_noise",
+			"gitd_gflow",
+			"gitd_gcell",
+			"gitd_greact",
+			"gitd_gpulse"
 		};
 		for (int i = 0; i < zeros.Size(); i++) Zero(zeros[i]);
 

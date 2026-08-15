@@ -145,8 +145,15 @@ $volume world/waterfall 0.05
 
 // bloodfall
 $random world/bloodfall 	{ world/bloodfall1 world/bloodfall2 }
-world/bloodfall1			bldfall1
-world/bloodfall2			bldfall2
+// bfall1/bfall2, NOT bldfall1/bldfall2. Those lumps have never existed in this
+// mod -- the files in sounds/walls are bfall1.ogg and bfall2.ogg, and have been
+// since the ambience layer was merged. Every bloodfall in every map has been
+// silent the whole time, and silently so: GZDoom resolves a missing lump to no
+// sound rather than to an error, so the only way to find this was to read the
+// two lists side by side. Its neighbours are right (watfall, slmfall, lvafall);
+// this one row was typed from the logical name instead of the file.
+world/bloodfall1			bfall1
+world/bloodfall2			bfall2
 $volume world/bloodfall 0.1
 
 // slimefall

@@ -162,8 +162,13 @@ class FancyTexTable play
 
 		t.Define("FancySectorSlimeCore", 0,
 			"SLIME01 SLIME02 SLIME03 SLIME04 SLIME05 SLIME06 SLIME07 SLIME08 "
-			"SLUDGE01 SLUDGE02 SLUDGE03 SLUDGE04 "
-			"BLOOD1 BLOOD2 BLOOD3 BLOOD4");
+			"SLUDGE01 SLUDGE02 SLUDGE03 SLUDGE04");
+
+		// BLOOD IS NOT SLIME. It used to be on the row above, which lit it
+		// green while the fog table below gave the same four flats dark red.
+		// See FancySectorBloodCore in fancy_floors.zs for why it is quieter
+		// than everything else here.
+		t.Define("FancySectorBloodCore", 0, "BLOOD1 BLOOD2 BLOOD3 BLOOD4");
 
 		t.Define("FancySectorLavaCore", 0,
 			"LAVA1 LAVA2 LAVA3 LAVA4 QLAVA1 QLAVA2 QLAVA3 QLAVA4");
