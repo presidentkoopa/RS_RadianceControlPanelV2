@@ -762,7 +762,6 @@ class GITD_PresetProfile abstract
 		// stripe on a wall; with it, it is a body of dark moving down a
 		// corridor. It is also the only reason the torch has a beam rather
 		// than a bright patch at the end of it.
-		I("ddz_fog", 168);
 		F("ddz_skymode", 1.0);
 		I("ddz_minlight", 0);   // no floor. Where it goes dark it goes dark.
 
@@ -1014,7 +1013,6 @@ class GITD_PresetProfile abstract
 		// A little air, and no more. Enough that the white bar below reads as
 		// a shaft rather than a stripe on a wall; not enough to soften
 		// anything. Grey haze is still grey.
-		I("ddz_fog", 40);
 
 		// ---- hard edges ---------------------------------------------------
 		//
@@ -1101,7 +1099,6 @@ class GITD_PresetProfile abstract
 
 		// A little air -- enough for the torch to have a shaft, not enough to
 		// soften anything. Grey haze is still grey.
-		I("ddz_fog", 40);
 
 		// A LOW, THIN, COLOURLESS LAYER, and PICKUP AT ZERO.
 		//
@@ -1380,7 +1377,6 @@ class GITD_PresetProfile abstract
 		// klaxon is a body of red moving down the corridor instead of a
 		// colour arriving on a surface. Lighter than Low Power's: this is a
 		// lit room having an emergency, not a dead one.
-		I("ddz_fog", 112);
 
 		// A THIN RED LAYER, and thin on purpose. Low Power's fog is a dead
 		// building's settled air; this is not that. It is smoke from whatever

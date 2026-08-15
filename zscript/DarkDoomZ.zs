@@ -16,8 +16,8 @@
 //Courtesy FishyClockwork, with modifications by Caligari87
 class DarkDoomZ_Handler : EventHandler {
 	Array<int> BaseLightLevels;
-	int Mode, Preset, PreGain, PostGain, FogDensity, MinLight;
-	int OldMode, OldPreset, OldPreGain, OldPostGain, OldFogDensity, OldMinLight;
+	int Mode, Preset, PreGain, PostGain, MinLight;
+	int OldMode, OldPreset, OldPreGain, OldPostGain, OldMinLight;
 	double SkyMode, OldSkyMode;
 	int BaseAdjustment, FinalAdjustment;
 	bool IsSky;
@@ -36,10 +36,21 @@ class DarkDoomZ_Handler : EventHandler {
 
 		ChangeLighting();
 
-		// Always, not just on reopen -- a save made before the second
-		// flashlight was removed still has its lights in it.
-		let iterator = ThinkerIterator.Create("DarkDoomZ_Spotlight");
-		for (Thinker mo; (mo = iterator.Next());) { mo.Destroy(); }
+		// Always, not just on reopen -- a save made before DarkDoomZ's own
+		// flashlight was removed still has its lights in it, and the class is
+		// gone now, so they would sit in the map forever with nothing left
+		// that knows how to clear them.
+		//
+		// Looked up by NAME rather than by the class itself for exactly that
+		// reason: the type no longer exists to be named in code, and
+		// ThinkerIterator.Create takes a class that may legitimately resolve
+		// to nothing on a fresh save.
+		let iterator = ThinkerIterator.Create("DynamicLight");
+		for (Thinker mo; (mo = iterator.Next());)
+		{
+			let dl = DynamicLight(mo);
+			if (dl && dl.GetClassName() == 'DarkDoomZ_Spotlight') dl.Destroy();
+		}
 	}
 
 	// [GITD] REASSERT EVERY TIC.
@@ -53,9 +64,14 @@ class DarkDoomZ_Handler : EventHandler {
 	// walls rather than all of them.
 	//
 	// Re-applying costs one pass of integer arithmetic over the sector list at
-	// 35Hz. Fog is deliberately NOT reapplied here -- SetFogDensity is the
-	// expensive part and nothing else competes for it, so it stays on the
-	// settings-changed path.
+	// 35Hz.
+	//
+	// [GITD] DarkDoomZ's sector fog is gone with its flashlight. It was a
+	// distance tint written per sector with SetFogDensity, and this project
+	// has its own fog -- a volumetric slab with a top you stand in, a surface,
+	// noise, a wake and disturbances, driven from Render.zs. Two fog systems
+	// on one screen is two answers to the same question, and the sector one
+	// was the weaker answer.
 	override void WorldTick() {
 		// Toggling Sector Effects off used to need a map reload, because the
 		// thinkers were only destroyed in WorldLoaded. Do it here and it takes
@@ -69,8 +85,8 @@ class DarkDoomZ_Handler : EventHandler {
 		}
 
 		// Settings poll, replacing the UiTick netevent -- see the note above
-		// NetworkProcess. Cheap: a handful of cvar reads, and the fog pass
-		// only runs when something actually changed.
+		// NetworkProcess. Cheap: a handful of cvar reads, and the pass only
+		// runs when something actually changed.
 		ChangeLighting();
 
 		ApplyDarkness();
@@ -155,7 +171,6 @@ class DarkDoomZ_Handler : EventHandler {
 		PreGain = ddz_pregain;
 		PostGain = ddz_postgain;
 		SkyMode = ddz_skymode;
-		FogDensity = ddz_fog;
 		MinLight = ddz_minlight;
 
 		bool changed = (
@@ -164,7 +179,6 @@ class DarkDoomZ_Handler : EventHandler {
 			OldPreGain != PreGain ||
 			OldPostGain != PostGain ||
 			OldSkyMode != Skymode ||
-			OldFogDensity != FogDensity ||
 			OldMinLight != MinLight);
 
 		if (changed) {
@@ -175,14 +189,12 @@ class DarkDoomZ_Handler : EventHandler {
 			// would resurrect the 35Hz wall flicker this mod already paid for
 			// once. ddz_mode still selects the darkness CURVE; see
 			// DarknessMul.
-			ApplyFog();
 		}
 		OldMode = Mode;
 		OldPreset = Preset;
 		OldPreGain = PreGain;
 		OldPostGain = PostGain;
 		OldSkyMode = SkyMode;
-		OldFogDensity = FogDensity;
 		OldMinLight = MinLight;
 	}
 
@@ -337,249 +349,7 @@ class DarkDoomZ_Handler : EventHandler {
 		return clamp(outL / base, 0.0, 1.0);
 	}
 
-	// Fog only moves when a setting moves, so it stays off the per-tic path.
-	void ApplyFog() {
-		for(int i = 0; i < BaseLightLevels.Size(); i++) {
-			bool sky = (level.Sectors[i].GetTexture(0) == skyflatnum ||
-						level.Sectors[i].GetTexture(1) == skyflatnum);
-			double d = FogDensity;
-			if (sky) { d *= SkyMode; }
-			level.Sectors[i].SetFogDensity(int(d));
-		}
-	}
 
-}
-
-class DarkDoomZ_Flashlight : CustomInventory {
-	DarkDoomZ_Spotlight SelfLight1, SelfLight2;
-	bool Active;
-	int Quality,OldQuality;
-	int Type,OldType;
-	int Mount,OldMount;
-	int R,G,B;
-	int beamInner, beamOuter, beamRadius;
-	int spillInner, spillOuter, spillRadius;
-	double offsetAngle, offsetZ;
-	int inertia;
-	double spring, damping;
-
-	default {
-		+INVENTORY.PERSISTENTPOWER;
-	}
-
-	override void DoEffect() {
-		super.DoEffect();
-		Quality = CVar.GetCvar("ddz_fl_quality").GetInt();
-		Type = CVar.GetCvar("ddz_fl_type").GetInt();
-		Mount = CVar.GetCvar("ddz_fl_pos").GetInt();
-		if(Active) {
-			if(Quality != OldQuality ||
-			   Type != OldType ||
-			   Mount != OldMount) {
-
-				if(SelfLight1) { SelfLight1.Destroy(); }
-				if(SelfLight2) { SelfLight2.Destroy(); }
-			}
-
-			switch(Type) {
-				case 0: //Incandescent
-					R = 255;
-					G = 214;
-					B = 170;
-					beamInner = 0;
-					beamOuter = 25;
-					beamRadius = 384;
-					spillInner = 15;
-					spillOuter = 45;
-					spillRadius = 128;
-					break;
-				case 1: //Halogen
-					R = 255;
-					G = 241;
-					B = 224;
-					beamInner = 0;
-					beamOuter = 20;
-					beamRadius = 512;
-					spillInner = 10;
-					spillOuter = 60;
-					spillRadius = 384;
-					break;
-				case 2: //LED
-					R = 248;
-					G = 255;
-					B = 255;
-					beamInner = 0;
-					beamOuter = 15;
-					beamRadius = 640;
-					spillInner = 15;
-					spillOuter = 75;
-					spillRadius = 256;
-					break;
-				case 3: //Red filter
-					R = 192;
-					G = 36;
-					B = 34;
-					beamInner = 0;
-					beamOuter = 20;
-					beamRadius = 256;
-					spillInner = 10;
-					spillOuter = 60;
-					spillRadius = 128;
-					break;
-			}
-
-			switch(Mount) {
-				case 0: //Handheld
-					spring = 0.25;
-					damping = 0.2;
-					inertia = 4;
-					offsetAngle = 0;
-					offsetZ = -13;
-					break;
-				case 1: //Left Shoulder
-					spring = 0.35;
-					damping = 0.75;
-					inertia = 2;
-					offsetAngle = 80;
-					offsetZ = -5;
-					break;
-				case 2: //Right Shoulder
-					spring = 0.35;
-					damping = 0.75;
-					inertia = 2;
-					offsetAngle = -80;
-					offsetZ = -5;
-					break;
-				case 3: //Helmet
-					spring = 1;
-					damping = 1;
-					inertia = 1;
-					offsetAngle = 0;
-					offsetZ = 4;
-					break;
-			}
-
-			switch(Quality) {
-				case 0:
-					if(!SelfLight1) {
-						SelfLight1 = DarkDoomZ_Spotlight(Spawn("DarkDoomZ_Spotlight",owner.pos,false));
-						SelfLight1.FollowTarget = owner;
-						SelfLight1.args[DynamicLight.LIGHT_RED] = R; //R
-						SelfLight1.args[DynamicLight.LIGHT_GREEN] = G; //G
-						SelfLight1.args[DynamicLight.LIGHT_BLUE] = B; //B
-						SelfLight1.args[DynamicLight.LIGHT_INTENSITY] = (beamRadius + spillRadius) / 2; //Radius
-						SelfLight1.SpotInnerAngle = (beamInner + spillInner) / 2;
-						SelfLight1.SpotOuterAngle = (beamOuter + spillOuter) / 2;
-						SelfLight1.angle = owner.angle;
-						SelfLight1.pitch = owner.pitch;
-						SelfLight1.spring = spring;
-						SelfLight1.damping = damping;
-						SelfLight1.inertia = inertia;
-						SelfLight1.offsetAngle = offsetAngle;
-						SelfLight1.offsetZ = offsetZ;
-					}
-					break;
-				case 1:
-					if(!SelfLight1) {
-						SelfLight1 = DarkDoomZ_Spotlight(Spawn("DarkDoomZ_Spotlight",owner.pos,false));
-						SelfLight1.FollowTarget = owner;
-						SelfLight1.args[DynamicLight.LIGHT_RED] = R; //R
-						SelfLight1.args[DynamicLight.LIGHT_GREEN] = G; //G
-						SelfLight1.args[DynamicLight.LIGHT_BLUE] = B; //B
-						SelfLight1.args[DynamicLight.LIGHT_INTENSITY] = beamRadius; //Radius
-						SelfLight1.SpotInnerAngle = beamInner;
-						SelfLight1.SpotOuterAngle = beamOuter;
-						SelfLight1.angle = owner.angle;
-						SelfLight1.pitch = owner.pitch;
-						SelfLight1.spring = spring;
-						SelfLight1.damping = damping;
-						SelfLight1.inertia = inertia;
-						SelfLight1.offsetAngle = offsetAngle;
-						SelfLight1.offsetZ = offsetZ;
-					}
-					if(!SelfLight2) {
-						SelfLight2 = DarkDoomZ_Spotlight(Spawn("DarkDoomZ_Spotlight",owner.pos,false));
-						SelfLight2.FollowTarget = owner;
-						SelfLight2.args[DynamicLight.LIGHT_RED] = int(R * 0.75); //R
-						SelfLight2.args[DynamicLight.LIGHT_GREEN] = int(G * 0.75); //G
-						SelfLight2.args[DynamicLight.LIGHT_BLUE] = int(B * 0.75); //B
-						SelfLight2.args[DynamicLight.LIGHT_INTENSITY] = spillRadius; //Radius
-						SelfLight2.SpotInnerAngle = spillInner;
-						SelfLight2.SpotOuterAngle = spillOuter;
-						SelfLight2.angle = owner.angle;
-						SelfLight2.pitch = owner.pitch;
-						SelfLight2.spring = spring;
-						SelfLight2.damping = damping;
-						SelfLight2.inertia = inertia;
-						SelfLight2.offsetAngle = offsetAngle;
-						SelfLight2.offsetZ = offsetZ;
-					}
-					break;
-			}
-		}
-		else {
-			if(SelfLight1) { SelfLight1.Destroy(); }
-			if(SelfLight2) { SelfLight2.Destroy(); }
-		}
-		OldQuality = Quality;
-		OldType = Type;
-		OldMount = Mount;
-	}
-
-	States {
-	Spawn:
-		ROCK A -1;
-		stop;
-	Use:
-		TNT1 A 1 { invoker.ToggleActive(); }
-		loop;
-	}
-
-	virtual void ToggleActive() {
-		// Was the Off sound in both branches -- turning the torch ON clicked
-		// like turning it off. DDZ_Flashlight_On has sat in sndinfo.txt,
-		// defined and never referenced, the whole time.
-		if(Active) { Active = false; owner.A_StartSound("DDZ_Flashlight_Off", CHAN_AUTO, 0, 0.5); }
-		else { Active = true; owner.A_StartSound("DDZ_Flashlight_On", CHAN_AUTO, 0, 0.5); }
-	}
-}
-
-class DarkDoomZ_Spotlight : DynamicLight {
-	actor FollowTarget;
-	double vela, velp;
-	double spring, damping;
-	double offsetAngle, offsetZ;
-	vector3 targetPos;
-	int inertia;
-
-	default {
-		DynamicLight.Type "Point";
-		+DYNAMICLIGHT.ATTENUATE;
-		+DYNAMICLIGHT.SPOT
-	}
-	override void Tick() {
-		super.Tick();
-		if(followTarget && followTarget.player) {
-			if(inertia == 0) inertia = 1;
-			targetpos = followTarget.vec3Angle(
-				2 + (6 * abs(sin(offsetAngle))),
-				followtarget.angle + offsetAngle,
-				followtarget.player.viewheight + offsetZ,
-				false);
-			vel.x += DampedSpring(pos.x, targetpos.x, vel.x, 1, 1);
-			vel.y += DampedSpring(pos.y, targetpos.y, vel.y, 1, 1);
-			vel.z += DampedSpring(pos.z, targetpos.z, vel.z, 1, 1);
-			vela  += DampedSpring(angle, followTarget.angle, vela, spring, damping);
-			velp  += DampedSpring(pitch, followTarget.pitch, velp, spring, damping);
-			setOrigin(pos + vel, true);
-			A_SetAngle(angle + (vela / inertia), true);
-			A_SetPitch(pitch + (velp / inertia), true);
-		}
-	}
-
-	double DampedSpring(double p, double r, double v, double k, double d) {
-		return -(d * v) - (k * (p - r));
-	}
 }
 
 class DarkDoomZ_OptionMenu : OptionMenu {

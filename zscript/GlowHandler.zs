@@ -2628,7 +2628,7 @@ class GITD_ResetHandler : EventHandler
 			"gitd_ss_perband",
 			"gitd_dd_enabled", "gitd_dd_noflash", "gitd_bloom_forced",
 			"ddz_mode", "ddz_preset", "ddz_desat", "ddz_skymode", "ddz_lighting",
-			"ddz_fog", "ddz_minlight", "ddz_pregain", "ddz_postgain",
+			"ddz_minlight", "ddz_pregain", "ddz_postgain",
 			"ddz_fl_pos", "ddz_fl_quality", "ddz_fl_type",
 			"fl_enabled", "fl_mount", "fl_range", "fl_intensity", "fl_inner",
 			"fl_outer", "fl_falloff", "fl_density", "fl_dust", "fl_dust_scale",

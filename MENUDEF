@@ -1738,7 +1738,6 @@ OptionMenu "GITDFog"
 	Title "Fog Options"
 	StaticText ""
 	Option "$GLPREFMNU_FOGMODE",	gl_fogmode, "FogMode"
-	Slider "Fog thickness",			"ddz_fog", 0, 512, 8, 0
 	StaticText ""
 	Slider "Sky brightness",		"ddz_skymode", 0.0, 1.0, 0.1, 1
 	StaticText "How much of the darkening reaches sky", darkgray
