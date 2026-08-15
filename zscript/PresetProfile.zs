@@ -326,28 +326,75 @@ class GITD_PresetProfile abstract
 		F("gitd_fog_color2_mix", mix);
 	}
 
+	// ---- the ambience layer ----------------------------------------------
+	//
+	// FancyWorld postdates every profile in this file, which is exactly the
+	// hazard HasProfile's comment describes: a profile that does not mention a
+	// system INHERITS whatever the last one left running. These exist so each
+	// profile can state its position on the newest layer rather than adopting
+	// the previous preset's by accident.
+
+	// detail: 0 none, 1 only where the map implies a light source, 2 everything.
+	clearscope static void Ambience(int detail, double lightScale, double particles)
+	{
+		B("fw_enabled", true);
+		B("fw_lights", detail > 0);
+		I("fw_light_detail", detail);
+		F("fw_light_scale", lightScale);
+		B("fw_particles", particles > 0.0);
+		F("fw_particle_scale", particles);
+	}
+
+	// The scan still runs and the ambient SOUND still plays -- this turns off
+	// what it draws, not what it is. A preset that wants silence as well has
+	// to say so with the range.
+	clearscope static void NoAmbienceLight()
+	{
+		B("fw_enabled", true);
+		B("fw_lights", false);
+		B("fw_particles", false);
+	}
+
+	clearscope static void Steps(double volume)
+	{
+		B("gitd_steps", volume > 0.0);
+		F("gitd_steps_volume", volume);
+	}
+
+	// amount is what an emitter drops to with no sight line. Not 0 by default
+	// anywhere: sound goes round corners, and a waterfall down a bent corridor
+	// should still reach you.
+	clearscope static void Occlude(double amount)
+	{
+		B("gitd_occlusion", amount < 1.0);
+		F("gitd_occlusion_amount", amount);
+	}
+
 	// ---- dispatch -------------------------------------------------------
 
 	clearscope static bool HasProfile(int preset)
 	{
-		// TWO SHIP. Black and White (11) and OMGWTF (12), and they are the
-		// two ends of the same range on purpose: one is a composition that
-		// refuses almost every system available to it, the other refuses
-		// nothing. A preset list with only the middle of that range in it
-		// teaches nobody what the mod can do.
+		// FOUR SHIP. Blackout (1), Low Power (2), Red Alert (3) and Black and
+		// White (11).
 		//
-		// The rest -- Blackout, Low Power, Red Alert -- are still here and
-		// still switched off. They predate reactive fog, the tornado, the
-		// heatmap and the lattice, and a profile that does not mention a
-		// system does not merely skip it: it INHERITS whatever the last one
-		// left running. That is what makes a stale profile worse than no
-		// profile, and it is why these two both say Off explicitly for
-		// everything they do not use.
+		// Three of these were switched off for a real reason, not an arbitrary
+		// one: they predate reactive fog, the tornado, the heatmap, the
+		// lattice and the whole ambience layer, and a profile that does not
+		// mention a system does not merely skip it -- it INHERITS whatever the
+		// last preset left running. A stale profile is worse than no profile,
+		// because its failures look like bugs in the systems it never asked
+		// for.
 		//
-		// Turning another back on is one number here and one line in MENUDEF,
-		// plus a pass over it for the systems that did not exist when it was
-		// written.
-		return preset == 11;
+		// So each has had the pass that comment asked for. Every one of them
+		// now states a position on fog, reactive fog, tendrils, the tornado,
+		// the heatmap, the grid, colour keep, ambience light, particles,
+		// footsteps and occlusion -- Off counts as a position, and saying it
+		// out loud is the entire discipline this file runs on.
+		//
+		// OMGWTF is gone. It had no dispatch case in any of the three switches
+		// below, so it had never once run; it was 273 lines describing a
+		// preset nobody could select.
+		return preset == 1 || preset == 2 || preset == 3 || preset == 11;
 	}
 
 	clearscope static void Apply(int preset)
@@ -780,6 +827,34 @@ class GITD_PresetProfile abstract
 		I("gitd_ss_c2", 0xA07840);
 		I("gitd_ss_c3", 0x1A1408);
 		I("gitd_ss_c4", 0x0A0804);
+
+		// ---- the systems that postdate this preset ------------------------
+		//
+		// A building on a failing supply is a building that has gone QUIET,
+		// and quiet is the one thing this preset could not previously say --
+		// it had no position on the ambience layer at all, so it inherited
+		// whichever one the last preset left on.
+
+		// Its fog is already stated further up and is not touched here. What
+		// follows is only the systems that did not exist to be refused.
+		NoTendrils();
+		NoTornado();
+		NoReactive();     // nothing here reacts; that IS the preset
+		NoHeat();
+		NoKeepColor();
+
+		// Light only where the map already implies a source, and dim. An
+		// emergency circuit lights the fixtures it must and nothing else, so
+		// the flavour glow on slime and computers is exactly wrong here.
+		Ambience(1, 0.7, 0.35);
+
+		// LOUD FEET IN A QUIET BUILDING. Your own footsteps are the most
+		// present sound left, which is the whole feeling being aimed at.
+		Steps(1.15);
+
+		// And heavily muffled through walls -- a dying building does not carry
+		// sound the way a live one does.
+		Occlude(0.25);
 	}
 
 	// Bloom for a dying filament: threshold LOW, because there is almost no
@@ -1043,6 +1118,25 @@ class GITD_PresetProfile abstract
 		B("fl_bounce", false);      // no fill. One light, and its absence.
 		I("fl_slots", 1);
 		I("fl_pattern", 0);
+
+		// ---- the ambience layer -------------------------------------------
+		//
+		// This preset already refuses almost everything, and the newest layer
+		// is no exception -- but it has to REFUSE it rather than not mention
+		// it, which is the discipline the whole file runs on.
+		//
+		// Light and particles off: coloured mist and orange embers in a
+		// monochrome image are the exact small dishonesty the bloom note above
+		// is about. The drain would grey them anyway, and grey embers are
+		// worse than none.
+		NoAmbienceLight();
+
+		// SOUND STAYS, and it is doing more work here than anywhere else.
+		// Strip a scene of colour and hearing carries proportionally more of
+		// it; footsteps and a room that closes behind you are the texture this
+		// preset removed from the image.
+		Steps(1.0);
+		Occlude(0.4);
 	}
 
 	// White that BLOWS OUT rather than glows. Threshold high, so only what is
@@ -1069,7 +1163,25 @@ class GITD_PresetProfile abstract
 	// preset that never touched bloom would still reset the player's own.
 	clearscope static bool HasEngineHalf(int preset)
 	{
-		return false;
+		// THIS RETURNED false UNCONDITIONALLY, and that was a leak.
+		//
+		// It is the gate on RestoreEngine (DarkDoomZ.zs:676), so while it
+		// always said no, nothing ever put the bloom and exposure back. A
+		// preset could rewrite both, and turning it off left them rewritten
+		// with the Preset row reading Off -- the exact failure the comment
+		// above RestoreEngine describes, still happening, because the function
+		// that decides when to call it never said yes.
+		//
+		// It could get away with it only while the one shipping preset was
+		// Black and White, whose engine half is deliberately empty. The moment
+		// Blackout, Low Power or Red Alert became selectable again it stopped
+		// being harmless.
+		//
+		// Black and White is still false, and for the right reason rather than
+		// by accident: BlackAndWhiteBloom() sets nothing, so there is nothing
+		// of its to restore, and claiming otherwise would have leaving it
+		// stamp the Bloom page's defaults over settings it never touched.
+		return preset == 1 || preset == 2 || preset == 3;
 	}
 
 	// =====================================================================
@@ -1338,6 +1450,36 @@ class GITD_PresetProfile abstract
 		I("gitd_ss_c6", 0xFF3018);   // the last beat, a touch hotter
 		I("gitd_ss_c7", 0x140000);
 		I("gitd_ss_c8", 0x8A5A40);   // all clear: the room's own colour back
+
+		// ---- the systems that postdate this preset ------------------------
+		//
+		// An alarm is a building REACTING, so this is the one of the three
+		// that should have the reactive layer turned up rather than off.
+
+		// Its fog is already stated further up, pickup and all, and is not
+		// touched here. What follows is only what did not exist to be refused.
+		NoTendrils();
+		NoTornado();
+
+		// Gunfire and death push the mist around. In a room already pulsing
+		// this reads as the air being disturbed by what is happening in it.
+		Reactive(1, 0.9, 1.0, 190.0, 3.0, 1.2);
+
+		// THE FLOOR KEEPS SCORE. An alert that ends with no trace of what
+		// happened during it is a light show; this leaves the room marked by
+		// the fight afterwards.
+		Heat(0.55, 0x200000, 0xFF3018, 0.6, 110.0, 0.4);
+
+		NoKeepColor();
+
+		// Everything lit, including the flavour glow -- a building at full
+		// alert has every panel it owns switched on.
+		Ambience(2, 1.0, 1.0);
+		Steps(0.9);
+
+		// Barely muffled. Alarms are meant to carry through walls; that is
+		// what they are for.
+		Occlude(0.75);
 	}
 
 	// Bloom for a klaxon: amount HIGH and threshold LOW, so the red does not
@@ -1366,279 +1508,6 @@ class GITD_PresetProfile abstract
 		// swells back at you rather than simply going dark. That pumping is
 		// the alarm breathing, and it only exists because exposure is live.
 		Exposure(1.15, 0.55, 1.0, 3.0);
-	}
-
-	// =====================================================================
-	// 12. OMGWTF -- every system at once, on purpose
-	//
-	// Every other preset in this file is an argument for restraint. One is
-	// about a failing supply and spends most of its time doing nothing; one
-	// is four surfaces refusing to agree; one is literally the absence of
-	// light. Restraint is right for all of them and it is also a claim, and a
-	// claim is worth testing against its own opposite.
-	//
-	// So this is the opposite. Every system on, every one of them turned up,
-	// nothing subordinated to anything else. It is not tasteful and it is not
-	// trying to be -- what it is for is showing, in one place, everything the
-	// mod can do at the same time, and finding out what breaks when it does.
-	//
-	// Treat it as the stress test it is. If a frame rate is going to fall
-	// over or two systems are going to disagree, they will do it here first.
-	// =====================================================================
-	clearscope static void OmgWtf()
-	{
-		// Nothing is drained here, so nothing needs saving from the drain --
-		// but it is said out loud, because a preset that does not mention a
-		// setting inherits it, and arriving here from Black and White with a
-		// red-only colour gate still live would be baffling.
-		NoKeepColor();
-
-		// PING-PONG on fast holds, so the palette walks its eight slots
-		// forwards and back instead of cycling -- the same thirty-two colours
-		// arriving in an order that keeps changing.
-		LanesI("_enabled", 1);
-		LanesI("_pattern", 4);       // ping-pong
-		LanesI("_anim", 1);          // and the per-sector ripple ON TOP
-		LanesI("_slots", 8);
-		LanesI("_falloff", 0);
-		Lanes("_saturation", 1.35);  // past 1: pushed toward white
-		Lanes("_intensity", 2.40);
-		Lanes("_speed", 0.020);
-		Lanes("_anim_speed", 1.4);
-		Lanes("_anim_depth", 0.7);
-		Lanes("_anim_sharp", 2.5);
-
-		// Four different hold patterns on four different totals, because
-		// nothing here should ever line up with anything else.
-		HoldFor("gitd_wb", 0.4, 0.9, 0.3, 1.2, 0.5, 0.8, 0.4, 1.1);
-		HoldFor("gitd_wt", 0.7, 0.3, 1.1, 0.4, 0.9, 0.3, 1.3, 0.5);
-		HoldFor("gitd_cg", 0.3, 1.3, 0.5, 0.7, 0.3, 1.1, 0.6, 0.9);
-		HoldFor("gitd_fg", 1.1, 0.5, 0.8, 0.3, 1.2, 0.4, 0.9, 0.3);
-
-		I("gitd_wb_coverage", 340);
-		I("gitd_wt_coverage", 340);
-		I("gitd_cg_coverage", 420);
-		I("gitd_fg_coverage", 420);
-
-		// THE WAVE, WITH EVERY TERM AT ONCE. Edge, brightness AND colour all
-		// swinging, short wavelength, fast, sharp, fully detuned, every room
-		// on its own phase, and a 180 degree climb so opposite surfaces are
-		// in antiphase -- the floor crests exactly as the ceiling troughs.
-		// This is the setting the wave was NOT designed for and it should be
-		// available anyway.
-		Wave(90.0, 9.0, 5.0, 4,    // shape 4: a shell, so it has volume too
-		     0.90, 1.0, 1.0,       // every term at the ceiling at once
-		     1.0,                  // maximum detune
-		     1.0,                  // maximum scatter
-		     180);
-
-		// AND THE OLD PER-SECTOR ANIMATION ON TOP OF THE PER-PIXEL ONE.
-		//
-		// Everywhere else in this file those two are treated as alternatives,
-		// because running a per-room pulse underneath a per-pixel wave is
-		// double-counting the same idea at two granularities and it muddies
-		// both. Here it is the point: rooms breathing on one clock while the
-		// surfaces inside them ripple on another, agreeing about nothing.
-		LanesI("_anim", 1);
-		Lanes("_anim_speed", 2.2);
-		Lanes("_anim_depth", 0.9);
-		Lanes("_anim_sharp", 4.0);
-		Lanes("_anim_phase", 0.37);
-
-		// Randomised colours ON TOP of the written table, so even the thirty
-		// two literal colours stop being a fixed set. Nothing else in this
-		// file would dare.
-		B("gitd_rnd_colors", true);
-		I("gitd_rnd_governor", 3);   // neon only: full sat, high value, any hue
-		B("gitd_rnd_times", true);   // and the holds re-roll every arrival
-		B("gitd_rnd_patterns", true);// and each lane picks its own transition
-
-		// Darkness on, deep, with both spatial terms -- so the chaos still
-		// falls off with distance and pools on the floor. Without it this is
-		// just a bright mess; with it, it is a bright mess with depth, which
-		// is at least a mess you can navigate.
-		B("gitd_dd_enabled", true);
-		I("ddz_mode", 4);      // Crush
-		I("ddz_preset", 5);
-		I("ddz_desat", 0);     // every colour survives. That is the point.
-		DeepDark(0.72, 1700.0, 0.55, 24.0, 300.0);
-
-		I("ddz_fog", 190);
-
-		// FOG UP TO YOUR CHEST, AND A LASER GRID IN IT.
-		//
-		// Every other preset picks one atmospheric idea and commits. This
-		// runs the slab at head height with maximum pickup -- so the mist
-		// takes on all thirty-two rainbow colours from whatever surface is
-		// behind it and becomes a different colour in every direction you
-		// look -- and then stands eight real beams in it.
-		//
-		// The grid rides the sweep, so a lattice of lasers comes down the
-		// corridor through chest-deep multicoloured fog while eight bands do
-		// four different things to the light. Nowhere else would this be
-		// defensible. That is the preset.
-		//
-		// The fog and the lattice are both set in the air block at the end of
-		// this function, not here. They used to be set twice -- once here in
-		// the original preset and once again down there when reactive fog
-		// arrived -- and the second write silently won. Two calls where the
-		// loser is invisible is the same fault as a cvar that reads On while
-		// nothing happens, so the dead one is gone rather than left to be
-		// found by someone tuning the wrong number.
-
-		B("fl_enabled", true);
-		I("fl_range", 1800);
-		F("fl_intensity", 2.0);
-		F("fl_density", 3.0);
-		F("fl_dust", 1.0);
-		F("fl_dust_scale", 0.12);
-		F("fl_dust_drift", 1.0);
-		B("fl_bounce", true);    // OMGWTF gets it precisely because it is wrong
-		// The torch cycles colour too, because why would it not.
-		I("fl_slots", 8);
-		I("fl_pattern", 4);          // ping-pong through all eight
-		F("fl_speed", 0.030);
-		I("fl_c1", 0xFF00E6); I("fl_c2", 0x00FF66); I("fl_c3", 0xFFD400);
-		I("fl_c4", 0x6600FF); I("fl_c5", 0x00E5FF); I("fl_c6", 0xFF3300);
-		I("fl_c7", 0x99FF00); I("fl_c8", 0xFF0066);
-
-		// EIGHT BANDS, AND ONE OF EACH KIND OF THING A BAND CAN DO. Add,
-		// lift, crush and recolour all running in the same train, with the
-		// origin orbiting, drift on so they pull apart and fold back, and
-		// speed rising as you lose health.
-		B("gitd_ss_enabled", true);
-		I("gitd_ss_count", 8);
-		I("gitd_ss_shape", 1);
-		I("gitd_ss_origin", 2);       // follows you. It is about you.
-		I("gitd_ss_direction", 2);    // ping-pong: it comes back
-		I("gitd_ss_trigger", 0);
-		I("gitd_ss_drive", 0);
-		I("gitd_ss_range", 1536);
-		F("gitd_ss_softness", 1.6);
-		F("gitd_ss_intensity", 2.2);
-		I("gitd_ss_thickness", 110);
-		I("gitd_ss_trail", 320);
-		B("gitd_ss_underlay", true);
-		F("gitd_ss_drift", 0.95);     // they overtake constantly
-		F("gitd_ss_health_speed", 3.0);// and the whole train panics as you weaken
-		F("gitd_ss_spin", 260.0);
-		F("gitd_ss_spin_radius", 700.0);
-		I("gitd_ss_spin_colors", 8);
-		B("gitd_ss_drop", true);      // and it leaves bands behind in place
-		F("gitd_ss_drop_every", 3.0);
-		I("gitd_ss_drop_max", 32);
-		B("gitd_ss_actors", true);    // ON. It walks the thinker list, and the
-		                              // whole point of this preset is to find
-		                              // out what falls over.
-		B("gitd_ss_light", false);    // all per pixel, via draw modes below
-
-		for (int i = 1; i <= 7; i++) I("gitd_ss_gap" .. i, 7);
-
-		static const int omgDraw[] = { 1, 4, 2, 1, 3, 4, 1, 2 };
-		static const int omgShape[] = { 1, 4, 2, 5, 1, 3, 4, 1 };
-		static const int omgCol[] = {
-			0xFF00E6, 0x00FF66, 0xFFD400, 0x6600FF,
-			0x00E5FF, 0xFF3300, 0x99FF00, 0xFF0066 };
-
-		// AND EVERY BAND ALSO CARRIES A PER-SECTOR EFFECT ON TOP OF ITS DRAW
-		// MODE. Two systems saying different things about the same band at
-		// two different granularities -- a per-pixel crush riding a
-		// per-sector brighten, monsters woken and marked and slowed by the
-		// bands that pass them. Nowhere else would this be defensible.
-		static const int omgFx[] = { 1, 2, 4, 5, 1, 6, 2, 7 };
-
-		for (int i = 1; i <= 8; i++)
-		{
-			F("gitd_ss_speed" .. i, 380.0 + i * 90.0);
-			I("gitd_ss_shape" .. i, omgShape[i - 1]);
-			I("gitd_ss_thick" .. i, 60 + i * 45);
-			I("gitd_ss_draw" .. i, omgDraw[i - 1]);
-			I("gitd_ss_c" .. i, omgCol[i - 1]);
-			I("gitd_ss_fx" .. i, omgFx[i - 1]);
-			I("gitd_ss_amount" .. i, 96);
-		}
-		B("gitd_ss_perband", true);
-		B("gitd_ss_light", true);     // yes, both paths at once. On purpose.
-
-		// ===================================================================
-		// AND THE AIR, WHICH IS WHERE THIS PRESET STOPPED BEING A PALETTE.
-		//
-		// Everything above happens ON surfaces. Everything below happens IN
-		// the room, and running both at once is the only reason to have built
-		// the second one. A band crossing a tornado standing in banked fog
-		// with a laser lattice inside it and rings going off from the gun is
-		// four systems arguing about the same cubic metre of air, and the
-		// answer they arrive at is not something any one of them could say.
-		// ===================================================================
-
-		// A DEEP layer, not a knee-high one -- chest height, so the funnel
-		// has something to stand in and the lattice has something to cut.
-		Fog(120, 2.6, 40, 0xFF00A0,
-		    2.2,      // the torch carves hard
-		    1.0,      // and the mist takes every colour behind it
-		    0.85, 220, 0.35);
-
-		// Banked HARD and drifting fast. At 0.9 depth the density swings from
-		// almost clear to soup across a single room, and a drift of 34 walks
-		// those banks past you at a speed you can watch.
-		FogBanks(0.9, 0.006, 34.0);
-		FogGradient(0x00E5FF, 0.85);   // magenta at the floor, cyan at the top
-
-		// A FOREST OF WISPS. Spacing 34 is dense enough to read as a field
-		// rather than as individual columns -- and it costs what four would,
-		// because it is a lattice. This is the setting the tendril field was
-		// built to make affordable and it should be used at least once.
-		Tendrils(1.5, 34.0, 7.0, 220.0, 26.0);
-
-		// A FUNNEL THAT HUNTS. Origin 5 is the nearest live monster, so the
-		// tornado walks the room on its own and is always standing where the
-		// fight is. Leaning hard, spinning fast, wound tight.
-		Tornado(5, 0, 1400, 40, 620, 1.9, 0xFFD400, 1.0, 7.0, 130.0);
-
-		// EVERY REACTIVE PATH AT ONCE. Ignite, so gunfire and death both
-		// light the mist rather than moving it -- which means it works even
-		// where the layer is thin, and every burst feeds bloom that is
-		// already at threshold 0.05 with anamorphic and chromatic both on.
-		Reactive(2, 1.6, 2.2, 640.0, 2.4, 4.0);
-		F("gitd_fog_displace", 0.85);      // and every monster drags a hole
-		I("gitd_fog_displace_count", 6);   // six of them, the cap
-
-		// The bands shoulder the air. With eight of them at 380-1100 units a
-		// second this is a room full of pressure fronts crossing each other.
-		Bow(2.8, 150.0, 0.9);
-
-		// THE LATTICE, IN THE AIR, INSIDE EVERY BAND. Dense, diagonal,
-		// drifting, flickering, jittered -- a screen door that is coming
-		// apart. Every band already has a fill mode from the loop above.
-		Grid(26.0, 1.6, 2.0, 0x00FF66, 45.0, 3.4);
-		F("gitd_ss_fill_drift", 40.0);
-		F("gitd_ss_fill_flicker", 0.22);
-		F("gitd_ss_fill_jitter", 0.5);
-		F("gitd_ss_fill_major", 4.0);
-		F("gitd_ss_fill_gap", 0.25);
-
-		// AND THE FLOOR KEEPS SCORE, in the loudest colours it has. Ceiling
-		// 4 so it saturates almost immediately and a busy room ends up paved.
-		// Hurt on as well, so the map records both halves of every fight.
-		Heat(1.6, 0x00FFFF, 0xFF0000, 4.0, 190.0, 1.2);
-	}
-
-	// Bloom with no restraint left: threshold on the floor so everything
-	// blooms, amount high, and both the anamorphic streak and the chromatic
-	// fringing on at once -- which no preset that respected the image would
-	// ever do, and which is exactly why they are here.
-	clearscope static void OmgWtfBloom()
-	{
-		Bloom(3.20, 0.05, 1.0, 1.0, 1.0, 1.0);
-		EF("gl_bloom_anamorphic", 1.0);
-		EF("gl_bloom_anamorphic_ratio", 6.0);
-		EF("gl_bloom_chromatic", 1.0);
-
-		// An eye that never settles. Speed 8 is faster than the wave it is
-		// chasing, so the exposure hunts the flicker instead of averaging it
-		// and the whole image pumps. Every other preset picks a speed to
-		// avoid exactly this.
-		Exposure(1.6, 0.9, 1.6, 8.0);
 	}
 
 	// Blackout's bloom is no bloom. There is nothing to bleed and a threshold
@@ -1698,5 +1567,39 @@ class GITD_PresetProfile abstract
 		// with the lights off.
 		NoFog();
 		NoGrid();
+
+		// ---- the systems that postdate this preset ------------------------
+		//
+		// The paragraph above is the whole argument and it now has to be made
+		// against six more systems than existed when it was written.
+		NoTendrils();
+		NoTornado();
+		NoKeepColor();
+
+		// TWO EXCEPTIONS, and they are the preset rather than departures from
+		// it.
+		//
+		// IGNITE works with no fog at all -- it adds LIGHT rather than mist.
+		// In a room defined by having nothing to see, an explosion briefly
+		// carving the shape of the space out of the dark is exactly the thing
+		// this preset is about. Shot and death disturbance stay at zero:
+		// there is no mist for them to push.
+		Reactive(2, 0.0, 0.0, 190.0, 2.2, 1.0);
+
+		// THE FLOOR REMEMBERS, because in a black room it is the only thing
+		// that can. Every other preset can show you where you have been by
+		// lighting it; this one can only show you where you have KILLED.
+		Heat(0.9, 0x0A0000, 0xFF2810, 0.85, 160.0, 0.25);
+
+		// Nothing passive glows -- that is the entire preset -- so the
+		// ambience layer keeps its sound and loses its light and particles.
+		NoAmbienceLight();
+
+		// AND YOU NAVIGATE BY EAR. Footsteps up, because in the dark they are
+		// how you know what you are standing on, and occlusion strong, because
+		// a sound you can hear through a wall tells you the wall is not there.
+		// In this preset that is not flavour, it is the map.
+		Steps(1.25);
+		Occlude(0.2);
 	}
 }

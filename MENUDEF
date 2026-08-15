@@ -143,6 +143,9 @@ OptionValue "GITDFLMount"
 OptionValue "GITDPreset"
 {
 	0,  "Off (use my colours)"
+	1,  "Blackout"
+	2,  "Low Power"
+	3,  "Red Alert"
 	11, "Black and White"
 }
 

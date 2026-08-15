@@ -399,7 +399,6 @@ class GITD_Presets : Object
 			case 9:  return "Deep Sea";
 			case 10: return "Monochrome";
 			case 11: return "Black and White";
-			case 12: return "OMGWTF";
 			default: return "Off";
 		}
 	}
@@ -2789,7 +2788,7 @@ class GITD_PresetCustomiser : StaticEventHandler
 	// preset. Left at 11, choosing OMGWTF would quietly have selected Black
 	// and White and every symptom would have pointed at the profile rather
 	// than at a bound.
-	const GITD_PRESET_MAX = 12;
+	const GITD_PRESET_MAX = 11;
 
 	// ---- The sweep working set -------------------------------------------
 	//
