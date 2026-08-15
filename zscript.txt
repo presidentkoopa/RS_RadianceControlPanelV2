@@ -33,6 +33,15 @@ version "4.14"
 //
 //  ORDER: the emitter base and the tables must parse before
 //  anything that inherits from them.
+//
+//  fancy_things.zs is the fourth kind of emitter and sits with
+//  the other three. fancy_klaxon.zs is the odd one out: it is
+//  not an emitter at all, it subclasses GITD_SweepEffect from
+//  SweepEngine.zs above, and it reads FancySettings from
+//  fancy_common.zs -- so it must follow BOTH, which is the only
+//  reason it is down here in the FancyWorld block rather than
+//  up with the sweep. fw_scan.zs stays last because it is the
+//  one file that names every class the others define.
 // ============================================================
 #include "zscript/fw/fancy_common.zs"
 #include "zscript/fw/fancy_tables.zs"
@@ -40,4 +49,6 @@ version "4.14"
 #include "zscript/fw/fancy_floors.zs"
 #include "zscript/fw/fancy_ceilings.zs"
 #include "zscript/fw/fancy_walls.zs"
+#include "zscript/fw/fancy_things.zs"
+#include "zscript/fw/fancy_klaxon.zs"
 #include "zscript/fw/fw_scan.zs"

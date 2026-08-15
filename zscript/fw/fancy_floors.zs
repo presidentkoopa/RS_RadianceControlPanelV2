@@ -52,7 +52,16 @@ class FancyLiquidCore : FancyEmitter
 
 class FancySectorNukageCore : FancyLiquidCore
 {
-	override Sound FancySound() { return "world/acidloop"; }
+	// COLD WAR: the same pools at the same emitters, read as a dose rate
+	// rather than as something bubbling. The bubbles themselves are NOT
+	// switched -- they are a picture of the liquid, and the liquid has not
+	// changed. Only the room's reading of it has.
+	override Sound FancySound()
+	{
+		if (FancyVoice() == 1) return "world/acidloop/cold";
+		return "world/acidloop";
+	}
+
 	override Name FancySurfaceItem() { return 'FancySectorNukage'; }
 	override int FancyPuffRate() { return 22; }
 
@@ -93,13 +102,39 @@ class FancySectorNukage : Actor
 
 class FancySectorWaterCore : FancyEmitter
 {
-	override Sound FancySound() { return "world/waterflow"; }
+	// THE CHEAPEST DIALECT IN THE DESIGN, and it needed no recording at all.
+	//
+	// Under Lovecraftian Fog the map's water speaks with the map's SLIME
+	// voice, from the same pools, at the same emitters, using a lump that has
+	// been in this mod since the merge. The water runs thick. A new file could
+	// not have said it more plainly, and it would have cost a manifest entry,
+	// a lump and a $volume to say it worse.
+	//
+	// gooflow is declared at $volume 0.005 and waterflow at 0.01 -- both are
+	// floor FIELDS, both sit at the bottom of the ladder for the same reason
+	// (dozens audible at once), so this is a change of character and not a
+	// change of level. That is the rule every voice row here follows.
+	override Sound FancySound()
+	{
+		if (FancyVoice() == 4) return "world/gooflow";
+		return "world/waterflow";
+	}
 }
 
 // ObAddon's XWATER.
 class FancySectorXWaterCore : FancyEmitter
 {
-	override Sound FancySound() { return "world/xwater"; }
+	// Same trade as FancySectorWaterCore above: under voice 4 it is the same
+	// pool saying something wrong. Note this one drops from $volume 0.1 to
+	// gooflow's 0.005 while it does it -- xwater is the one value in sndinfo
+	// that does not fit its own ladder, so the preset is quieter here than the
+	// default is. On the handful of ObAddon maps with large XWATER areas that
+	// is a mercy rather than a bug.
+	override Sound FancySound()
+	{
+		if (FancyVoice() == 4) return "world/gooflow";
+		return "world/xwater";
+	}
 
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x2860A0; }
@@ -220,10 +255,19 @@ class FancySectorLava : Actor
 
 // ---- Hot surfaces ----------------------------------------------------------
 
-// SLIME09-12: hot rock rather than a liquid. No loop -- the original only ever
-// hissed occasionally, and the smoke is the main event.
+// SLIME09-12: hot rock rather than a liquid.
+//
+// IT NOW HAS THE LOOP IT NEVER HAD. This class overrode no FancySound() at
+// all: it hissed 40/256 of the time and was otherwise a silent emitter with a
+// light and some smoke, which made it the one liquid-adjacent flat in the mod
+// that a player could stand on and hear nothing from. world/hotloop is a
+// burning-coal bed at $volume 0.03 -- the floor-field rung, matching lavaflow,
+// one below the workhorse band -- and the occasional hiss stays exactly as it
+// was, on CHAN_VOICE, so it still punctuates rather than competing.
 class FancySectorHotCore : FancyEmitter
 {
+	override Sound FancySound() { return "world/hotloop"; }
+
 	override int FancyLightType() { return DynamicLight.FlickerLight; }
 	override Color FancyLightColor() { return 0x883410; }
 	override int FancyLightRadius() { return 72; }

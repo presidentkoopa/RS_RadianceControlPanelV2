@@ -119,6 +119,13 @@ class FancyTexTable play
 		t.Define("FancyWallSlimedrip", 0, "SLADRIP1 SLADRIP2 SLADRIP3");
 		t.Define("FancyWallGargfont", 0, "GSTFONT1 GSTFONT2 GSTFONT3");
 
+		// A wall that is a PICTURE of dripping blood, in doom.wad and
+		// doom2.wad both, and named nowhere in this file until now. It sits
+		// next to SLADRIP and GSTFONT because it is the same idea found in the
+		// same place -- the difference is that this one fires one-shots rather
+		// than holding a loop. See FancyWallBloodDrip.
+		t.Define("FancyWallBloodDrip", 0, "BLODRIP1 BLODRIP2 BLODRIP3 BLODRIP4");
+
 		t.Define("FancyWallCompstation", 0,
 			"COMPSTA1 COMPSTA2 COMPSTA3 COMPSTA4 COMPSTA5 COMPSTA6 COMPTALR");
 
@@ -132,7 +139,20 @@ class FancyTexTable play
 			"COMPTALL COMP2 SPACEW3 COMPUTE1 PLANET1 "
 			"COMPUTE4 COMPUTE7 COMPUTE8 COMPUTE9");
 
-		t.Define("FancyWallStatic", 0, "COMPFUZ1 COMPFUZ2 COMPFUZ3 COMPFUZ4");
+		// COMPFUZ1-4 DO NOT EXIST. Not in doom.wad, not in doom2.wad; checked
+		// by reading TEXTURE1/TEXTURE2 out of both. So FancyWallStatic, its
+		// two lumps, its $random group and the mod's only RandomFlickerLight
+		// have never once fired in a vanilla game. Bind() resolves an unknown
+		// name to nothing and moves on, so it never errored -- the bloodfall
+		// bug again, in the table instead of the sndinfo.
+		//
+		// These three are the real garbled-screen textures and all three are
+		// present: COMPOHSO in doom1, COMPWERD and COMPSPAN in both. COMPBLUE
+		// and COMPTILE were the other candidates and are deliberately NOT
+		// here. COMPBLUE is a general-purpose tech wall used across whole
+		// episodes of Doom 1, and a strobing broken monitor on every one of
+		// them is the FLAT2 mistake with a sound attached.
+		t.Define("FancyWallStatic", 0, "COMPOHSO COMPWERD COMPSPAN");
 		t.Define("FancyWallFaces", 0, "SP_FACE1");
 
 		// WALL LIGHTS, SPLIT BY COLOUR.
@@ -196,7 +216,58 @@ class FancyTexTable play
 			"CEIL1_2 CEIL1_3 CEIL3_6 FLAT2 FLAT17 GRNLITE1 "
 			"TLITE6_1 TLITE6_4 TLITE6_5 TLITE6_6");
 
+		// WET ROCK, AND ONLY ROCK. GRNROCK and the RROCK family are Doom II's
+		// broken-stone flats, and a sector with one of them as its CEILING is
+		// an enclosed cave -- an outdoor one would have F_SKY1 up there
+		// instead. That is the whole argument, and it is why this row is four
+		// names and not fourteen.
+		//
+		// FLAT5_7 and FLAT5_8 were on this list and came off it. Both exist,
+		// both are Doom 1 flats, and I could not establish what either one
+		// depicts without looking at the pixels. The FLAT2/FLAT17 row above is
+		// what guessing at a generic flat costs: an emitter every 384 units
+		// across whole levels, each with a light and a loop.
+		//
+		// Doom II only, which is correct and harmless -- Bind() skips a name
+		// that does not resolve, so a Doom 1 game simply has no wet ceilings.
+		t.Define("FancyCeilingDrip", 0, "GRNROCK RROCK03 RROCK04 RROCK13");
+
 		return t;
+	}
+
+	// ---- things ----------------------------------------------------------
+	//
+	// The scan reads floors, ceilings and linedefs. It has never read THINGS,
+	// and the map has been telling us about those just as loudly: a RedTorch
+	// is an object whose entire purpose is to be on fire in the corner of a
+	// room, and Doom places more of them than any other decoration.
+	//
+	// NOT a FancyTexTable. That class is indexed by TextureID and a thing has
+	// no texture; making one fit would mean inventing a fake index for every
+	// actor class, which is a lie the Find() hot path would then have to carry
+	// forever. This is the table, it lives here so "one place to add a row"
+	// stays true, and it has one row.
+	//
+	// `is` rather than a class-name compare, so a mod that subclasses or
+	// replaces RedTorch still gets a fire. All seven are listed because all
+	// seven are flat under Actor in wadsrc/static/zscript/actors/doom/
+	// doomdecorations.zs (232-351, 688) -- ShortRedTorch does NOT derive from
+	// RedTorch, and assuming it did would have silently dropped the short
+	// torches, which are the ones Doom II uses most.
+	//
+	// Adding the hanging bodies, the barrel or the EvilEye is one line here
+	// and one class beside FancyThingTorch. None of them ship today: each
+	// would cost a manifest entry and an sndinfo block for a decoration that
+	// appears a handful of times per megawad, and they cost nothing to add
+	// the day someone wants them.
+	static Name FancyThingEmitter(Actor a)
+	{
+		if (a is 'RedTorch'   || a is 'GreenTorch'   || a is 'BlueTorch'
+		 || a is 'ShortRedTorch' || a is 'ShortGreenTorch' || a is 'ShortBlueTorch'
+		 || a is 'BurningBarrel')
+			return 'FancyThingTorch';
+
+		return '';
 	}
 
 	// ---- fog ------------------------------------------------------------

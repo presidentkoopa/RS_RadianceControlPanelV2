@@ -63,6 +63,20 @@ class SpawnEnvActorHandler : EventHandler
 
 	override void WorldLoaded(WorldEvent e)
 	{
+		// ABOVE THE fw_enabled GUARD ON PURPOSE. The klaxon is not a scanned
+		// emitter -- it has no texture, no lattice cell and no part in the four
+		// passes below. It rides the sector sweep, and the sweep is on whether
+		// or not the ambience layer is.
+		//
+		// And it is registered HERE rather than from GITD_Handler because
+		// GITD_Handler.WorldLoaded CLEARS the effect list (GlowHandler.zs:709,
+		// so an effect never holds sectors from a level that is gone) and
+		// mapinfo.txt puts SpawnEnvActorHandler after it in AddEventHandlers.
+		// Registering from anything earlier in that list registers into a list
+		// that is about to be wiped -- silently, and only from map 2 onward,
+		// which is the worst possible way for it to fail.
+		GITD_Sweep.Register(new("GITD_KlaxonSweep"));
+
 		if (!FancySettings.GetBool("fw_enabled", true)) return;
 
 		MeasureMap();
@@ -74,6 +88,7 @@ class SpawnEnvActorHandler : EventHandler
 		SpawnFloorActors();
 		SpawnCeilingActors();
 		SpawnWallActors();
+		SpawnThingActors();
 
 		IndexLiquids();
 
@@ -418,6 +433,64 @@ class SpawnEnvActorHandler : EventHandler
 				fe.fwTint = tint;
 				fe.fwHasTint = true;
 			}
+		}
+	}
+
+	// ---- things ----------------------------------------------------------
+	//
+	// The fourth pass, and the only one that does not read a texture. See
+	// FancyTexTable.FancyThingEmitter for what it matches and why that matcher
+	// is not a FancyTexTable.
+
+	private void SpawnThingActors()
+	{
+		double step = max(64.0, FancySettings.GetFloat("fw_spacing", 256.0));
+		ResetClaims(step);
+
+		// COLLECT, THEN SPAWN. Spawning inside the iteration inserts new
+		// thinkers into the list the iterator is currently walking, which is the
+		// kind of thing that works until the day it does not -- and the day it
+		// does not, the new thinkers are themselves FancyEmitters, so the pass
+		// would start matching its own output. The array is a few dozen entries
+		// on any real map.
+		//
+		// IT HOLDS THE TORCHES, NOT THEIR POSITIONS, and that is forced rather
+		// than preferred. Array<Vector3> does not compile: DetermineType rejects
+		// any dynamic array whose element needs more than one VM register
+		// (zcc_compile.cpp:2042, "Base type for dynamic array types must be
+		// integral"), and a Vector3 needs three. The VM has exactly eight
+		// dynarray backings -- i8/i16/i32/f32/f64/string/ptr/obj -- and none of
+		// them is a vector. Array<Actor> takes the object backing and works.
+		//
+		// It also fails LOUDLY rather than silently, which is why it is worth a
+		// note: that one line would have failed the whole of zscript.txt to
+		// parse, taking every emitter in the mod down with it, not just the
+		// torches.
+		Array<Actor> torches;
+
+		ThinkerIterator it = ThinkerIterator.Create("Actor");
+		Actor a;
+		while (a = Actor(it.Next()))
+		{
+			if (FancyTexTable.FancyThingEmitter(a) != 'FancyThingTorch') continue;
+
+			// Row 1, and it is the only row this lattice will ever use until a
+			// second thing emitter exists. The pass has its own ResetClaims, so
+			// row 1 here cannot collide with row 1 of the wall pass.
+			if (!ClaimCell(a.pos.xy, 1)) continue;
+
+			torches.Push(a);
+		}
+
+		for (int i = 0; i < torches.Size(); i++)
+		{
+			let t = torches[i];
+			if (!t) continue;
+
+			// Mid-height rather than at the actor's feet: a torch's flame is at
+			// the top of it, and these are tall.
+			Actor.Spawn("FancyThingTorch",
+				(t.pos.x, t.pos.y, t.pos.z + t.height * 0.5));
 		}
 	}
 

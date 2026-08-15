@@ -132,6 +132,20 @@ anywhere in its own files; if you know who wrote it, please say so and the
 credit goes in. Assets are sourced from several commercial games and no
 ownership is claimed over them.
 
+**Ambience additions** — the sky wind, the cave drip, the wall drips, the
+torches, the klaxon on the sweep band and the preset voices come from three
+community ambience mods: *Universal Ambience*, *Ambient Decorations*, and a
+Cosmo ambience script. Their own samples trace back to S.T.A.L.K.E.R.,
+Half-Life 1 and 2, Portal, Silent Hill and Resident Evil. As with FancyWorld
+above, none of those three name an author anywhere in their own files; if you
+know who wrote them, please say so and the credit goes in. No ownership is
+claimed over any of it.
+
+Everything here was downmixed to mono on the way in, and that is not a
+housekeeping note. GZDoom does not spatialise a stereo sound: it plays flat at
+your head, at full volume, everywhere in the map. A stereo file in this mod
+would be exactly the thing this mod exists to avoid.
+
 **Tooltip menu library** by ToxicFrog, MIT.
 
 ---

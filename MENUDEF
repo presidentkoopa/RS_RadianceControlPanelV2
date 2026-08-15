@@ -2337,6 +2337,23 @@ OptionMenu "GITDFancyWorld"
 	StaticText "and under doors.", darkgray
 	StaticText ""
 
+	StaticText "Voice", gold
+	Option "What the world says",	"gitd_voice", "GITDVoice"
+	StaticText "NOT a new sound. Every emitter this touches", darkgray
+	StaticText "was already in the room -- this only changes", darkgray
+	StaticText "what it SAYS.", darkgray
+	StaticText "Cold turns the map's own computers into a", darkgray
+	StaticText "reactor room and its nukage into a dose rate.", darkgray
+	StaticText "Labouring makes the same machines strain.", darkgray
+	StaticText "Wrong makes the water run thick and the face", darkgray
+	StaticText "on the wall speak.", darkgray
+	StaticText "Alarm leaves the machines alone and mounts a", darkgray
+	StaticText "klaxon on the sweep band, so the alarm crosses", darkgray
+	StaticText "the building the way its light already does --", darkgray
+	StaticText "which means no sweep, no alarm.", darkgray
+	StaticText "The presets set this for you.", darkgray
+	StaticText ""
+
 	StaticText "Cost", gold
 	Slider "Emitter range",			"fw_range", 512, 4096, 128, 0
 	StaticText "How close you must be for an emitter to do", darkgray
@@ -2368,6 +2385,15 @@ OptionValue "FWWallSpacing"
 	64,  "Normal"
 	128, "Sparse"
 	256, "Thin"
+}
+
+OptionValue "GITDVoice"
+{
+	0, "The map's own"
+	1, "Cold"
+	2, "Labouring"
+	3, "Alarm"
+	4, "Wrong"
 }
 
 //============================================================================

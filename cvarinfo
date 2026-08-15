@@ -1549,3 +1549,20 @@ server float gitd_steps_stride     = 52.0;   // world units travelled per footfa
 // should still reach you -- just not as though it were in front of your face.
 server bool  gitd_occlusion        = true;
 server float gitd_occlusion_amount = 0.45;
+
+// The world's DIALECT. Not a new sound source: every emitter this reaches is
+// one the texture scan already placed, in a room, at a position you can walk
+// to. It changes only what that emitter SAYS.
+//
+// ONE cvar and five values rather than a switch per family, because a
+// per-family dialect table is nine cvars nobody would ever set by hand and
+// eight presets that would each have to remember all nine. A preset writes
+// one number; the classes that have something to say about that number say
+// it, and every class that does not ignores it for free.
+//
+//   0  the map's own voice -- what shipped, and the default
+//   1  cold        (Cold War)
+//   2  labouring   (Low Power)
+//   3  alarm       (Red Alert) -- also arms the sweep klaxon, see fancy_klaxon.zs
+//   4  wrong       (Lovecraftian Fog)
+server int gitd_voice = 0;

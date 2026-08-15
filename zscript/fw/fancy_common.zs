@@ -67,6 +67,32 @@ class FancyEmitter : Actor
 	private bool	fwLit;
 	private int		fwClock;
 
+	// [BB] THE WORLD'S DIALECT.
+	//
+	// gitd_voice adds no sound source anywhere. Every emitter it touches was
+	// already in the room, at a place you could walk to; this changes only
+	// what that place SAYS. Cold War does not put a hum in the air -- it
+	// changes what the map's own computers sound like.
+	//
+	// These fields exist because of the trap, which is worth stating in full:
+	// FancyUpdate starts a loop ONLY on the out-of-range -> in-range edge, so
+	// returning a different name from FancySound() does nothing at all to an
+	// emitter you are currently standing next to. It would re-read when you
+	// walked fw_range away and came back. Guarded, never errors, silently
+	// does not happen -- and the whole feature would have looked like it
+	// worked, because walking away and back is exactly what testers do.
+	//
+	// fwVoiceSnd is the second half of that and it is not redundant with
+	// fwVoice. It holds the sound this emitter is ACTUALLY playing, so the
+	// swap below can ask "did my voice change" rather than "did the world's
+	// voice change". Most emitters have nothing to say about gitd_voice, and
+	// without this every one of them would eat a StopSound plus a StartSound
+	// on every preset change -- including the genuinely silent ones, where
+	// both calls are no-ops that only look like they mean something. See the
+	// swap arm in FancyUpdate.
+	private int		fwVoice;
+	private Sound	fwVoiceSnd;
+
 	// [BB] DETUNE, so a wall of waterfalls is a waterfall.
 	//
 	// A big fall or a long computer bank puts a dozen emitters within earshot
@@ -118,7 +144,20 @@ class FancyEmitter : Actor
 	// ---- What this emitter IS. Subclasses answer; nothing else overrides. --
 
 	// The looping ambience. Empty means silent.
+	//
+	// A subclass may answer differently depending on FancyVoice(). It is read
+	// again on every voice change, not only at spawn -- see FancyUpdate.
 	virtual Sound FancySound() { return ""; }
+
+	// Which dialect the world is speaking. Read here rather than in five
+	// separate FancySound() overrides so there is one spelling of the cvar
+	// name in the whole layer.
+	//
+	//   0 the map's own voice, 1 cold, 2 labouring, 3 alarm, 4 wrong.
+	//
+	// Every value has a menu entry -- see OptionValue "GITDVoice". A value
+	// reachable only from the console is a value nobody will ever see.
+	int FancyVoice() { return FancySettings.GetInt("gitd_voice", 0); }
 
 	// -1 for no light. Otherwise a DynamicLight.ELightType.
 	virtual int FancyLightType() { return -1; }
@@ -127,8 +166,12 @@ class FancyEmitter : Actor
 	virtual int FancyLightRadius2() { return 0; }
 
 	// Third GLDEFS parameter, and it means something different per type:
-	// seconds for PulseLight, 0..1 chance for FlickerLight, tics for
-	// RandomFlickerLight. Ignored by PointLight.
+	// seconds for PulseLight, a 0..1 chance for FlickerLight, and for
+	// RandomFlickerLight TICS DIVIDED BY 360 -- AttachLightDirect multiplies
+	// everything except PulseLight by 360 before storing it (a_dynlight.cpp:
+	// 926), and this type then compares its tick count against that number
+	// directly. The old note here said "tics", which cost FancyWallStatic a
+	// forty-one-second interval nobody could see. Ignored by PointLight.
 	virtual double FancyLightParam() { return 0.0; }
 
 	// How much of a light this is, against fw_light_detail:
@@ -141,6 +184,25 @@ class FancyEmitter : Actor
 	// Chance out of 256, per ~6-tic pass, that FancyPuff() runs. 0 = never.
 	virtual int FancyPuffRate() { return 0; }
 	virtual void FancyPuff() { }
+
+	// AN OCCASIONAL ONE-SHOT THAT IS NOT A PARTICLE, and it is a separate hook
+	// for one reason: FancyPuff is gated on fw_particles.
+	//
+	// That gate is correct for everything that was using FancyPuff before now,
+	// because for those classes the sound IS the particle -- a nukage bubble
+	// pops, a lava bubble bursts, hot rock hisses under its own smoke. Turn
+	// particles off and there is nothing there to make a noise.
+	//
+	// A dripping wall is not that. Its drip is the only sound it has, and
+	// hanging it off FancyPuff would mean a player who turned particles down
+	// lost an emitter's entire voice with nothing to tell them so -- guarded,
+	// never errors, silently does not happen. That is this project's signature
+	// bug and it is cheaper to not write it than to find it later.
+	//
+	// Same units as FancyPuffRate: chance out of 256 per ~6-tic pass. NOT
+	// scaled by fw_particle_scale, because this is not a particle.
+	virtual int FancyOneShotRate() { return 0; }
+	virtual void FancyOneShot() { }
 
 	// ---- When any of it happens ------------------------------------------
 
@@ -164,20 +226,64 @@ class FancyEmitter : Actor
 	{
 		double range = FancySettings.GetFloat("fw_range", 2048.0);
 		bool near = FancyNearPlayer(range);
+		int voice = FancyVoice();
 
 		if (near && !fwAudible)
 		{
 			// An empty sound here is a no-op, which is how the silent
 			// emitters get away with not overriding FancySound at all --
-			// hot rock, for one, which only hisses occasionally and has no
-			// loop to start.
-			A_StartSound(FancySound(), CHAN_BODY, CHANF_LOOPING,
+			// the blood drips, for one, which fire one-shots on CHAN_VOICE
+			// and have no loop to start.
+			fwVoiceSnd = FancySound();
+			A_StartSound(fwVoiceSnd, CHAN_BODY, CHANF_LOOPING,
 				fwVol, ATTN_NORM, fwPitch);
 		}
 		else if (!near && fwAudible)
 		{
 			A_StopSound(CHAN_BODY);
 		}
+		else if (near && voice != fwVoice)
+		{
+			// Already singing, and the dialect changed underneath it.
+			//
+			// Re-issuing on the same channel replaces the loop in place --
+			// s_sound.cpp:545 stops whatever CHAN_BODY held before starting
+			// the new one -- so there is no destroy and no second voice. It
+			// is a hard cut rather than a crossfade, and it stays that way:
+			// a crossfade needs a second channel, and CHAN_BODY is the only
+			// one an emitter owns.
+			//
+			// The name compare is the guard. Most emitters have nothing to
+			// say about gitd_voice and return the same sound they already
+			// hold, so for them this whole arm is one virtual call and one
+			// int compare -- no channel is touched when nothing changed.
+			Sound snd = FancySound();
+			if (snd != fwVoiceSnd)
+			{
+				A_StopSound(CHAN_BODY);
+
+				// fwVol * fwOccl, NOT fwVol. A_StartSound resets the channel
+				// to whatever volume it was handed, and FancyEaseOcclusion
+				// walks back at only 0.08 a pass, so starting at the un-ducked
+				// value would give an occluded emitter half a second of
+				// shouting through the wall it is behind. It is one multiply.
+				if (snd != 0)
+					A_StartSound(snd, CHAN_BODY, CHANF_LOOPING,
+						fwVol * fwOccl, ATTN_NORM, fwPitch);
+
+				fwVoiceSnd = snd;
+			}
+		}
+
+		// Assigned on every pass, in range or not, so an emitter that was far
+		// away when the preset changed comes back in the new voice by the
+		// normal start path above and never fires a spurious swap.
+		//
+		// The half-second ripple this produces is a feature and not latency.
+		// FancyUpdate runs at ~2Hz and every emitter was staggered 1-6 tics at
+		// spawn, so a preset change crosses a room as a ragged wave of
+		// machines changing note rather than as one hard cut on a single tic.
+		fwVoice = voice;
 
 		// Tracked whether or not there was a sound: it is also what gates
 		// particles, so a silent emitter still needs it.
@@ -260,6 +366,10 @@ class FancyEmitter : Actor
 		}
 
 		if (!fwAudible) return;
+
+		// Above the particle gate, deliberately. See FancyOneShotRate.
+		int oneshot = FancyOneShotRate();
+		if (oneshot > 0 && random(0, 255) < oneshot) FancyOneShot();
 
 		int rate = FancyPuffRate();
 		if (rate <= 0) return;
