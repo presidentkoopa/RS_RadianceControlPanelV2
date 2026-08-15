@@ -814,6 +814,31 @@ class GITD_PresetProfile abstract
 		// Speed 0.18 is barely moving: this air is settling, not circulating.
 		Surface(3.0, 52.0, 0.18, 0.65);
 
+		// THE AIR IS NOT EVEN, and this is the difference between a fog layer
+		// and a fog FILTER. Uniform density is a value applied to the screen;
+		// density that is thick in one corner and thin in the next is a
+		// substance occupying a room. Large and slow -- 0.0022 is a bank about
+		// the size of a hall, drifting across one in half a minute.
+		FogBanks(0.45, 0.0022, 1.4);
+
+		// AND THINGS RISE OFF IT. The only preset of the four that takes
+		// tendrils, and the only one where they mean anything: wisps lifting
+		// off standing air in a building nobody has ventilated since the
+		// incident. Sparse and tall, not a forest -- spacing 150 puts one
+		// every few paces, and they lean because the air is barely moving
+		// rather than still.
+		//
+		// Cheap enough to afford here: the lattice is a fract(), so four
+		// hundred of them cost what one costs.
+		Tendrils(0.20, 150.0, 12.0, 110.0, 5.0);
+
+		// AND THE POOLS KEEP THEIR OWN COLOUR. Amber is what the failing
+		// lights are doing to the air; a nukage sump is not part of that
+		// argument and should not be recoloured by it. This is the one source
+		// that comes from the map rather than from the preset.
+		I("gitd_fog_color_mode", 4);
+		F("gitd_fog_color_blend", 0.7);   // toward the liquid, not all the way
+
 		NoGrid();
 
 		// ---- the torch ---------------------------------------------------
@@ -1124,6 +1149,20 @@ class GITD_PresetProfile abstract
 		    0.0,      // and NOTHING tints it
 		    0.35, 90, 0.12);
 
+		// FLAT ON PURPOSE, and it is the only preset here that is.
+		//
+		// The other three sag their layer into low ground, because mist that
+		// pools reads as weather. This one wants the opposite: a horizontal
+		// plane at one height across the whole map, so the grey sits in the
+		// frame like a printed tone rather than like something the room is
+		// doing. A layer that follows the floor is describing terrain; a level
+		// one is describing the IMAGE.
+		//
+		// A little swell so it is not a sheet of card -- long, slow, and small
+		// enough that you notice it only when looking along the surface.
+		Follow(0.0, 0.0);
+		Surface(2.0, 64.0, 0.10, 0.7);
+
 		NoGrid();
 
 		// ---- the air is uneven, and nothing else about it is ------------
@@ -1410,6 +1449,31 @@ class GITD_PresetProfile abstract
 		// units at nearly four times the speed -- air being moved rather than
 		// air going still.
 		Surface(2.0, 30.0, 0.65, 0.5);
+
+		// Fine and fast-moving, where Low Power's banks are large and slow.
+		// 0.006 is roughly a doorway rather than a hall, drifting at three
+		// times the speed: this is air being pushed by handling that is still
+		// running, not air that has settled. Shallow depth, because a klaxon
+		// preset wants the mist EVEN enough that the bands crossing it read as
+		// clean edges.
+		FogBanks(0.25, 0.006, 4.0);
+
+		// A BOW WAVE, and this is the only preset that has any business with
+		// one. It is mist shouldered aside by a travelling sweep band -- which
+		// requires a travelling sweep band, and this is the preset built
+		// around eight of them. The alarm does not merely light the room, it
+		// pushes the air in front of it.
+		Bow(0.7, 90.0, 0.55);
+
+		NoTendrils();   // nothing hangs in moving air
+
+		// The mist stays RED. Deliberately not the liquid source Low Power
+		// takes: this preset is a building shouting one colour, and a green
+		// sump in the middle of that is the alarm losing an argument with the
+		// scenery. The one place the composition beats the map.
+		I("gitd_fog_color_mode", 1);     // match a lane
+		I("gitd_fog_color_lane", 3);     // the floor, which carries the klaxon
+		F("gitd_fog_color_blend", 0.55); // part way, so it never goes pure
 
 		NoGrid();
 
@@ -1742,5 +1806,23 @@ class GITD_PresetProfile abstract
 		// In this preset that is not flavour, it is the map.
 		Steps(1.25);
 		Occlude(0.2);
+
+		// ---- what is left of colour ---------------------------------------
+		//
+		// Full drain, and it costs nothing now: this used to be a walk over
+		// every sector in the map, so a preset either did it or did not. It is
+		// one number a frame, so it can be a considered value rather than a
+		// switch.
+		//
+		// Not quite full. 235 rather than 255 leaves the faintest trace of hue
+		// in the few things bright enough to have any -- your muzzle flash, an
+		// ignite, the laser core -- so the only colour in the world is the
+		// colour you brought into it. At 255 even those come out grey and the
+		// preset loses the one contrast it has.
+		I("ddz_desat", 235);
+
+		// And what survives the drain is red, which needs no explanation in a
+		// preset where the floor is keeping score in blood.
+		KeepColor(0.5, 0.2, 1);
 	}
 }
