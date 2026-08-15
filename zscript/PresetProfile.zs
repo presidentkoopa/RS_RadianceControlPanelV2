@@ -162,6 +162,16 @@ class GITD_PresetProfile abstract
 		F("gitd_dd_height_range", heightRange);
 	}
 
+	// BACK TO THE PER-SECTOR CURVE, and this is not a cosmetic choice.
+	//
+	// DarkDoomZ runs exactly one of the two implementations: the sector path
+	// checks gitd_dd_perpixel and, if it is set, disables itself outright
+	// (DarkDoomZ.zs:251 -- "if (perPixel) on = false"). So a preset that wants
+	// the sector curve and does not say so does not merely get a different
+	// look if per-pixel was left on by the last preset -- it gets NO DARKENING
+	// AT ALL, while every dial in the menu still reads as though it should.
+	clearscope static void NoDeepDark() { B("gitd_dd_perpixel", false); }
+
 	// Mist with a top. The one atmospheric system that has a SHAPE, so it is
 	// the one that changes what a room feels like to stand in rather than
 	// what it looks like from across the map.
@@ -325,6 +335,46 @@ class GITD_PresetProfile abstract
 		I("gitd_fog_color2", color);
 		F("gitd_fog_color2_mix", mix);
 	}
+
+	// ---- the shape of the layer ------------------------------------------
+	//
+	// HOW HARD THE MIST CLINGS TO THE GROUND UNDER IT, which no preset in this
+	// file had ever said anything about -- so every one of them was getting a
+	// flat sheet at one world height, and inheriting whatever the last one set
+	// if it had been touched from the menu.
+	//
+	//   0.0  a level, like water in a tank. The low room fills and a staircase
+	//        rises out of it; the landing above is clear air.
+	//   1.0  constant depth everywhere. It coats the world, climbs every step,
+	//        and lies ankle deep in rooms that should be dry.
+	//
+	// The interesting settings are low but not zero: the layer sags toward low
+	// ground and pools there without following you upstairs, which is what
+	// reads as weather rather than as geometry.
+	clearscope static void Follow(double top, double bottom)
+	{
+		F("gitd_fog_follow_top", top);
+		F("gitd_fog_follow_bottom", bottom);
+	}
+
+	// THE TOP SURFACE MOVES. A flat top is a horizontal plane, and once you
+	// can see it clearly that is what it reads as -- a sheet, not a body of
+	// mist. Two waves at an angle interfere, and interference is what looks
+	// like a surface rolling rather than a pattern scrolling.
+	//
+	// wavelength is world units PER RADIAN, so the visible period is about 2pi
+	// times it. This is the easiest number in the whole fog API to get wrong by
+	// a factor of six.
+	clearscope static void Surface(double amp, double wavelength,
+	                               double speed, double cross)
+	{
+		F("gitd_fog_surf", amp);
+		F("gitd_fog_surf_len", wavelength);
+		F("gitd_fog_surf_speed", speed);
+		F("gitd_fog_surf_cross", cross);
+	}
+
+	clearscope static void NoSurface() { F("gitd_fog_surf", 0.0); }
 
 	// ---- the ambience layer ----------------------------------------------
 	//
@@ -736,10 +786,29 @@ class GITD_PresetProfile abstract
 		// several seconds to close, so you can look back and see where you
 		// walked. In a preset about a place nobody has been in for a while,
 		// leaving a mark is the whole point.
-		Fog(44, 1.5, 26, 0x3A2E1E,
+		// LOW AND ROLLING, which is a different thing from thick.
+		//
+		// Top dropped from 44 to 30 and density from 1.5 to 1.1: the old
+		// values put a chest-deep bank across the whole map, and once mist is
+		// above your eyeline you stop reading it as a layer lying on the floor
+		// and start reading it as a filter over the lens. Waist height is
+		// where it still has a SURFACE you can look down at, which is the
+		// whole reason this engine's fog has a top at all.
+		Fog(30, 1.10, 24, 0x3A2E1E,
 		    0.9,      // the torch lights it -- this is where the beam earns its keep
 		    0.75,     // and it picks up the failing amber from the walls
 		    0.7, 130, 0.06);
+
+		// And it POOLS. 0.3 sags toward low ground without climbing stairs, so
+		// the mist gathers in the sunken rooms and the stairwells while the
+		// landing above stays clear -- and walking up out of it is a thing you
+		// can watch happen.
+		Follow(0.3, 0.0);
+
+		// A slow, long swell. Wavelength 52 is a visible period of about 330
+		// units -- roughly a room -- so the surface rolls rather than ripples.
+		// Speed 0.18 is barely moving: this air is settling, not circulating.
+		Surface(3.0, 52.0, 0.18, 0.65);
 
 		NoGrid();
 
@@ -1321,10 +1390,25 @@ class GITD_PresetProfile abstract
 		// The wake is FAST here (lag 0.35): the layer closes up almost as
 		// soon as you pass, so it reads as moving air rather than as
 		// something that has been undisturbed for months.
-		Fog(30, 0.85, 18, 0x4A0E08,
+		// SOME, not much. Thinner than Low Power's on purpose: this preset's
+		// whole argument is made by the klaxon bands sweeping the room, and a
+		// dense layer would soften the leading edge of every one of them. What
+		// the mist is here for is to be something for those bands to CROSS --
+		// a band you can see travelling through the air reads as a volume, and
+		// a band painted only on the walls reads as a texture.
+		Fog(26, 0.55, 18, 0x4A0E08,
 		    1.1,      // and the klaxon's own bands light it as they cross
 		    0.85,     // taking red from every surface it stands in front of
 		    0.5, 100, 0.35);
+
+		// Barely any sag. An alert is a room with the air handling still
+		// running, so the layer sits level rather than settling into corners.
+		Follow(0.1, 0.0);
+
+		// Short and quick, and the opposite of Low Power's. Period about 190
+		// units at nearly four times the speed -- air being moved rather than
+		// air going still.
+		Surface(2.0, 30.0, 0.65, 0.5);
 
 		NoGrid();
 
@@ -1510,12 +1594,34 @@ class GITD_PresetProfile abstract
 		Exposure(1.15, 0.55, 1.0, 3.0);
 	}
 
-	// Blackout's bloom is no bloom. There is nothing to bleed and a threshold
-	// low enough to find something would only find the thing this preset is
-	// defined by not having.
+	// BLACKOUT'S BLOOM IS NOT "NO BLOOM" ANY MORE, AND THE LASER SIGHT IS WHY.
+	//
+	// The old reasoning was sound on its own terms: there is nothing ambient to
+	// bleed in a black room, and a threshold low enough to find something would
+	// only find the thing this preset is defined by not having. So it set
+	// gl_bloom 0 and was done.
+	//
+	// That was written before anything in the world was EMISSIVE. The laser
+	// sight's core is drawn deliberately past white so the bloom pass picks it
+	// up -- that is the entire mechanism by which it glows without costing a
+	// dynamic light, and the same trick carries the muzzle flash and an Ignite
+	// burst. Switching bloom off in the one preset built around "only what you
+	// carry lights the room" silenced precisely the things that were supposed
+	// to light it.
+	//
+	// So: bloom ON, threshold HIGH. In a room crushed to black nothing ambient
+	// comes anywhere near 0.8, so the pass finds only what is genuinely past
+	// white -- your laser, your muzzle, an explosion. Amount high because when
+	// something does cross that line it should be the brightest thing you have
+	// seen in ten minutes. Knee tight so it crosses hard rather than easing in.
+	//
+	// This is the preset's own thesis restated in the bloom stage: the only
+	// light is the light you brought.
 	clearscope static void BlackoutBloom()
 	{
-		EI("gl_bloom", 0);
+		Bloom(2.40, 0.82, 0.15, 1.0, 1.0, 1.0);
+		EF("gl_bloom_anamorphic", 0.0);
+		EF("gl_bloom_chromatic", 0.0);
 	}
 
 	// =====================================================================
@@ -1557,6 +1663,23 @@ class GITD_PresetProfile abstract
 		I("ddz_mode", 4);      // Crush
 		I("ddz_preset", 8);    // Pure
 		I("ddz_desat", 255);   // no colour survives here either
+
+		// PER SECTOR, EXPLICITLY, and it is the only preset of the four that
+		// wants it that way.
+		//
+		// The other three use DeepDark for its distance falloff -- a corridor
+		// that stops being visible rather than ending. That is precisely wrong
+		// here: this preset's whole premise is a UNIFORM void, so that a glow
+		// reads identically in every room and the only variable is what you
+		// did to light it. Distance falloff would make the dark itself
+		// interesting, and the dark is supposed to be nothing.
+		//
+		// It also has to be said out loud rather than left alone. The sector
+		// path switches itself off when per-pixel is set, so inheriting it
+		// from whichever preset ran last would leave Blackout with no
+		// darkening whatsoever -- a black-canvas preset rendering a lit map,
+		// with every dial reading correctly.
+		NoDeepDark();
 
 		// AND NOTHING IN THE AIR EITHER.
 		//
