@@ -242,7 +242,7 @@ That one difference buys everything:
 - **It lights the room** — surfaces near it brighten because they *are* near it
 - **Visible in the air**, not just where it lands, and **correctly hidden** by
   walls in front of it
-- **It blooms by itself** — no dynamic light, no sprite, no quad
+- **It blooms by itself**, straight out of the shader
 - **Energy travels along it**, it tapers tight at the aperture and blooms
   toward what it hits, and it flares where it lands
 - **It lights fog** — a beam through mist is a shaft along its whole length,
