@@ -65,6 +65,18 @@ class FancyFootsteps : EventHandler
 		Step(pmo);
 	}
 
+	// 0..1, varying per step. Mixes the tic with where the foot landed, so two
+	// steps in the same spot at different times differ and two steps at the
+	// same time in different places differ. Multipliers are odd primes that
+	// fit in a signed 32-bit int; the wrap on overflow is the point.
+	private double StepJitter(Actor pmo)
+	{
+		int h = level.maptime * 1103515245
+		      + int(pmo.pos.x) * 12345
+		      + int(pmo.pos.y) * 6789;
+		return ((h >> 9) & 1023) / 1023.0;
+	}
+
 	private void Step(Actor pmo)
 	{
 		let sec = pmo.cursector;
@@ -89,7 +101,14 @@ class FancyFootsteps : EventHandler
 		// the variety the others get from having six.
 		double lo = (lastKind == 'flesh') ? 0.82 : 0.93;
 		double hi = (lastKind == 'flesh') ? 1.18 : 1.07;
-		double pitch = frandom(lo, hi);
+
+		// NOT frandom. random()/frandom() are Actor-scope intrinsics -- there
+		// is no use of either from an EventHandler anywhere in this engine's
+		// own ZScript or in this mod, and they are not declared in base.zs.
+		// This is an EventHandler, so the spread comes from a cheap hash of
+		// the tic and the position instead. For a footstep that is
+		// indistinguishable from random, and it cannot fail to compile.
+		double pitch = lo + (hi - lo) * StepJitter(pmo);
 
 		// Switched rather than built by concatenation. A Name pasted onto a
 		// string is not a Sound, and the compiler is right to say so.

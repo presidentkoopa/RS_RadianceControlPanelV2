@@ -377,6 +377,7 @@ OptionMenu "GITDOptions"
 	Submenu "Volumetric Flashlight Options...","GITDFlashlight"
 	Submenu "Bloom Options...",		"GITDBloom"
 	Submenu "Fog Options...",		"GITDFog"
+	Submenu "World Ambience...",	"GITDFancyWorld"
 	StaticText ""
 	StaticText ""
 
@@ -2243,4 +2244,104 @@ OptionMenu "GITDShapes"
 	StaticText "Fired on the trigger's rising edge, not per", darkgray
 	StaticText "shot -- a chaingun would spend all sixteen", darkgray
 	StaticText "slots in half a second.", darkgray
+}
+
+//============================================================================
+// WORLD AMBIENCE (FancyWorld)
+//
+// The scan reads the map's own textures and puts ambience where they say it
+// belongs. Every dial here was console-only until this page existed.
+//============================================================================
+OptionMenu "GITDFancyWorld"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "World Ambience"
+	StaticText ""
+
+	Option "World Ambience",		"fw_enabled", "OnOff"
+	StaticText "At load, every sector flat and every wall", darkgray
+	StaticText "texture is matched against a table and an", darkgray
+	StaticText "emitter is placed where it matches. A WFALL", darkgray
+	StaticText "wall becomes a waterfall you can hear and", darkgray
+	StaticText "see mist from; a LAVA floor gets a roar, a", darkgray
+	StaticText "flicker and embers.", darkgray
+	StaticText "No map edits -- it works on WADs that have", darkgray
+	StaticText "never heard of it.", darkgray
+	StaticText ""
+
+	StaticText "Light", gold
+	Option "Dynamic lights",		"fw_lights", "OnOff", "fw_enabled"
+	Option "  Detail",				"fw_light_detail", "FWLightDetail", "fw_lights"
+	StaticText "Doom's lit ceiling flats are a PICTURE of a", darkgray
+	StaticText "light -- nothing actually emits. Real sources", darkgray
+	StaticText "lights only those, plus wall light textures,", darkgray
+	StaticText "lavafalls, teleport pads and broken monitors.", darkgray
+	StaticText "Everything adds flavour glow on slime,", darkgray
+	StaticText "computers and the face texture.", darkgray
+	Slider "  Radius",				"fw_light_scale", 0.25, 2.0, 0.05, 2
+	StaticText ""
+
+	StaticText "Particles", gold
+	Option "Mist, embers and drips",	"fw_particles", "OnOff", "fw_enabled"
+	Slider "  Density",				"fw_particle_scale", 0.0, 2.0, 0.05, 2
+	StaticText "Thrown AWAY from the wall they were found", darkgray
+	StaticText "on, so they go into the room and not into", darkgray
+	StaticText "the geometry.", darkgray
+	StaticText ""
+
+	StaticText "Footsteps", gold
+	Option "Footsteps",				"gitd_steps", "OnOff"
+	StaticText "Doom has never had any. The material comes", darkgray
+	StaticText "from the flat under you: metal, grating,", darkgray
+	StaticText "wood, gravel, dirt, rock, tile, flesh, or a", darkgray
+	StaticText "splash in liquid.", darkgray
+	Slider "  Volume",				"gitd_steps_volume", 0.0, 2.0, 0.05, 2
+	Slider "  Distance per step",	"gitd_steps_stride", 24, 96, 4, 0
+	StaticText "Measured in distance travelled, not time, so", darkgray
+	StaticText "walking and running come out right on their", darkgray
+	StaticText "own. In room-scale VR, tune to your stride.", darkgray
+	StaticText ""
+
+	StaticText "Through walls", gold
+	Option "Muffle what you can't see",	"gitd_occlusion", "OnOff"
+	Slider "  How much",			"gitd_occlusion_amount", 0.0, 1.0, 0.05, 2
+	StaticText "Until this, the only thing between you and a", darkgray
+	StaticText "sound was DISTANCE -- a waterfall behind a", darkgray
+	StaticText "sealed door was as loud as one in open air.", darkgray
+	StaticText "Not 0 by default on purpose: a sight line is", darkgray
+	StaticText "not an acoustic path. Sound goes round corners", darkgray
+	StaticText "and under doors.", darkgray
+	StaticText ""
+
+	StaticText "Cost", gold
+	Slider "Emitter range",			"fw_range", 512, 4096, 128, 0
+	StaticText "How close you must be for an emitter to do", darkgray
+	StaticText "anything. The biggest single lever here.", darkgray
+	Option "Floor/ceiling spacing",	"fw_spacing", "FWSpacing"
+	Option "Wall spacing",			"fw_wall_spacing", "FWWallSpacing"
+	StaticText "Both apply on the next map.", darkgray
+}
+
+OptionValue "FWLightDetail"
+{
+	0, "Off"
+	1, "Real sources only"
+	2, "Everything"
+}
+
+OptionValue "FWSpacing"
+{
+	128, "Dense"
+	192, "Thick"
+	256, "Normal"
+	384, "Sparse"
+	512, "Thin"
+}
+
+OptionValue "FWWallSpacing"
+{
+	32,  "Dense"
+	64,  "Normal"
+	128, "Sparse"
+	256, "Thin"
 }
