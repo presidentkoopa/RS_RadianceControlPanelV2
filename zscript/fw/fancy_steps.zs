@@ -82,6 +82,58 @@ class FancyFootsteps : EventHandler
 		let sec = pmo.cursector;
 		if (!sec) return;
 
+		double vol0 = clamp(FancySettings.GetFloat("gitd_steps_volume", 1.0), 0.0, 2.0);
+		if (vol0 <= 0.01) return;
+
+		// ---- ASK THE TERRAIN FIRST -----------------------------------------
+		//
+		// GZDoom has had a footstep spec per terrain since forever, and this
+		// system was written without noticing: TerrainDef carries StepSound,
+		// LeftStepSound, RightStepSound, StepVolume and IsLiquid, and a TERRAIN
+		// lump maps flats onto it. Any mod that ships one -- and liquid packs
+		// generally do -- has already answered the exact question the table
+		// below is guessing at, for the exact flats it cares about.
+		//
+		// So the table stops being the authority and becomes the FALLBACK.
+		// Where a terrain names a sound, that is a deliberate answer from
+		// whoever authored the WAD or the liquid pack, and it beats a guess
+		// made from a texture name every time.
+		//
+		// Only when it names one. A TERRAIN lump that defines splashes and
+		// footclip but no step sounds -- which is most of them, including the
+		// liquid packs -- leaves this null and the table takes over as before.
+		//
+		// AND ONLY WHEN THE ENGINE IS NOT ALREADY DOING IT. PlayerPawn has its
+		// own MakeFootsteps/DoFootstep pair that walks the same TerrainDef,
+		// alternates left and right feet and scales by snd_footstepvolume --
+		// gated on the pawn's bMakeFootsteps flag, which vanilla Doom's player
+		// does not set, which is why Doom appears to have no footsteps at all.
+		//
+		// If a player class DOES set it, that path is already running and
+		// playing this very sound. Deferring to the terrain there would not be
+		// deferring, it would be playing it twice.
+		int tn = sec.terrainnum[Sector.floor];
+		if (tn >= 0 && tn < Terrains.Size())
+		{
+			let td = Terrains[tn];
+			if (td.StepSound || td.LeftStepSound || td.RightStepSound)
+			{
+				// The engine has this covered. Say nothing.
+				//
+				// MakeFootsteps is a PlayerPawn flag rather than an Actor one,
+				// so it needs the cast -- pmo is typed Actor here because
+				// everything else in this function is happy with that.
+				let ppawn = PlayerPawn(pmo);
+				if (ppawn && ppawn.bMakeFootsteps) return;
+
+				Sound s = td.StepSound ? td.StepSound : td.LeftStepSound;
+				double tvol = (td.StepVolume > 0.0) ? td.StepVolume : 1.0;
+				pmo.A_StartSound(s, CHAN_AUTO, 0, vol0 * tvol,
+					ATTN_NORM, 0.94 + StepJitter(pmo) * 0.12);
+				return;
+			}
+		}
+
 		int row = stepTable.Find(sec.GetTexture(Sector.floor));
 		if (row != lastRow)
 		{
@@ -92,8 +144,7 @@ class FancyFootsteps : EventHandler
 			lastKind = (row == 0) ? 'hard' : stepTable.RowClass(row);
 		}
 
-		double vol = clamp(FancySettings.GetFloat("gitd_steps_volume", 1.0), 0.0, 2.0);
-		if (vol <= 0.01) return;
+		double vol = vol0;
 
 		// Pitch spread per step, for the same reason the emitters are detuned:
 		// the same sample twice in a row is a sample, three times is a loop.

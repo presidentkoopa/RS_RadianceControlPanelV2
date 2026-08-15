@@ -107,9 +107,33 @@ class SpawnEnvActorHandler : EventHandler
 		for (int i = 0; i < level.Sectors.Size(); i++)
 		{
 			int row = fog.Find(level.Sectors[i].GetTexture(Sector.floor));
-			if (row == 0) continue;
-			liqSec.Push(i);
-			liqTint.Push(fog.RowTint(row));
+			if (row != 0)
+			{
+				liqSec.Push(i);
+				liqTint.Push(fog.RowTint(row));
+				continue;
+			}
+
+			// THE TERRAIN KNOWS THINGS THE TABLE DOES NOT.
+			//
+			// A TERRAIN lump marks flats `liquid`, and a liquid pack ships one
+			// covering flats this table has never heard of -- FreeDoom's
+			// SWATER, Eviternity's OBLODA and OSLUDG, whatever the next WAD
+			// invents. Those sectors ARE liquid, authoritatively, and the fog
+			// should tint over them.
+			//
+			// What the terrain cannot say is what COLOUR. It has a splash
+			// class and a sound, not a hue. So these get the neutral slime
+			// green rather than being guessed at from a name nobody here
+			// recognises -- present and slightly wrong beats absent, and the
+			// table still wins wherever it has an opinion, which is why this
+			// is the second test and not the first.
+			int tn = level.Sectors[i].terrainnum[Sector.floor];
+			if (tn >= 0 && tn < Terrains.Size() && Terrains[tn].IsLiquid)
+			{
+				liqSec.Push(i);
+				liqTint.Push(0x3E8C24);
+			}
 		}
 	}
 
