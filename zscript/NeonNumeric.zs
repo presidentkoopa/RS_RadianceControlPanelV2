@@ -123,8 +123,44 @@ class GITD_Neon
 		int n = text.Length();
 		if (n < 1) n = 1;
 		double h = 22.0 * scale;
-		double w = h * 0.78 * n;
-		return w, h;
+
+		// MEASURED, NOT ESTIMATED -- but only for the payload that needs it.
+		//
+		// This used to be h * 0.78 * n for everything, which is a monospace
+		// assumption. It is exactly right for the three SEGMENT payloads,
+		// because a 16-segment cell and an LCD digit and a WG13 lozenge are
+		// all fixed-width by construction -- an eight is the same size as a
+		// one.
+		//
+		// It is wrong for BB_TEXT, which draws a real typeface out of an SDF
+		// atlas. "11" and "88" are not the same width in any proportional
+		// font, so every panel sized this way sat slightly off-centre.
+		//
+		// And no constant could have been tuned to fix it, because the engine
+		// RESHUFFLES ITS FONT ROSTER EVERY GAME. Slot 0 names a role, never a
+		// typeface -- so the correct multiplier was a different number each
+		// session, which is the sort of bug that gets noticed once and never
+		// reproduced.
+		//
+		// Slot 0 because nothing here calls SetBillboardFont; the whole
+		// roster, and RollBillboardFonts with it, is untouched. Worth knowing
+		// it is there.
+		//
+		// Kept behind the payload check rather than used unconditionally: for
+		// a segment display the engine would measure glyphs that payload never
+		// draws.
+		if (Payload() == LevelLocals.BB_TEXT)
+		{
+			double w = level.MeasureBillboardText(text, h, 0);
+
+			// A zero comes back if the roster is empty or the string is --
+			// neither should happen, but a zero-width panel is invisible and
+			// silent, which is the worst way for this to fail. Fall back to
+			// the old estimate rather than to nothing.
+			if (w > 0.0) return w, h;
+		}
+
+		return h * 0.78 * n, h;
 	}
 
 	// ---- the three placements -------------------------------------------
