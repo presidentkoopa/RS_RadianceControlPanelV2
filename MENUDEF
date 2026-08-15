@@ -325,15 +325,7 @@ OptionMenu "GITDNeon"
 
 OptionMenu "GITDOptions"
 {
-	// GITD_RollMenu, NOT DarkDoomZ_OptionMenu, and only because bloom is an
-	// engine cvar. ZScript refuses to write gl_bloom_* unless DMenu::InMenu is
-	// set, and it is not set during a netevent -- so "Randomise Bloom" cannot
-	// apply its own result. It stages the numbers into seven mod cvars it does
-	// own, and this subclass spends them on the next menu event. Take this line
-	// back to the parent class and the bloom roll stages forever and never
-	// lands, silently, while the other four rolls keep working. Same reason the
-	// reset handler cannot reset bloom either.
-	Class "GITD_RollMenu"
+	Class "DarkDoomZ_OptionMenu"
 	Title "Glow In The Dark"
 	StaticText ""
 
@@ -1191,12 +1183,7 @@ OptionMenu "GITDWaves"
 
 OptionMenu "GITDBloom"
 {
-	// GITD_RollMenu for the same reason as GITDOptions -- see the note there.
-	// This page is the second one that has to be able to spend a staged bloom
-	// roll, because opening Bloom to look at the result is the obvious thing to
-	// do after pressing Randomise, and if this page were still the parent class
-	// the sliders would show the OLD numbers and quietly discard the roll.
-	Class "GITD_RollMenu"
+	Class "DarkDoomZ_OptionMenu"
 	Title "Bloom Options"
 	StaticText ""
 	StaticText "Makes bright surfaces bleed light past", darkgray

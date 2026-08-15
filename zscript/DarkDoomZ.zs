@@ -443,6 +443,61 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 		// menu was open, because every edit would be overwritten before it
 		// could be seen.
 		SyncEngine(preset);
+
+		// AFTER SyncEngine, and the order is the whole point. If a preset
+		// changed on this same tic, its bloom is the one the player asked for
+		// and lands first; a roll pressed deliberately is newer intent and
+		// lands second. Swap these two and pressing Randomise Bloom while a
+		// preset row is moving throws the roll away on some tics and not
+		// others, which is the worst kind of bug to be told about.
+		SpendBloomRoll();
+	}
+
+	// [GITD] THE ROLLED BLOOM, SPENT.
+	//
+	// gitd_roll_bloom rolls its numbers in PLAY scope, where they cannot be
+	// applied -- bloom is gl_*, and the netevent that carries the roll is not
+	// menu code by any definition. So the roll leaves its result in
+	// gitd_bloom_roll_* and raises _pending, and this spends it.
+	//
+	// It lives on the base class rather than on a subclass any page has to opt
+	// into, because the button that fires it is on the FRONT page and the page
+	// you want to see the result on is Bloom. Anything narrower means the roll
+	// lands only if you happen to be standing somewhere specific, which is a
+	// worse failure than not having the feature.
+	void SpendBloomRoll() {
+		let p = CVar.FindCVar("gitd_bloom_roll_pending");
+		if (!p || !p.GetBool()) return;
+
+		// Cleared BEFORE the writes, not after. A roll applies exactly once,
+		// and clearing first keeps that true even if one of the gl_* names has
+		// gone missing in some future engine and the write below quietly does
+		// nothing -- otherwise the flag sits raised forever and re-pushes the
+		// same numbers every tic, which would make the Bloom page impossible to
+		// edit while it was open. That is the precise shape of the bug the
+		// change guard in SyncEngine exists to prevent, and there is no reason
+		// to reintroduce it eight lines later.
+		p.SetInt(0);
+
+		PushRolled("gl_bloom_amount",    "gitd_bloom_roll_amount");
+		PushRolled("gl_bloom_threshold", "gitd_bloom_roll_threshold");
+		PushRolled("gl_bloom_knee",      "gitd_bloom_roll_knee");
+		PushRolled("gl_bloom_tint_r",    "gitd_bloom_roll_tint_r");
+		PushRolled("gl_bloom_tint_g",    "gitd_bloom_roll_tint_g");
+		PushRolled("gl_bloom_tint_b",    "gitd_bloom_roll_tint_b");
+		// gl_bloom itself is deliberately absent. It is the master switch, and
+		// no roll in this mod moves one.
+	}
+
+	// Guarded on both sides. gl_bloom_knee does not exist in every GZDoom that
+	// could load this, and an unguarded FindCVar().SetFloat on a name that does
+	// not resolve is a native dereference, not a catchable abort.
+	private void PushRolled(string engineName, string rolledName) {
+		let d = CVar.FindCVar(engineName);
+		if (!d) return;
+		let s = CVar.FindCVar(rolledName);
+		if (!s) return;
+		d.SetFloat(s.GetFloat());
 	}
 
 	// ONE PLACE THAT DECIDES, because the Ticker and MenuEvent both used to
@@ -474,21 +529,27 @@ class DarkDoomZ_OptionMenu : OptionMenu {
 	// console-set preset catch its bloom up the moment you open the menu.
 	private int lastEnginePreset;
 
-	// [GITD] THE ENGINE HALF OF A PROFILE, AND WHY IT LIVES HERE.
+	// [GITD] STILL HERE, BUT NO LONGER LOAD-BEARING.
 	//
-	// Bloom and exposure are gl_* -- ENGINE cvars, not this mod's. ZScript
-	// refuses to write one unless DMenu::InMenu is set, and it is set around
-	// MenuEvent, OnUIEvent and OnInputEvent but NOT around Ticker. So the
-	// rest of a profile can be pushed from the ticker and this part cannot;
-	// it has to ride a key press.
+	// This override used to be the ONLY way a profile's bloom could apply, back
+	// when InMenu was set around MenuEvent and not around Ticker, and the long
+	// comment that used to sit here explained that bargain at length. The fork
+	// closed that gap -- see the note in Ticker -- and this became a second
+	// caller of a function that is already idempotent and already runs 35 times
+	// a second.
 	//
-	// Which is exactly when it is needed. A preset is chosen by moving an
-	// option, and moving an option IS a MenuEvent, so the bloom half lands on
-	// the same keystroke as everything else. The one case it does not cover
-	// is setting gitd_preset from the console, where a profile's colours and
-	// sweep apply and its bloom does not until the menu is next touched --
-	// stated plainly rather than papered over, because a silent half-apply is
-	// worse than a known one.
+	// IT IS KEPT ANYWAY, and the reason is not sentiment. SyncEngine returns
+	// immediately unless the preset actually changed, so the cost is a compare;
+	// and a keypress is the one event that can change gitd_preset and be
+	// followed by the menu closing before the next tick ever runs. Removing it
+	// would reintroduce the half-apply on exactly the interaction the whole
+	// system exists for.
+	//
+	// THE COMMENT THAT WAS HERE OUTLIVED THE TRUTH IT DESCRIBED, and an agent
+	// working on the randomise buttons read it, believed it, and built a whole
+	// opt-in menu subclass to work around a restriction that had already been
+	// lifted. That subclass is gone. A stale comment is not a cosmetic problem;
+	// it is a wrong answer sitting in the place people look for answers.
 	override bool MenuEvent(int mkey, bool fromcontroller) {
 		bool handled = super.MenuEvent(mkey, fromcontroller);
 		let c = CVar.FindCVar("gitd_preset");

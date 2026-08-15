@@ -667,18 +667,21 @@ server int  gitd_rnd_governor = 0;      // what constrains the randomness
 server bool gitd_rnd_times = false;     // randomise each colour's hold time
 server bool gitd_rnd_patterns = false;  // each lane picks its own transition
 
-// ---- The rolled bloom, waiting for a keystroke -----------------------------
+// ---- The rolled bloom, waiting one tic -------------------------------------
 // gitd_roll_bloom cannot write its own result. Bloom is gl_* -- ENGINE cvars,
-// and ZScript refuses to write one unless DMenu::InMenu is set, which it is
-// around MenuEvent, OnUIEvent and OnInputEvent and NOT around a netevent. The
-// roll runs in play scope, so writing gl_bloom_amount there is the same abort
-// that once killed the whole reset handler (see GlowHandler.zs, "BLOOM AND
-// EXPOSURE ARE NOT RESET HERE").
+// and ZScript refuses to write one unless DMenu::InMenu is set, which a
+// netevent is not and never will be. The roll runs in play scope, so writing
+// gl_bloom_amount there is the same abort that once killed the whole reset
+// handler (see GlowHandler.zs, "BLOOM AND EXPOSURE ARE NOT RESET HERE").
 //
 // So the roll lands HERE, in cvars this mod owns and may write from anywhere,
-// and GITD_RollMenu pushes them into the engine on the next menu keystroke.
+// and DarkDoomZ_OptionMenu.Ticker pushes them into the engine. The fork counts
+// a menu's tick as menu code (DMenu::CallTicker), so that is one tic after the
+// button, on whatever page you are standing on, with no further input.
+//
 // _pending is the whole handshake: non-zero means a roll is waiting, and the
-// menu clears it once it has been spent, so a roll applies exactly once.
+// menu clears it BEFORE spending, so a roll applies exactly once even if a
+// gl_* name has gone missing and the write no-ops.
 server bool  gitd_bloom_roll_pending = false;
 server float gitd_bloom_roll_amount = 1.0;
 server float gitd_bloom_roll_threshold = 0.8;

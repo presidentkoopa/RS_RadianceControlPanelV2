@@ -2791,8 +2791,9 @@ class GITD_ResetHandler : EventHandler
 
 	// The bloom, which cannot be applied from here -- see the cvarinfo block on
 	// gitd_bloom_roll_*. This stages the numbers and raises the flag;
-	// GITD_RollMenu spends it on the next keystroke, in the only scope the
-	// engine will accept a gl_* write from.
+	// DarkDoomZ_OptionMenu.Ticker spends it, which is the nearest scope the
+	// engine will accept a gl_* write from and is one tic away, not one
+	// keystroke away.
 	static void RollBloom(double baseHue)
 	{
 		PutF("gitd_bloom_roll_amount",    random(6, 18) * 0.1);   // slider 0.1..4, step 0.1
@@ -3420,76 +3421,17 @@ class GITD_PresetCustomiser : StaticEventHandler
 }
 
 // ---------------------------------------------------------------------------
-// THE ROLLED BLOOM, SPENT ON A KEYSTROKE.
+// GITD_RollMenu USED TO LIVE HERE, and it was ninety lines answering a question
+// that had already been answered.
 //
-// gitd_roll_bloom rolls its numbers in play scope, where they cannot be
-// applied: bloom is gl_* -- ENGINE cvars -- and ZScript refuses to write one
-// unless DMenu::InMenu is set. That flag is set around MenuEvent, OnUIEvent
-// and OnInputEvent, and around nothing a netevent ever touches. Writing
-// gl_bloom_amount from NetworkProcess is the same abort that once took the
-// whole reset handler down with it; see the long note in GITD_ResetHandler.
+// gitd_roll_bloom rolls in play scope and cannot apply its own result -- bloom
+// is gl_*, and ZScript will not write an engine cvar outside menu code. That
+// much is still true and always will be. What was NOT true was the next step:
+// that menu code means a keypress. The fork counts a menu's tick as menu code
+// (DMenu::CallTicker), so the roll is spent by DarkDoomZ_OptionMenu.Ticker,
+// on every GITD page, within one tic of the button being pressed and with no
+// input at all.
 //
-// So the roll leaves its result in gitd_bloom_roll_* and raises _pending, and
-// this menu spends it the next time the player presses a key or moves the
-// mouse on a page that uses this class. It is the same bargain
-// DarkDoomZ_OptionMenu already struck for a preset's bloom half -- stated
-// plainly rather than papered over, because a silent half-apply is worse than
-// a known one.
-//
-// A page opts in by naming this instead of DarkDoomZ_OptionMenu, from which it
-// inherits the live preview and everything else unchanged.
+// The subclass existed because the comment above MenuEvent in DarkDoomZ.zs
+// still described the world before that change. Both are corrected now.
 // ---------------------------------------------------------------------------
-
-class GITD_RollMenu : DarkDoomZ_OptionMenu
-{
-	// Cleared BEFORE the writes, not after. A roll applies exactly once, and
-	// clearing first means that stays true even if one of the gl_* names has
-	// gone missing in a future engine and the write below quietly no-ops --
-	// otherwise the flag would sit raised forever and re-push the same numbers
-	// on every keystroke, making the Bloom page impossible to edit.
-	private void SpendBloomRoll()
-	{
-		let p = CVar.FindCVar("gitd_bloom_roll_pending");
-		if (!p || !p.GetBool()) return;
-		p.SetInt(0);
-
-		PushEngine("gl_bloom_amount",    "gitd_bloom_roll_amount");
-		PushEngine("gl_bloom_threshold", "gitd_bloom_roll_threshold");
-		PushEngine("gl_bloom_knee",      "gitd_bloom_roll_knee");
-		PushEngine("gl_bloom_tint_r",    "gitd_bloom_roll_tint_r");
-		PushEngine("gl_bloom_tint_g",    "gitd_bloom_roll_tint_g");
-		PushEngine("gl_bloom_tint_b",    "gitd_bloom_roll_tint_b");
-		// gl_bloom itself is deliberately absent. It is the master switch, and
-		// no roll in this mod moves one.
-	}
-
-	// Guarded on both sides. gl_bloom_knee did not exist in every GZDoom that
-	// can load this, and an unguarded FindCVar().SetFloat on a name that does
-	// not resolve is a native dereference rather than a catchable abort.
-	private void PushEngine(string engineName, string rolledName)
-	{
-		let d = CVar.FindCVar(engineName);
-		if (!d) return;
-		let s = CVar.FindCVar(rolledName);
-		if (!s) return;
-		d.SetFloat(s.GetFloat());
-	}
-
-	override bool MenuEvent(int mkey, bool fromcontroller)
-	{
-		bool handled = super.MenuEvent(mkey, fromcontroller);
-		SpendBloomRoll();
-		return handled;
-	}
-
-	// Mouse movement counts too, and it is what makes this feel immediate
-	// rather than delayed: pressing the roll button is itself a MenuEvent, but
-	// the netevent it fires does not run until the next tic, so the press that
-	// caused the roll can never be the press that spends it.
-	override bool OnUIEvent(UIEvent ev)
-	{
-		bool handled = super.OnUIEvent(ev);
-		SpendBloomRoll();
-		return handled;
-	}
-}
