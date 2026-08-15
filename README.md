@@ -484,3 +484,31 @@ under a single root rather than adding a second top-level entry.
 DarkDoomZ darkens sector light; the glow lanes are a separate mechanism added
 on top, which is why floor and ceiling glow stay visible in a room crushed to
 near black.
+
+**Environmental FancyWorld** — the ambience layer in `zscript/fw/` began as the
+2019 mod of that name, and what survives from it is worth stating precisely,
+because it is not much and it is not nothing.
+
+What came from the original: its **sound and sprite assets**, and its
+**texture research** — the mapping from Doom's flat and wall texture names to
+what they actually depict. That mapping is the tedious, valuable part and it was
+theirs.
+
+What did not: the implementation. The scan was rewritten (texture names now
+resolve once into a flat lookup instead of ~500 string comparisons per linedef,
+and it walks sectors rather than sweeping a fixed grid over the whole map); the
+twenty-four near-identical emitter classes became one base declaring what a
+thing *is* while the base decides when any of it happens; and the light,
+particles, footsteps, sight-line occlusion and per-emitter detune are all new.
+
+**The original mod does not name its author anywhere in its own files** — its
+credits thank the people who helped and never sign themselves. If you know who
+wrote it, or you are them, please say so and the credit goes here. Its own
+credits, preserved:
+
+- Id Software, for everything
+- Gutawer — ZScript help
+- PhantomBeta — further ZScript help
+- Sound and sprite assets sourced from Nintendo, Epic Games, Valve, Bungie,
+  Bethesda, Volition and Remedy/Rockstar. No ownership is claimed over any of
+  them.
