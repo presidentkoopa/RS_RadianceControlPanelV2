@@ -1,32 +1,19 @@
 // ============================================================================
-//  Environmental FancyWorld -- the texture table.
+//  Environmental FancyWorld -- what the texture table still does.
 // ============================================================================
 //
-//  todo.txt, entry one:
+//  This used to also build the wall, floor and ceiling emitter tables and the
+//  one-row thing-emitter matcher -- the lookup behind the whole ambience scan.
+//  That scan is gone. Two readings of the map's textures earned their keep
+//  independently of it and stay:
 //
-//      "Some better way of defining sounds for textures. The current sea of
-//       copy-paste is a pain in the ass."
-//
-//  This is that. It is also, by a wide margin, the single biggest speedup in
-//  the mod, because the old sea of copy-paste was not just ugly -- it was
-//  quadratic in the wrong things.
-//
-//  WHAT IT USED TO COST. The wall scan walked every linedef, and inside that
-//  loop it walked ~84 texture names, and for each one called
-//  TexMan.CheckForTexture() -- a STRING LOOKUP -- against three side slots,
-//  twice. That is roughly 500 string lookups per linedef. A 5,000-line map
-//  paid two and a half million of them before you saw the first frame. The
-//  floor scan did the same trick from the other end: 257,000 grid points, each
-//  spawning an actor whose first state ran another 40 CheckForTexture calls.
-//
-//  WHAT IT COSTS NOW. Every texture name in the mod is resolved exactly once,
-//  here, at map load -- about 130 lookups total, ever. The result is a flat
-//  array indexed by texture index, so the scan asks "is this texture
-//  interesting?" with a single array read. Not a hash, not a compare, not a
-//  string. An array read.
-//
-//  ADDING A NEW ONE is now a single line in the right group below, which was
-//  the actual complaint.
+//  BuildFog() is what lets the mist take its colour from the liquid you are
+//  standing in (fw_scan.zs's IndexLiquids reads it at load, GlowHandler.zs's
+//  fog colour mode 4 reads the result every frame). BuildSteps() is what
+//  fancy_steps.zs asks per footfall to know what you just stepped on. Neither
+//  needs a scanner, a lattice or an emitter -- both are answered by a single
+//  array read against the same lookup machinery, which is the part worth
+//  keeping this class for.
 //
 // ============================================================================
 
@@ -98,191 +85,12 @@ class FancyTexTable play
 	Name RowClass(int row) const { return emitClass[row - 1]; }
 	int RowTint(int row) const { return emitTint[row - 1]; }
 
-	// ---- the table itself -----------------------------------------------
-
-	static FancyTexTable BuildWalls()
-	{
-		let t = new("FancyTexTable");
-
-		// Plutonia waterfalls, plus the WADSMOOSH names for the same thing.
-		t.Define("FancyWallWaterfall", 0,
-			"WFALL1 WFALL2 WFALL3 WFALL4 PWFALL1 PWFALL2 PWFALL3 PWFALL4");
-
-		t.Define("FancyWallBloodfall", 0, "BFALL1 BFALL2 BFALL3 BFALL4");
-		t.Define("FancyWallSlimefall", 0, "SFALL1 SFALL2 SFALL3 SFALL4");
-
-		// ObAddon lavafalls and the CC4 set.
-		t.Define("FancyWallLavafall", 0,
-			"LFALL1 LFALL2 LFALL3 LFALL4 LFAL21 LFAL22 LFAL23 LFAL24 "
-			"LAVFALL1 LAVFALL2 LAVFALL3 LAVFALL4");
-
-		t.Define("FancyWallSlimedrip", 0, "SLADRIP1 SLADRIP2 SLADRIP3");
-		t.Define("FancyWallGargfont", 0, "GSTFONT1 GSTFONT2 GSTFONT3");
-
-		// A wall that is a PICTURE of dripping blood, in doom.wad and
-		// doom2.wad both, and named nowhere in this file until now. It sits
-		// next to SLADRIP and GSTFONT because it is the same idea found in the
-		// same place -- the difference is that this one fires one-shots rather
-		// than holding a loop. See FancyWallBloodDrip.
-		t.Define("FancyWallBloodDrip", 0, "BLODRIP1 BLODRIP2 BLODRIP3 BLODRIP4");
-
-		t.Define("FancyWallCompstation", 0,
-			"COMPSTA1 COMPSTA2 COMPSTA3 COMPSTA4 COMPSTA5 COMPSTA6 COMPTALR");
-
-		t.Define("FancyWallFireblu", 0, "FIREBLU1 FIREBLU2");
-
-		t.Define("FancyWallFirewall", 0,
-			"FIREMAG1 FIREMAG2 FIREMAG3 FIREWALL FIREWALA FIREWALB "
-			"FIRELAVA FIRELAV2 FIRELAV3");
-
-		t.Define("FancyWallTechhum", 0,
-			"COMPTALL COMP2 SPACEW3 COMPUTE1 PLANET1 "
-			"COMPUTE4 COMPUTE7 COMPUTE8 COMPUTE9");
-
-		// COMPFUZ1-4 DO NOT EXIST. Not in doom.wad, not in doom2.wad; checked
-		// by reading TEXTURE1/TEXTURE2 out of both. So FancyWallStatic, its
-		// two lumps, its $random group and the mod's only RandomFlickerLight
-		// have never once fired in a vanilla game. Bind() resolves an unknown
-		// name to nothing and moves on, so it never errored -- the bloodfall
-		// bug again, in the table instead of the sndinfo.
-		//
-		// These three are the real garbled-screen textures and all three are
-		// present: COMPOHSO in doom1, COMPWERD and COMPSPAN in both. COMPBLUE
-		// and COMPTILE were the other candidates and are deliberately NOT
-		// here. COMPBLUE is a general-purpose tech wall used across whole
-		// episodes of Doom 1, and a strobing broken monitor on every one of
-		// them is the FLAT2 mistake with a sound attached.
-		t.Define("FancyWallStatic", 0, "COMPOHSO COMPWERD COMPSPAN");
-		t.Define("FancyWallFaces", 0, "SP_FACE1");
-
-		// WALL LIGHTS, SPLIT BY COLOUR.
-		//
-		// The old code had all eighteen of these in one array feeding one
-		// class, which meant a blue light and a red light produced the same
-		// nothing. The map has been telling us the colour the whole time --
-		// it is right there in the texture name -- so each family gets its
-		// own row and its own tint, and a corridor of LITERED now actually
-		// runs red.
-		t.Define("FancyWallLights", 0xFFE8B0,
-			"LITE2 LITE3 LITE4 LITE5 LITE96 LITEMET LITESTON BRICKLIT BSTONE3");
-		t.Define("FancyWallLights", 0x4080FF, "LITEBLU1 LITEBLU4");
-		t.Define("FancyWallLights", 0xFF3828, "LITERED LITERED1 LITERED2");
-		t.Define("FancyWallLights", 0x40FF60, "LITEGRN1");
-		t.Define("FancyWallLights", 0xFFD040, "LITEYEL1 LITEYEL2 LITEYEL3");
-
-		return t;
-	}
-
-	static FancyTexTable BuildFloors()
-	{
-		let t = new("FancyTexTable");
-
-		t.Define("FancySectorNukageCore", 0, "NUKAGE1 NUKAGE2 NUKAGE3 NUKAGE4");
-		t.Define("FancySectorWaterCore", 0, "FWATER1 FWATER2 FWATER3 FWATER4");
-
-		t.Define("FancySectorSlimeCore", 0,
-			"SLIME01 SLIME02 SLIME03 SLIME04 SLIME05 SLIME06 SLIME07 SLIME08 "
-			"SLUDGE01 SLUDGE02 SLUDGE03 SLUDGE04");
-
-		// BLOOD IS NOT SLIME. It used to be on the row above, which lit it
-		// green while the fog table below gave the same four flats dark red.
-		// See FancySectorBloodCore in fancy_floors.zs for why it is quieter
-		// than everything else here.
-		t.Define("FancySectorBloodCore", 0, "BLOOD1 BLOOD2 BLOOD3 BLOOD4");
-
-		t.Define("FancySectorLavaCore", 0,
-			"LAVA1 LAVA2 LAVA3 LAVA4 QLAVA1 QLAVA2 QLAVA3 QLAVA4");
-
-		t.Define("FancySectorHotCore", 0, "SLIME09 SLIME10 SLIME11 SLIME12");
-		t.Define("FancySectorXWaterCore", 0, "XWATER1 XWATER2 XWATER3 XWATER4");
-
-		// Teleporter pads. These were the "old way" scan -- one emitter at the
-		// sector's centre spot -- and they stay that way, because a teleporter
-		// pad is a small square and its centre is always inside it.
-		t.Define("FancySectorTeleporterCore", 0,
-			"GATE1 GATE2 GATE3 GATE4 "
-			"GATE3TN GATE4BL GATE4GN GATE4OR GATE4RD GATE4YL");
-
-		return t;
-	}
-
-	static FancyTexTable BuildCeilings()
-	{
-		let t = new("FancyTexTable");
-
-		t.Define("FancySectorSky", 0, "F_SKY1");
-
-		t.Define("FancySectorCeilingLite", 0,
-			"CEIL1_2 CEIL1_3 CEIL3_6 FLAT2 FLAT17 GRNLITE1 "
-			"TLITE6_1 TLITE6_4 TLITE6_5 TLITE6_6");
-
-		// WET ROCK, AND ONLY ROCK. GRNROCK and the RROCK family are Doom II's
-		// broken-stone flats, and a sector with one of them as its CEILING is
-		// an enclosed cave -- an outdoor one would have F_SKY1 up there
-		// instead. That is the whole argument, and it is why this row is four
-		// names and not fourteen.
-		//
-		// FLAT5_7 and FLAT5_8 were on this list and came off it. Both exist,
-		// both are Doom 1 flats, and I could not establish what either one
-		// depicts without looking at the pixels. The FLAT2/FLAT17 row above is
-		// what guessing at a generic flat costs: an emitter every 384 units
-		// across whole levels, each with a light and a loop.
-		//
-		// Doom II only, which is correct and harmless -- Bind() skips a name
-		// that does not resolve, so a Doom 1 game simply has no wet ceilings.
-		t.Define("FancyCeilingDrip", 0, "GRNROCK RROCK03 RROCK04 RROCK13");
-
-		return t;
-	}
-
-	// ---- things ----------------------------------------------------------
-	//
-	// The scan reads floors, ceilings and linedefs. It has never read THINGS,
-	// and the map has been telling us about those just as loudly: a RedTorch
-	// is an object whose entire purpose is to be on fire in the corner of a
-	// room, and Doom places more of them than any other decoration.
-	//
-	// NOT a FancyTexTable. That class is indexed by TextureID and a thing has
-	// no texture; making one fit would mean inventing a fake index for every
-	// actor class, which is a lie the Find() hot path would then have to carry
-	// forever. This is the table, it lives here so "one place to add a row"
-	// stays true, and it has one row.
-	//
-	// `is` rather than a class-name compare, so a mod that subclasses or
-	// replaces RedTorch still gets a fire. All seven are listed because all
-	// seven are flat under Actor in wadsrc/static/zscript/actors/doom/
-	// doomdecorations.zs (232-351, 688) -- ShortRedTorch does NOT derive from
-	// RedTorch, and assuming it did would have silently dropped the short
-	// torches, which are the ones Doom II uses most.
-	//
-	// Adding the hanging bodies, the barrel or the EvilEye is one line here
-	// and one class beside FancyThingTorch. None of them ship today: each
-	// would cost a manifest entry and an sndinfo block for a decoration that
-	// appears a handful of times per megawad, and they cost nothing to add
-	// the day someone wants them.
-	static Name FancyThingEmitter(Actor a)
-	{
-		if (a is 'RedTorch'   || a is 'GreenTorch'   || a is 'BlueTorch'
-		 || a is 'ShortRedTorch' || a is 'ShortGreenTorch' || a is 'ShortBlueTorch'
-		 || a is 'BurningBarrel')
-			return 'FancyThingTorch';
-
-		return '';
-	}
-
 	// ---- fog ------------------------------------------------------------
 	//
-	// A second reading of the same flats, for the volumetric slab.
-	//
-	// It cannot reuse the floor table, because that one deliberately folds
-	// blood in with slime -- they share a sound and a glow, and there was no
-	// reason to separate them. Fog is the reason: a blood pool wants dark red
-	// mist over it and a slime pool wants green, and that is a difference you
-	// can see across a room.
-	//
-	// The row's "class" is a KIND rather than an actor here, and the tint is
-	// the mist colour. FancyFogDirector switches on the kind for depth and
-	// density; see Publish().
+	// Which flats are liquid, and what colour mist should sit over them.
+	// fw_scan.zs reads this once at load to build its liquid index; the row's
+	// "class" is a KIND rather than an actor here, and the tint is the mist
+	// colour.
 	static FancyTexTable BuildFog()
 	{
 		let t = new("FancyTexTable");
@@ -308,9 +116,8 @@ class FancyTexTable play
 
 	// ---- footsteps -------------------------------------------------------
 	//
-	// A third reading of the flats, this time for what it sounds like to walk
-	// on one. Doom ships no footstep sounds at all, so every one of these is
-	// silence today.
+	// What it sounds like to walk on a flat. Doom ships no footstep sounds at
+	// all, so every one of these is silence without this table.
 	//
 	// THIS TABLE IS A STARTING POINT AND IS MEANT TO BE ARGUED WITH. Doom's
 	// flat names say almost nothing about material -- FLOOR4_8 could be

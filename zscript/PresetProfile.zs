@@ -431,48 +431,12 @@ class GITD_PresetProfile abstract
 
 	clearscope static void NoSurface() { F("gitd_fog_surf", 0.0); }
 
-	// ---- the ambience layer ----------------------------------------------
-	//
-	// FancyWorld postdates every profile in this file, which is exactly the
-	// hazard HasProfile's comment describes: a profile that does not mention a
-	// system INHERITS whatever the last one left running. These exist so each
-	// profile can state its position on the newest layer rather than adopting
-	// the previous preset's by accident.
-
-	// detail: 0 none, 1 only where the map implies a light source, 2 everything.
-	clearscope static void Ambience(int detail, double lightScale, double particles)
-	{
-		B("fw_enabled", true);
-		B("fw_lights", detail > 0);
-		I("fw_light_detail", detail);
-		F("fw_light_scale", lightScale);
-		B("fw_particles", particles > 0.0);
-		F("fw_particle_scale", particles);
-	}
-
-	// The scan still runs and the ambient SOUND still plays -- this turns off
-	// what it draws, not what it is. A preset that wants silence as well has
-	// to say so with the range.
-	clearscope static void NoAmbienceLight()
-	{
-		B("fw_enabled", true);
-		B("fw_lights", false);
-		B("fw_particles", false);
-	}
+	// ---- footsteps ---------------------------------------------------------
 
 	clearscope static void Steps(double volume)
 	{
 		B("gitd_steps", volume > 0.0);
 		F("gitd_steps_volume", volume);
-	}
-
-	// amount is what an emitter drops to with no sight line. Not 0 by default
-	// anywhere: sound goes round corners, and a waterfall down a bent corridor
-	// should still reach you.
-	clearscope static void Occlude(double amount)
-	{
-		B("gitd_occlusion", amount < 1.0);
-		F("gitd_occlusion_amount", amount);
 	}
 
 	// ---- dispatch -------------------------------------------------------
@@ -484,18 +448,17 @@ class GITD_PresetProfile abstract
 		// White (11).
 		//
 		// Three of these were switched off for a real reason, not an arbitrary
-		// one: they predate reactive fog, the tornado, the heatmap, the
-		// lattice and the whole ambience layer, and a profile that does not
-		// mention a system does not merely skip it -- it INHERITS whatever the
-		// last preset left running. A stale profile is worse than no profile,
-		// because its failures look like bugs in the systems it never asked
-		// for.
+		// one: they predate reactive fog, the tornado and the heatmap, and a
+		// profile that does not mention a system does not merely skip it -- it
+		// INHERITS whatever the last preset left running. A stale profile is
+		// worse than no profile, because its failures look like bugs in the
+		// systems it never asked for.
 		//
 		// So each has had the pass that comment asked for. Every one of them
 		// now states a position on fog, reactive fog, tendrils, the tornado,
-		// the heatmap, the grid, colour keep, ambience light, particles,
-		// footsteps and occlusion -- Off counts as a position, and saying it
-		// out loud is the entire discipline this file runs on.
+		// the heatmap, the grid, colour keep and footsteps -- Off counts as a
+		// position, and saying it out loud is the entire discipline this file
+		// runs on.
 		//
 		// THE FOUR NEW ONES WERE HELD TO A LONGER LIST THAN THAT, and it is
 		// worth writing down what the longer list is rather than only that it
@@ -1123,18 +1086,9 @@ class GITD_PresetProfile abstract
 		NoHeat();
 		NoKeepColor();
 
-		// Light only where the map already implies a source, and dim. An
-		// emergency circuit lights the fixtures it must and nothing else, so
-		// the flavour glow on slime and computers is exactly wrong here.
-		Ambience(1, 0.7, 0.35);
-
 		// LOUD FEET IN A QUIET BUILDING. Your own footsteps are the most
 		// present sound left, which is the whole feeling being aimed at.
 		Steps(1.15);
-
-		// And heavily muffled through walls -- a dying building does not carry
-		// sound the way a live one does.
-		Occlude(0.25);
 	}
 
 	// Bloom for a dying filament: threshold LOW, because there is almost no
@@ -1425,24 +1379,13 @@ class GITD_PresetProfile abstract
 		I("fl_slots", 1);
 		I("fl_pattern", 0);
 
-		// ---- the ambience layer -------------------------------------------
+		// ---- footsteps ------------------------------------------------------
 		//
-		// This preset already refuses almost everything, and the newest layer
-		// is no exception -- but it has to REFUSE it rather than not mention
-		// it, which is the discipline the whole file runs on.
-		//
-		// Light and particles off: coloured mist and orange embers in a
-		// monochrome image are the exact small dishonesty the bloom note above
-		// is about. The drain would grey them anyway, and grey embers are
-		// worse than none.
-		NoAmbienceLight();
-
-		// SOUND STAYS, and it is doing more work here than anywhere else.
-		// Strip a scene of colour and hearing carries proportionally more of
-		// it; footsteps and a room that closes behind you are the texture this
-		// preset removed from the image.
+		// FOOTSTEPS STAY, and they are doing more work here than anywhere
+		// else. Strip a scene of colour and hearing carries proportionally
+		// more of it; your own steps are texture this preset removed from
+		// the image.
 		Steps(1.0);
-		Occlude(0.4);
 	}
 
 	// White that BLOWS OUT rather than glows. Threshold high, so only what is
@@ -1838,14 +1781,7 @@ class GITD_PresetProfile abstract
 
 		NoKeepColor();
 
-		// Everything lit, including the flavour glow -- a building at full
-		// alert has every panel it owns switched on.
-		Ambience(2, 1.0, 1.0);
 		Steps(0.9);
-
-		// Barely muffled. Alarms are meant to carry through walls; that is
-		// what they are for.
-		Occlude(0.75);
 	}
 
 	// Bloom for a klaxon: amount HIGH and threshold LOW, so the red does not
@@ -2838,55 +2774,14 @@ class GITD_PresetProfile abstract
 		// modifier. A lighting menu is not consent to a gameplay change.
 		B("gitd_law_enabled", false);
 
-		// ---- the ambience layer -------------------------------------------
+		// ---- footsteps ------------------------------------------------------
 		//
-		// LIGHTS WHERE THE MAP SAYS THERE ARE LIGHTS, AND NOWHERE ELSE.
-		//
-		// Detail 1 lights only the fixtures the map already implies -- lit
-		// ceiling flats, wall light textures, teleport pads. Detail 2 adds
-		// the flavour tier: glowing slime, computer banks, the face. Red
-		// Alert takes 2 because a building at full alert has every panel it
-		// owns switched on. This building is not at alert, it is at rest, and
-		// a facility at rest runs its lighting and its plant and nothing
-		// decorative. Scale 0.55 because they are the same aged tubes.
-		//
-		// PARTICLES AT ZERO. Every particle this layer emits is warm or wet:
-		// embers, drips, steam off slime. There is nothing in this building
-		// hot enough to spark and nothing liquid enough to drip, and a single
-		// ember would undo four hundred lines of argument. Off by passing 0,
-		// which is a stated position rather than the blanket NoAmbienceLight
-		// -- the lights are wanted here, and only the particles are not.
-		Ambience(1, 0.55, 0.0);
-
-		// AND THE RADIUS, WHICH NoAmbienceLight'S OWN COMMENT DEMANDS AND NO
-		// PRESET HAS EVER GIVEN IT. fw_range is the per-emitter audibility
-		// radius (fw/fancy_common.zs:163), so every preset in this file has
-		// so far sounded identical no matter what it argued about acoustics.
-		//
-		// 1024, half the shipped default, and it is the same claim Occlude
-		// makes below rather than a second one: if a metre of reinforced
-		// concrete means an emitter with no sight line all but disappears,
-		// then an emitter three rooms away should not be audible through the
-		// open doors either. Halving the radius is what makes "a series of
-		// small silences" true of the ambience layer and not only of the
-		// geometry. It is the shortest range in the file and it should be.
-		F("fw_range", 1024.0);
-
 		// FOOTSTEPS, RAISED A LITTLE. Concrete, steel and a lot of empty
 		// volume: you are the loudest thing in here, and that is worth
 		// hearing. Not Blackout's 1.25 though -- there your feet are the map,
 		// because you cannot see. Here you can see perfectly well, so they
 		// are only company.
 		Steps(1.1);
-
-		// AND THE MOST MUFFLED SETTING IN THE FILE, for a literal reason
-		// rather than a mood one. This is a HARDENED installation. The walls
-		// are a metre of reinforced concrete and sound does not go through a
-		// metre of reinforced concrete. 0.15 means an emitter with no sight
-		// line all but disappears, so every room is acoustically sealed from
-		// the one next to it, and the building is a series of small silences
-		// rather than one large sound.
-		Occlude(0.15);
 	}
 
 	// FLUORESCENT BLOOM, WHICH MEANS A LINE RATHER THAN A POINT.
@@ -3704,38 +3599,12 @@ class GITD_PresetProfile abstract
 		// rows away on its own page.
 		B("gitd_law_enabled", false);
 
-		// ---- the ambience layer -------------------------------------------
-		//
-		// LIGHTS ON EVERYWHERE, PARTICLES OFF, and the split is the preset in
-		// one line. Detail 2 lights every fixture the scan can find, which is
-		// the literal claim in the name: every light in the building. But
-		// FancyWorld's particles drift on their own emitter timers, and a
-		// room full of embers wandering across a beat is the exact soup this
-		// is trying not to be.
-		Ambience(2, 0.90, 0.0);
-
-		// AND THE EMITTER RADIUS, STATED AT THE SHIPPED VALUE. NoAmbienceLight
-		// says out loud that a preset wanting silence has to say so with the
-		// range, and no preset in this file ever has -- so FancyWorld's ambient
-		// sound has been identical under all eight, whatever each of them
-		// argued. This one wants it exactly where it ships: a building running
-		// one circuit throughout should sound like one building, carrying from
-		// room to room, which is the audio restatement of the whole preset.
-		// Cold War halves it because its rooms are sealed; Black and White
-		// extends it because hearing carries more there. Here 2048 is a
-		// choice that happens to match the default.
-		F("fw_range", 2048.0);
-
 		// FOOTSTEPS DOWN, which is the only preset here that turns them down.
 		// Blackout runs 1.25 because in the dark your feet are the map. Here
 		// they are a second tempo -- an irregular one, set by how you walk --
 		// laid directly over a four second beat. 0.8 keeps them present
 		// enough to place you and quiet enough not to argue.
 		Steps(0.8);
-
-		// And sound carries between rooms. 0.6 is most of the way open, short
-		// of Red Alert's 0.75, which was an alarm's job.
-		Occlude(0.6);
 
 		// NOTE FOR WHOEVER EDITS THIS NEXT. Preset 6 is a GENERATED palette,
 		// not a literal table -- SlotColor special-cases 1, 2, 3 and 11 and
@@ -4678,32 +4547,12 @@ class GITD_PresetProfile abstract
 		// system and it takes it on purpose.
 		B("gitd_neon_enabled", false);
 
-		// Light and particles off. The ambience layer colours emitters from
-		// what the map's own texture names imply -- green on slime, orange on
-		// fire -- which is a fifth colour source this preset does not compose
-		// and cannot make disagree on purpose. Unowned colour in a preset
-		// about colour is not chaos, it is noise, and the difference between
-		// those two words is this entire function. The scan and its SOUND stay
-		// on: the ears are the one channel here that is telling the truth.
-		NoAmbienceLight();
-
-		// AND THE SOUND'S REACH, STATED, BECAUSE THE LINE ABOVE CLAIMS IT.
-		// NoAmbienceLight's own comment says a preset that wants silence has
-		// to say so with the range -- and this preset says the opposite, that
-		// the audio is the fixed reference the eye gets to measure against.
-		// That claim was inherited until now: fw_range is the per-emitter
-		// audibility radius, no preset in this file had ever written it, and
-		// "the sound stays on" was therefore a promise about whatever the last
-		// preset happened to leave. 2048 is the shipped value, chosen.
-		F("fw_range", 2048.0);
-
-		// Footsteps at par and occlusion near the default. Deliberately the
-		// most ordinary numbers in the file. The eye is being asked to do a
-		// great deal in this preset, and the audio is the fixed reference it
-		// gets to measure against -- a room that sounds normal is what makes
-		// the room that looks abnormal legible rather than disorienting.
+		// Footsteps at par, deliberately the most ordinary number in the
+		// file. The eye is being asked to do a great deal in this preset, and
+		// your own steps are the fixed reference it gets to measure against
+		// -- a sound that stays normal is what makes the room that looks
+		// abnormal legible rather than disorienting.
 		Steps(1.0);
-		Occlude(0.5);
 
 		// ---- THE RANDOMISE MODES, AND WHY TWO OF THEM STAY OFF -----------
 		//
@@ -5794,54 +5643,11 @@ class GITD_PresetProfile abstract
 		B("fl_random", false);
 		B("fl_agitate", false);
 
-		// ---- the ambience layer -------------------------------------------
-		//
-		// LIGHTS ON, PARTICLES OFF, and the split is deliberate.
-		//
-		// Detail 1 lights only what the map already implies is a light source
-		// -- a wall torch, a lit ceiling flat, a lavafall -- and this is the
-		// one preset that genuinely needs them. Mist is not visible; mist that
-		// something is shining through is. Turn every source in the level off
-		// and the layer has nothing to be lit by except your torch, and then
-		// the only interesting air in the game is the ten degrees in front of
-		// you. Detail 2 goes too far the other way: flavour glow on slime and
-		// computer banks puts a cheerful little light in every corner of a
-		// preset whose argument is that the room is indifferent.
-		//
-		// Scale 0.55 so the sources are present rather than helpful.
-		//
-		// Particles at zero for the same reason the torch has no dust: the fog
-		// is this preset's particle system and a second one competes with it.
-		Ambience(1, 0.55, 0.0);
-
-		// AND THE EMITTER RADIUS IS STATED, AT THE SHIPPED 2048.
-		// NoAmbienceLight's own comment says a preset that wants the ambience
-		// layer silent "has to say so with the range", and no preset in this
-		// file has ever said anything about it -- so FancyWorld's scan sounds
-		// and reaches identically under all eight, which is a system nobody has
-		// ever made a decision about. This preset's decision is to keep it
-		// where it ships: the ambient sound is the one layer here that is
-		// honestly reporting the room, and Occlude(0.55) below is already
-		// making it arrive from slightly the wrong place. Cutting the radius as
-		// well would silence the map, and a silent map is a different preset.
-		F("fw_range", 2048.0);
-
 		// LOUD FEET, because in a layer this deep you cannot see them. Your
 		// own footsteps are the only confirmation that the ground under the
 		// mist is the ground you think it is, and the material changing under
 		// you is the only warning you get that it is not.
 		Steps(1.2);
-
-		// AND SOUND ARRIVES FROM SLIGHTLY THE WRONG PLACE. 0.55 is the middle
-		// of the range and it is chosen against both ends. Blackout muffles
-		// hard at 0.2 because there sound IS the map and a wall has to be
-		// audible as a wall. Red Alert runs 0.75 because alarms are built to
-		// carry. Half-occluded is the least useful setting of the three and
-		// that is what it is for: things through walls are clearly audible and
-		// no longer clearly located, so you hear something and cannot say
-		// where, which is the correct amount of information for this preset to
-		// give you.
-		Occlude(0.55);
 	}
 
 	// BLOOM AS DIFFUSION, NOT AS GLARE.
@@ -6054,16 +5860,10 @@ class GITD_PresetProfile abstract
 		// lighting it; this one can only show you where you have KILLED.
 		Heat(0.9, 0x0A0000, 0xFF2810, 0.85, 80.0, 0.25);
 
-		// Nothing passive glows -- that is the entire preset -- so the
-		// ambience layer keeps its sound and loses its light and particles.
-		NoAmbienceLight();
-
 		// AND YOU NAVIGATE BY EAR. Footsteps up, because in the dark they are
-		// how you know what you are standing on, and occlusion strong, because
-		// a sound you can hear through a wall tells you the wall is not there.
-		// In this preset that is not flavour, it is the map.
+		// how you know what you are standing on. In this preset that is not
+		// flavour, it is the map.
 		Steps(1.25);
-		Occlude(0.2);
 
 		// ---- what is left of colour ---------------------------------------
 		//

@@ -12,9 +12,10 @@ GameInfo
 	//     say must have had its tick before the write happens.
 	//   GITD_PresetCustomiser is before GITD_Handler because it loads the
 	//     selected preset into the working set the lanes read that same tick.
-	//   FancyWorld's two handlers sit before GITD_Composite like everything
-	//     else. Neither declares into the composite -- the scan spawns actors
-	//     and the footsteps play a sound -- so they have no ordering needs of
-	//     their own; they are simply not allowed to land after the flush.
-	AddEventHandlers = "DarkDoomZ_Handler", "GITD_PresetCustomiser", "GITD_Handler", "GITD_FlashlightHandler", "GITD_NeonKillCounter", "GITD_ResetHandler", "GITD_SetpieceConsole", "GITD_ColorLaw", "GITD_NeonDrawSync", "SpawnEnvActorHandler", "FancyFootsteps", "GITD_Composite"
+	//   GITD_LiquidIndex and FancyFootsteps sit before GITD_Composite like
+	//     everything else. Neither declares into the composite -- the index
+	//     just reads sectors and the footsteps play a sound -- so they have no
+	//     ordering needs of their own; they are simply not allowed to land
+	//     after the flush.
+	AddEventHandlers = "DarkDoomZ_Handler", "GITD_PresetCustomiser", "GITD_Handler", "GITD_FlashlightHandler", "GITD_NeonKillCounter", "GITD_ResetHandler", "GITD_SetpieceConsole", "GITD_ColorLaw", "GITD_NeonDrawSync", "GITD_LiquidIndex", "FancyFootsteps", "GITD_Composite"
 }

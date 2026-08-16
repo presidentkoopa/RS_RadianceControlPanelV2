@@ -2306,9 +2306,10 @@ class GITD_Handler : StaticEventHandler
 		//
 		// The one colour source that comes from the MAP rather than from this
 		// mod: green over nukage, dark red over blood, orange over lava, pale
-		// blue over water. FancyWorld already knows which sectors are which,
-		// because it read every flat in the level to place its emitters, so
-		// this costs a walk over the liquid sectors and nothing else.
+		// blue over water. GITD_LiquidIndex already knows which sectors are
+		// which -- it read every floor flat in the level at load for exactly
+		// this -- so this costs a walk over the liquid sectors and nothing
+		// else.
 		//
 		// Falls through to the lane sources when there is no liquid in reach,
 		// rather than returning -- a room with no pool in it should still get
@@ -2316,11 +2317,11 @@ class GITD_Handler : StaticEventHandler
 		if (mode == 4)
 		{
 			// EventHandler.Find rather than StaticEventHandler.Find, which is
-			// what the rest of this file uses: SpawnEnvActorHandler is a
+			// what the rest of this file uses: GITD_LiquidIndex is a
 			// per-level handler, and the static lookup searches a different
-			// list. Null is a legitimate answer -- FancyWorld may not be
-			// loaded, or fw_enabled may have been off when the map loaded.
-			let scan = SpawnEnvActorHandler(EventHandler.Find("SpawnEnvActorHandler"));
+			// list. Null is a legitimate answer if it somehow failed to
+			// register for this level.
+			let scan = GITD_LiquidIndex(EventHandler.Find("GITD_LiquidIndex"));
 			if (scan && playeringame[consoleplayer])
 			{
 				let pmo = players[consoleplayer].mo;

@@ -11,44 +11,24 @@ version "4.14"
 #include "zscript/ColorLaw.zs"
 
 // ============================================================
-//  FancyWorld -- ambience read off the map's own textures.
+//  What survives of Environmental FancyWorld.
 //
-//  At load it matches every sector flat and every wall texture
-//  against a table and places emitters where they belong: a
-//  looping ambient sound, a dynamic light in the colour the
-//  texture name implies, and particles. Plus footsteps that
-//  match the flat under you, and sight-line occlusion so a
-//  waterfall behind a sealed door stops being as loud as one
-//  in open air.
+//  The texture-scanned ambience layer -- emitters placed on
+//  every liquid floor, lit ceiling and interesting wall, four
+//  preset dialects, the sweep klaxon -- was removed for being
+//  more maintenance than it was worth. Two things it did stay,
+//  because neither one depends on the part that got cut:
 //
-//  Works on any WAD with no patch.
+//  Footsteps, matched to the flat under you. And the fog
+//  taking its colour from whichever liquid you are nearest,
+//  which is why fw_scan.zs is still here -- trimmed to reading
+//  the map's liquid sectors once at load for Render.zs's fog
+//  colour mode 4, and nothing else.
 //
-//  NOT INCLUDED: FancyWorld's own fog director. This project
-//  already owns the fog slab in Render.zs, and two things
-//  writing one scene-global layer would fight every frame --
-//  the exact problem GITD_Composite exists to solve. The part
-//  worth keeping from it is knowing WHICH LIQUID the player is
-//  nearest, which belongs on Render's existing tint parameter
-//  rather than in a second writer.
-//
-//  ORDER: the emitter base and the tables must parse before
-//  anything that inherits from them.
-//
-//  fancy_things.zs is the fourth kind of emitter and sits with
-//  the other three. fancy_klaxon.zs is the odd one out: it is
-//  not an emitter at all, it subclasses GITD_SweepEffect from
-//  SweepEngine.zs above, and it reads FancySettings from
-//  fancy_common.zs -- so it must follow BOTH, which is the only
-//  reason it is down here in the FancyWorld block rather than
-//  up with the sweep. fw_scan.zs stays last because it is the
-//  one file that names every class the others define.
+//  ORDER: fancy_tables.zs must parse before fw_scan.zs, which
+//  reads FancyTexTable.BuildFog() from it.
 // ============================================================
 #include "zscript/fw/fancy_common.zs"
 #include "zscript/fw/fancy_tables.zs"
 #include "zscript/fw/fancy_steps.zs"
-#include "zscript/fw/fancy_floors.zs"
-#include "zscript/fw/fancy_ceilings.zs"
-#include "zscript/fw/fancy_walls.zs"
-#include "zscript/fw/fancy_things.zs"
-#include "zscript/fw/fancy_klaxon.zs"
 #include "zscript/fw/fw_scan.zs"

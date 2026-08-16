@@ -1505,64 +1505,14 @@ server float gitd_fog_color_blend = 1.0; // how far toward it, 0..1
 server float gitd_origin_ahead = 320.0;
 
 // ============================================================================
-//  FANCYWORLD -- ambience read off the map's own textures.
+//  FOOTSTEPS -- what survives of Environmental FancyWorld.
 //
-//  The scan matches every sector flat and every wall texture against a table
-//  and places emitters accordingly: a looping ambient sound, a dynamic light
-//  in the colour the texture name implies, and particles. Works on any WAD.
-//
-//  Its fog director is deliberately NOT loaded -- Render.zs owns the fog slab
-//  and two writers would fight -- so there are no fog cvars here.
+//  Doom has never had any. The material comes from the flat under you, read
+//  through the same texture-table machinery the old ambience scan used --
+//  see FancyTexTable.BuildSteps() in fancy_tables.zs. The scan itself, its
+//  emitters, its four preset dialects and the sweep klaxon are gone.
 // ============================================================================
 
-server bool  fw_enabled        = true;
-
-// Light. Detail 1 lights only what the map already implies (lit ceiling flats,
-// wall light textures, lavafalls, teleport pads, broken monitors); 2 adds
-// flavour glow on slime, computers and the face texture.
-server bool  fw_lights         = true;
-server int   fw_light_detail   = 2;
-server float fw_light_scale    = 1.0;
-
-server bool  fw_particles      = true;
-server float fw_particle_scale = 1.0;
-
-// How close you must be for an emitter to make sound, light or particles.
-// The biggest single performance lever in the scan.
-server float fw_range          = 2048.0;
-
-// Emitter spacing. Both apply on the next map, since they decide placement.
-server int   fw_spacing        = 256;
-server int   fw_wall_spacing   = 64;
-
-// Footsteps. Doom has never had any; the material comes from the flat under
-// you, through the same table machinery as everything else.
 server bool  gitd_steps            = true;
 server float gitd_steps_volume     = 1.0;
 server float gitd_steps_stride     = 52.0;   // world units travelled per footfall
-
-// Muffle emitters you cannot see. A real sight trace, run only on things
-// already in range and already audible.
-//
-// The amount is NOT 0 on purpose: a sight line is not an acoustic path. Sound
-// goes round corners and under doors, and a waterfall down a bent corridor
-// should still reach you -- just not as though it were in front of your face.
-server bool  gitd_occlusion        = true;
-server float gitd_occlusion_amount = 0.45;
-
-// The world's DIALECT. Not a new sound source: every emitter this reaches is
-// one the texture scan already placed, in a room, at a position you can walk
-// to. It changes only what that emitter SAYS.
-//
-// ONE cvar and five values rather than a switch per family, because a
-// per-family dialect table is nine cvars nobody would ever set by hand and
-// eight presets that would each have to remember all nine. A preset writes
-// one number; the classes that have something to say about that number say
-// it, and every class that does not ignores it for free.
-//
-//   0  the map's own voice -- what shipped, and the default
-//   1  cold        (Cold War)
-//   2  labouring   (Low Power)
-//   3  alarm       (Red Alert) -- also arms the sweep klaxon, see fancy_klaxon.zs
-//   4  wrong       (Lovecraftian Fog)
-server int gitd_voice = 0;

@@ -485,21 +485,22 @@ DarkDoomZ darkens sector light; the glow lanes are a separate mechanism added
 on top, which is why floor and ceiling glow stay visible in a room crushed to
 near black.
 
-**Environmental FancyWorld** — the ambience layer in `zscript/fw/` began as the
-2019 mod of that name, and what survives from it is worth stating precisely,
-because it is not much and it is not nothing.
+**Environmental FancyWorld** — what is left of it in `zscript/fw/` is worth
+stating precisely, because it went from most of the layer to a small piece of
+it. The 2019 mod of that name contributed its **sound and sprite assets** and
+its **texture research** — the mapping from Doom's flat and wall texture names
+to what they actually depict. That mapping is the tedious, valuable part and
+it was theirs.
 
-What came from the original: its **sound and sprite assets**, and its
-**texture research** — the mapping from Doom's flat and wall texture names to
-what they actually depict. That mapping is the tedious, valuable part and it was
-theirs.
-
-What did not: the implementation. The scan was rewritten (texture names now
-resolve once into a flat lookup instead of ~500 string comparisons per linedef,
-and it walks sectors rather than sweeping a fixed grid over the whole map); the
-twenty-four near-identical emitter classes became one base declaring what a
-thing *is* while the base decides when any of it happens; and the light,
-particles, footsteps, sight-line occlusion and per-emitter detune are all new.
+The texture-scanned ambience layer built on top of that research — an emitter
+placed on every liquid floor, lit ceiling and interesting wall, with a sound,
+a light and particles, plus four preset dialects and a klaxon on the sector
+sweep — was removed for being more maintenance than it was worth. Two things
+survived the removal because neither depended on the part that got cut:
+footsteps, matched to the flat under you (`fancy_steps.zs`), and the fog
+taking its colour from the liquid you are standing in (`fw_scan.zs`, trimmed
+to just that reading). Both still use the original's texture research; neither
+uses anything else from it.
 
 **The original mod does not name its author anywhere in its own files** — its
 credits thank the people who helped and never sign themselves. If you know who
