@@ -190,29 +190,15 @@ class FancyEmitter : Actor
 	// Shape has no equivalent "light type" -- it has one look, not four.
 	// Subclasses returning a specific ELightType still compile and still
 	// gate correctly; the distinction between which one just stopped
-	// mattering. Not swept clean across every subclass in this pass -- see
-	// FancyLightParam below for why that is a stated debt, not an oversight.
+	// mattering.
+	//
+	// FancyLightRadius2 and FancyLightParam -- the old secondary radius and
+	// GLDEFS third parameter -- are gone entirely, along with every
+	// subclass override of them, now that a Shape has nothing to hand
+	// either one to.
 	virtual int FancyLightType() { return -1; }
 	virtual Color FancyLightColor() { return 0xFFFFFF; }
 	virtual int FancyLightRadius() { return 0; }
-
-	// DEAD since the Shapes swap. A Shape has no secondary radius -- there
-	// is one size, not a min/max pulse range -- so nothing calls this
-	// anymore. Left defined, not deleted, because roughly a dozen
-	// subclasses across fancy_walls.zs/fancy_floors.zs/fancy_ceilings.zs
-	// still override it, and cutting the base virtual out from under them
-	// would be a compile error in every one rather than a clean removal.
-	// Stated here so the next person does not go looking for the caller.
-	virtual int FancyLightRadius2() { return 0; }
-
-	// DEAD for the same reason -- this was the third GLDEFS parameter
-	// (seconds for PulseLight, a 0..1 chance for FlickerLight, tics/360 for
-	// RandomFlickerLight), and a Shape has no per-type animation parameter
-	// to hand it to. Every subclass override of this is now inert but
-	// harmless: it computes a value nothing reads. Worth an actual cleanup
-	// pass across the emitter files at some point, not bundled into the
-	// swap that made it dead.
-	virtual double FancyLightParam() { return 0.0; }
 
 	// How much of a light this is, against fw_light_detail:
 	//   1 = the map already implies a light source here. A lit ceiling flat,

@@ -68,8 +68,6 @@ class FancySectorNukageCore : FancyLiquidCore
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x58D820; }
 	override int FancyLightRadius() { return 112; }
-	override int FancyLightRadius2() { return 84; }
-	override double FancyLightParam() { return 2.6; }
 	override int FancyLightTier() { return 1; }
 }
 
@@ -139,8 +137,6 @@ class FancySectorXWaterCore : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x2860A0; }
 	override int FancyLightRadius() { return 72; }
-	override int FancyLightRadius2() { return 52; }
-	override double FancyLightParam() { return 4.0; }
 	override int FancyLightTier() { return 2; }
 }
 
@@ -153,8 +149,6 @@ class FancySectorSlimeCore : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x38A020; }
 	override int FancyLightRadius() { return 80; }
-	override int FancyLightRadius2() { return 58; }
-	override double FancyLightParam() { return 3.4; }
 	override int FancyLightTier() { return 2; }
 }
 
@@ -193,8 +187,6 @@ class FancySectorBloodCore : FancyEmitter
 	override int FancyLightType() { return DynamicLight.FlickerLight; }
 	override Color FancyLightColor() { return 0x7A1414; }  // matches the fog exactly
 	override int FancyLightRadius() { return 56; }
-	override int FancyLightRadius2() { return 40; }
-	override double FancyLightParam() { return 0.18; }     // flicker chance, not a period
 	override int FancyLightTier() { return 2; }
 }
 
@@ -209,8 +201,6 @@ class FancySectorLavaCore : FancyLiquidCore
 	override int FancyLightType() { return DynamicLight.FlickerLight; }
 	override Color FancyLightColor() { return 0xFF5C10; }
 	override int FancyLightRadius() { return 152; }
-	override int FancyLightRadius2() { return 112; }
-	override double FancyLightParam() { return 0.22; }
 	override int FancyLightTier() { return 1; }
 
 	override void FancyPuff()
@@ -271,8 +261,6 @@ class FancySectorHotCore : FancyEmitter
 	override int FancyLightType() { return DynamicLight.FlickerLight; }
 	override Color FancyLightColor() { return 0x883410; }
 	override int FancyLightRadius() { return 72; }
-	override int FancyLightRadius2() { return 48; }
-	override double FancyLightParam() { return 0.20; }
 	override int FancyLightTier() { return 2; }
 
 	override int FancyPuffRate() { return 14; }
@@ -300,8 +288,6 @@ class FancySectorTeleporterCore : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0xB040FF; }
 	override int FancyLightRadius() { return 104; }
-	override int FancyLightRadius2() { return 64; }
-	override double FancyLightParam() { return 1.2; }
 	override int FancyLightTier() { return 1; }
 
 	override int FancyPuffRate() { return 30; }

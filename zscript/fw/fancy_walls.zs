@@ -81,8 +81,6 @@ class FancyWallSlimefall : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x3CD824; }
 	override int FancyLightRadius() { return 56; }
-	override int FancyLightRadius2() { return 40; }
-	override double FancyLightParam() { return 2.4; }
 	override int FancyLightTier() { return 2; }
 
 	override int FancyPuffRate() { return 120; }
@@ -105,8 +103,6 @@ class FancyWallLavafall : FancyEmitter
 	override int FancyLightType() { return DynamicLight.FlickerLight; }
 	override Color FancyLightColor() { return 0xFF6410; }
 	override int FancyLightRadius() { return 136; }
-	override int FancyLightRadius2() { return 96; }
-	override double FancyLightParam() { return 0.25; }
 	override int FancyLightTier() { return 1; }
 
 	override int FancyPuffRate() { return 170; }
@@ -132,8 +128,6 @@ class FancyWallSlimedrip : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x34B01C; }
 	override int FancyLightRadius() { return 32; }
-	override int FancyLightRadius2() { return 22; }
-	override double FancyLightParam() { return 3.0; }
 	override int FancyLightTier() { return 2; }
 
 	// A drain drips. It does not spray -- the low rate is the effect.
@@ -232,8 +226,6 @@ class FancyWallFirewall : FancyEmitter
 	override int FancyLightType() { return DynamicLight.FlickerLight; }
 	override Color FancyLightColor() { return 0xFF7020; }
 	override int FancyLightRadius() { return 112; }
-	override int FancyLightRadius2() { return 78; }
-	override double FancyLightParam() { return 0.30; }
 	override int FancyLightTier() { return 1; }
 
 	override int FancyPuffRate() { return 130; }
@@ -258,8 +250,6 @@ class FancyWallFireblu : FancyEmitter
 	override int FancyLightType() { return DynamicLight.FlickerLight; }
 	override Color FancyLightColor() { return 0xC030FF; }
 	override int FancyLightRadius() { return 96; }
-	override int FancyLightRadius2() { return 62; }
-	override double FancyLightParam() { return 0.38; }
 	override int FancyLightTier() { return 1; }
 
 	override int FancyPuffRate() { return 90; }
@@ -291,8 +281,6 @@ class FancyWallCompstation : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x30C850; }
 	override int FancyLightRadius() { return 56; }
-	override int FancyLightRadius2() { return 38; }
-	override double FancyLightParam() { return 2.0; }
 	override int FancyLightTier() { return 2; }
 }
 
@@ -317,8 +305,6 @@ class FancyWallTechhum : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x3898D0; }
 	override int FancyLightRadius() { return 48; }
-	override int FancyLightRadius2() { return 32; }
-	override double FancyLightParam() { return 3.2; }
 	override int FancyLightTier() { return 2; }
 }
 
@@ -349,9 +335,7 @@ class FancyWallStatic : FancyEmitter
 
 	override int FancyLightType() { return DynamicLight.RandomFlickerLight; }
 	override Color FancyLightColor() { return 0x6098FF; }
-	override int FancyLightRadius()  { return 30; }           // radius1 = SMALL
-	override int FancyLightRadius2() { return 64; }           // radius2 = LARGE
-	override double FancyLightParam() { return 8.0 / 360.0; } // 8 tics
+	override int FancyLightRadius()  { return 30; }
 	override int FancyLightTier() { return 1; }
 }
 
@@ -389,8 +373,6 @@ class FancyWallFaces : FancyEmitter
 	override int FancyLightType() { return DynamicLight.PulseLight; }
 	override Color FancyLightColor() { return 0x902018; }
 	override int FancyLightRadius() { return 64; }
-	override int FancyLightRadius2() { return 20; }
-	override double FancyLightParam() { return 4.5; }
 	override int FancyLightTier() { return 2; }
 }
 
