@@ -2,3 +2,7 @@
 
 # Claude Code session settings -- local tooling permissions, not mod source.
 .claude/
+
+# The built pk3 lives here for convenience; it is a build output, not source.
+# Excluded from packaging too, so it can never end up inside itself.
+*.pk3
