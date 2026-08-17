@@ -109,9 +109,13 @@ behind it — you can be hurt while adjusting.
 
 ## Playing with other mods
 
-Load a **liquid pack** (TERRAIN-based) and this defers to it: its splashes and
-step sounds win, and its liquid flats feed the fog colour even for flats this
-mod has never heard of.
+Liquids already splash — nukage, blood, slime, water and lava all have real
+TERRAIN-driven splashes built in, not just ambience. Load a **different
+liquid pack** on top and normal load order applies: whichever loads last
+wins for any flat both define, same as any other TERRAIN lump. Either way,
+liquid flats neither this mod nor a loaded pack recognise still feed the fog
+colour through a neutral fallback — see `TERRAIN` in the mod root for the
+`floor optional` entries already covering FreeDoom and Eviternity.
 
 Do **not** load *Environmental FancyWorld* separately. It is built in.
 
@@ -131,6 +135,14 @@ The implementation is not original to it. The original does not name its author
 anywhere in its own files; if you know who wrote it, please say so and the
 credit goes in. Assets are sourced from several commercial games and no
 ownership is claimed over them.
+
+**Liquid splashes** — the splash and lava sprites and the water/muck/lava
+sounds are from *Environmental_MTOLiquids*, a small freeware resource by
+MObreck built on Heretic's water terrain effects; its own credits trace the
+assets further back to Heretic and Hexen. The TERRAIN lump and the ZScript
+splash classes in this mod are written for it, not copied from MTOLiquids'
+own DECORATE — only the sprites, sounds, and the general shape of the idea
+(TERRAIN-driven splashes rather than a scan) carried over.
 
 **Ambience additions** — the sky wind, the cave drip, the wall drips and the
 torches come from three community ambience mods: *Universal Ambience*,

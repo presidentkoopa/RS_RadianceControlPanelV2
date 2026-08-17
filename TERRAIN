@@ -1,0 +1,281 @@
+// ============================================================================
+//  Liquid splashes -- the engine's own terrain system, not a scan.
+// ============================================================================
+//
+//  See zscript/fw/fancy_liquids.zs for the actors these splash blocks name,
+//  and the credits in README.md for where the assets behind them are from.
+//
+//  Broad coverage is deliberate and costs nothing: a flat this mod's own
+//  FancyWorld table has never heard of, but that a loaded texture pack
+//  ships, still gets a real splash -- `floor optional` silently skips
+//  whatever isn't present in the currently loaded IWAD/PWAD rather than
+//  erroring, so listing FreeDoom's and Eviternity's liquid flats here has
+//  no cost when they're absent and a real one when they're not.
+//
+// ============================================================================
+
+// ---- splashes --------------------------------------------------------------
+
+splash MTOWater
+{
+	smallclass    MTOSplashBaseGreen
+	smallclip     12
+	smallsound    world/mtoliquid/water
+
+	baseclass     MTOSplashBaseGreen
+	chunkclass    MTOSplashChunkGreen
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/water
+	noalert
+}
+
+splash MTOYellowWater
+{
+	smallclass    MTOSplashBaseYellow
+	smallclip     12
+	smallsound    world/mtoliquid/water
+
+	baseclass     MTOSplashBaseYellow
+	chunkclass    MTOSplashChunkYellow
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/water
+	noalert
+}
+
+splash MTOGreenGoo
+{
+	smallclass    MTOSplashBaseGreen
+	smallclip     12
+	smallsound    world/mtoliquid/muck
+
+	baseclass     MTOSplashBaseGreen
+	chunkclass    MTOSplashChunkGreen
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/muck
+	noalert
+}
+
+splash MTOGunkGoo
+{
+	smallclass    MTOSplashBaseGunk
+	smallclip     12
+	smallsound    world/mtoliquid/muck
+
+	baseclass     MTOSplashBaseGunk
+	chunkclass    MTOSplashChunkGunk
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/muck
+	noalert
+}
+
+splash MTORedGoo
+{
+	smallclass    MTOSplashBaseRed
+	smallclip     12
+	smallsound    world/mtoliquid/muck
+
+	baseclass     MTOSplashBaseRed
+	chunkclass    MTOSplashChunkRed
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/muck
+	noalert
+}
+
+splash MTOBrownWater
+{
+	smallclass    MTOSplashBaseBrown
+	smallclip     12
+	smallsound    world/mtoliquid/water
+
+	baseclass     MTOSplashBaseBrown
+	chunkclass    MTOSplashChunkBrown
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/water
+	noalert
+}
+
+splash MTOBrownGoo
+{
+	smallclass    MTOSplashBaseBrown
+	smallclip     12
+	smallsound    world/mtoliquid/muck
+
+	baseclass     MTOSplashBaseBrown
+	chunkclass    MTOSplashChunkBrown
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/muck
+	noalert
+}
+
+splash MTOMilkGoo
+{
+	smallclass    MTOSplashBaseMilk
+	smallclip     12
+	smallsound    world/mtoliquid/water
+
+	baseclass     MTOSplashBaseMilk
+	chunkclass    MTOSplashChunkMilk
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/water
+	noalert
+}
+
+splash MTOPurpleGoo
+{
+	smallclass    MTOSplashBasePurple
+	smallclip     12
+	smallsound    world/mtoliquid/muck
+
+	baseclass     MTOSplashBasePurple
+	chunkclass    MTOSplashChunkPurple
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/muck
+	noalert
+}
+
+splash MTOBlackGoo
+{
+	smallclass    MTOSplashBaseBlack
+	smallclip     12
+	smallsound    world/mtoliquid/muck
+
+	baseclass     MTOSplashBaseBlack
+	chunkclass    MTOSplashChunkBlack
+	chunkxvelshift 8
+	chunkyvelshift 8
+	chunkzvelshift 8
+	chunkbasezvel 2
+	sound         world/mtoliquid/muck
+	noalert
+}
+
+splash MTOLava
+{
+	smallclass    MTOLavaSplash
+	smallclip     12
+	smallsound    world/mtoliquid/lava
+
+	baseclass     MTOLavaSplash
+	chunkclass    MTOLavaSmoke
+	chunkxvelshift -1
+	chunkyvelshift -1
+	chunkzvelshift 7
+	chunkbasezvel 1
+	sound         world/mtoliquid/lava
+	noalert
+}
+
+splash MTOYellowLava
+{
+	smallclass    MTOLavaSplashYellow
+	smallclip     12
+	smallsound    world/mtoliquid/lava
+
+	baseclass     MTOLavaSplashYellow
+	chunkclass    MTOLavaSmoke
+	chunkxvelshift -1
+	chunkyvelshift -1
+	chunkzvelshift 7
+	chunkbasezvel 1
+	sound         world/mtoliquid/lava
+	noalert
+}
+
+// ---- terrain types ----------------------------------------------------------
+
+terrain MTOWater       { splash MTOWater;       footclip 10; liquid }
+terrain MTOYellowWater { splash MTOYellowWater; footclip 10; liquid }
+terrain MTOGreenGoo    { splash MTOGreenGoo;    footclip 10; liquid }
+terrain MTOGunkGoo     { splash MTOGunkGoo;     footclip 10; liquid }
+terrain MTORedGoo      { splash MTORedGoo;      footclip 10; liquid }
+terrain MTOBrownWater  { splash MTOBrownWater;  footclip 10; liquid }
+terrain MTOBrownGoo    { splash MTOBrownGoo;    footclip 10; liquid }
+terrain MTOMilkGoo     { splash MTOMilkGoo;     footclip 10; liquid }
+terrain MTOPurpleGoo   { splash MTOPurpleGoo;   footclip 10; liquid }
+terrain MTOBlackGoo    { splash MTOBlackGoo;    footclip 10; liquid }
+terrain MTOLava        { splash MTOLava;        footclip 10; liquid }
+terrain MTOYellowLava  { splash MTOYellowLava;  footclip 10; liquid }
+
+// Solid, hot rock -- SLIME09-12 in this mod's own floor table (see
+// fancy_tables.zs) are already treated as "hot surface, not a pool" for
+// the same reason: they read as scorched stone, not something you wade
+// into. A splash without the liquid flag, so footsteps still land solid.
+terrain MTOLavaSolid { splash MTOLava }
+
+// ---- floor -> terrain --------------------------------------------------------
+
+floor FWATER1 MTOWater
+floor FWATER2 MTOWater
+floor FWATER3 MTOWater
+floor FWATER4 MTOWater
+floor NUKAGE1 MTOGreenGoo
+floor NUKAGE2 MTOGreenGoo
+floor NUKAGE3 MTOGreenGoo
+floor BLOOD1 MTORedGoo
+floor BLOOD2 MTORedGoo
+floor BLOOD3 MTORedGoo
+floor SLIME01 MTOBrownWater
+floor SLIME02 MTOBrownWater
+floor SLIME03 MTOBrownWater
+floor SLIME04 MTOBrownWater
+floor SLIME05 MTOBrownGoo
+floor SLIME06 MTOBrownGoo
+floor SLIME07 MTOBrownGoo
+floor SLIME08 MTOBrownGoo
+floor RROCK01 MTOLavaSolid
+floor RROCK05 MTOLavaSolid
+floor RROCK06 MTOLavaSolid
+floor RROCK07 MTOLavaSolid
+floor RROCK08 MTOLavaSolid
+floor SLIME09 MTOLavaSolid
+floor SLIME10 MTOLavaSolid
+floor SLIME11 MTOLavaSolid
+floor SLIME12 MTOLavaSolid
+floor LAVA1 MTOLava
+floor LAVA2 MTOLava
+floor LAVA3 MTOLava
+floor LAVA4 MTOLava
+
+// FreeDoom
+floor optional SWATER1 MTOYellowWater
+floor optional SWATER2 MTOYellowWater
+floor optional SWATER3 MTOYellowWater
+floor optional SWATER4 MTOYellowWater
+
+// Eviternity
+floor optional OBLODA01 MTORedGoo
+floor optional ONUKEA01 MTOGreenGoo
+floor optional OSLUDG01 MTOGunkGoo
+floor optional OWATER01 MTOWater
+floor optional OICYWA01 MTOMilkGoo
+floor optional OGOOPY01 MTOPurpleGoo
+floor optional OTAR__01 MTOBlackGoo
+floor optional OLAVAC01 MTOLava
+floor optional OLAVAD01 MTOYellowLava

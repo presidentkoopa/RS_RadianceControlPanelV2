@@ -1,3 +1,11 @@
+// ==== LIQUID SPLASHES ====
+// Fired by the engine's own TERRAIN system (see TERRAIN in the mod root),
+// not polled for. world/mtoliquid/* names the three sounds fancy_liquids.zs's
+// splash actors and the terrain blocks both point at.
+world/mtoliquid/water	DSWATER
+world/mtoliquid/muck	DSMUCK
+world/mtoliquid/lava	DSLAVA
+
 $random DDZ_Flashlight_Off {
 	DarkDoomZ/Flashlight/01
 	DarkDoomZ/Flashlight/02
