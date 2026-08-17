@@ -305,6 +305,16 @@ class FancyTexTable play
 		// Polished. The marble and the clean tech floors.
 		t.Define('tile', 0, "FLOOR7_1 FLOOR7_2 FLAT1 FLAT4 CEIL4_1 CEIL4_2 CEIL4_3");
 
+		// A harder, echoier tile than the row above -- FSTILE21-28 have sat in
+		// sounds/footsteps/ unused since before this table existed. Sourced
+		// from a wider community texture-to-material list that also named
+		// FLOOR4_8, FLOOR7_2 and DEM1_1-6 for this row; all three are already
+		// claimed above (FLOOR4_8 as metal, FLOOR7_2 as tile, DEM1_1-6 as
+		// flesh) and are deliberately not moved here to match -- this table's
+		// own judgement on those three stands, only the genuinely open names
+		// are added.
+		t.Define('tile2', 0, "FLOOR4_6 FLOOR5_1 FLOOR5_2 FLOOR5_3");
+
 		// Hell's meat floors, and the only material with a single sample --
 		// the driver leans harder on pitch variation for these.
 		t.Define('flesh', 0,

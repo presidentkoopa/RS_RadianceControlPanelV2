@@ -340,6 +340,21 @@ world/step/tile4        FSTILE04
 world/step/tile5        FSTILE05
 world/step/tile6        FSTILE06
 
+// A harder, echoier tile than world/step/tile -- FSTILE21-28 sat unused in
+// sounds/footsteps/ until FancyTexTable.BuildSteps() picked up a 'tile2' row.
+// NOT named world/step/tile2: that name is already taken, as the second
+// member of the world/step/tile group two rows up (FSTILE02). Collision
+// avoided by naming the group after the material instead of after the row.
+$random world/step/tilehard { world/step/tilehard1 world/step/tilehard2 world/step/tilehard3 world/step/tilehard4 world/step/tilehard5 world/step/tilehard6 world/step/tilehard7 world/step/tilehard8 }
+world/step/tilehard1    FSTILE21
+world/step/tilehard2    FSTILE22
+world/step/tilehard3    FSTILE23
+world/step/tilehard4    FSTILE24
+world/step/tilehard5    FSTILE25
+world/step/tilehard6    FSTILE26
+world/step/tilehard7    FSTILE27
+world/step/tilehard8    FSTILE28
+
 $random world/step/carpet { world/step/carpet1 world/step/carpet2 world/step/carpet3 }
 world/step/carpet1      FSCARP1
 world/step/carpet2      FSCARP2
@@ -366,6 +381,7 @@ $volume world/step/gravel 0.45
 $volume world/step/dirt   0.40
 $volume world/step/rock   0.45
 $volume world/step/tile   0.45
+$volume world/step/tilehard 0.45
 $volume world/step/carpet 0.35
 $volume world/step/flesh  0.40
 $volume world/step/snow   0.40

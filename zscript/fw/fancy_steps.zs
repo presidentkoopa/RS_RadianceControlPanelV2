@@ -172,6 +172,7 @@ class FancyFootsteps : EventHandler
 		case 'gravel': pmo.A_StartSound("world/step/gravel", CHAN_AUTO, 0, vol, ATTN_NORM, pitch); break;
 		case 'rock':   pmo.A_StartSound("world/step/rock",   CHAN_AUTO, 0, vol, ATTN_NORM, pitch); break;
 		case 'tile':   pmo.A_StartSound("world/step/tile",   CHAN_AUTO, 0, vol, ATTN_NORM, pitch); break;
+		case 'tile2':  pmo.A_StartSound("world/step/tilehard", CHAN_AUTO, 0, vol, ATTN_NORM, pitch); break;
 		case 'carpet': pmo.A_StartSound("world/step/carpet", CHAN_AUTO, 0, vol, ATTN_NORM, pitch); break;
 		case 'snow':   pmo.A_StartSound("world/step/snow",   CHAN_AUTO, 0, vol, ATTN_NORM, pitch); break;
 		case 'flesh':  pmo.A_StartSound("world/step/flesh",  CHAN_AUTO, 0, vol, ATTN_NORM, pitch); break;
