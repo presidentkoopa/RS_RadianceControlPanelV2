@@ -61,20 +61,68 @@ class UMESettings abstract play
 // it, the same shape FancyLiquidFlourish already uses in fancy_liquids.zs.
 class UMEDecorFX abstract play
 {
-	// A permanent Shape (life 0) at the prop's own light height, tracking it
-	// exactly the way FancyEmitter's own fwShapeSlot does since the
-	// DynamicLight swap -- one slot, moved rather than re-added, so it keeps
-	// its identity (and its place in the eviction order) for as long as the
-	// prop stands. Returns the slot so the caller can hold and release it.
-	static int Glow(Actor from, Color c, double radius, double intensity)
+	// ---- THE SLOT BUDGET IS THE WHOLE DESIGN HERE --------------------------
+	//
+	// A prop's glow is a PERMANENT Shape (life 0), and permanent shapes are
+	// deliberately protected from eviction by the engine's own allocator
+	// (ShapeSlot in vmthunks.cpp) -- so a hundred torches would not gracefully
+	// degrade, they would exhaust all 128 slots and then start overwriting
+	// slot 0, stealing a light some other prop still believes it owns and
+	// still intends to release.
+	//
+	// That budget is shared: kill marks, liquid rings and bubbles, FancyWorld's
+	// own emitter lights and these all draw on the same 128. A big hell map can
+	// hold sixty torches on its own.
+	//
+	// So a prop only holds a slot while a player is near enough to see it,
+	// exactly as FancyEmitter does since the DynamicLight swap. Nothing is
+	// lost by it -- a light nobody is close enough to see was not doing
+	// anything with the slot it was holding.
+	//
+	// Called from the prop's own Tick with its current slot; returns the slot
+	// it should hold now. Create-when-wanted, release-when-not, one call site
+	// per prop.
+	static int GlowUpdate(Actor from, int slot, Color c, double radius,
+		double intensity)
 	{
-		if (!UMESettings.GetBool("ume_decorations", true)) return -1;
-		if (radius <= 0.0) return -1;
+		bool wanted = UMESettings.GetBool("ume_decorations", true)
+			&& radius > 0.0 && InRange(from);
 
-		return level.AddShape(1, 2,
-			from.pos.x, from.pos.y, from.pos.z + from.height * 0.6,
-			radius, 0.0, 3.0, c, intensity, 0.0);
+		if (wanted && slot < 0)
+		{
+			return level.AddShape(1, 2,
+				from.pos.x, from.pos.y, from.pos.z + from.height * 0.6,
+				radius, 0.0, 3.0, c, intensity, 0.0);
+		}
+
+		if (!wanted && slot >= 0)
+		{
+			level.RemoveShape(slot);
+			return -1;
+		}
+
+		return slot;
 	}
+
+	// Distance to the viewing player, against the same default FancyWorld uses
+	// for its own emitters. Squared, so this never takes a square root -- it
+	// runs on every lit prop in the map on the tics the stagger lets through.
+	static bool InRange(Actor from)
+	{
+		if (!playeringame[consoleplayer]) return false;
+		let pmo = players[consoleplayer].mo;
+		if (!pmo) return false;
+
+		double r = UMESettings.GetFloat("ume_light_range", 2048.0);
+		return (pmo.pos - from.pos).LengthSquared() <= r * r;
+	}
+
+	// The range check is not worth running every tic on every prop, and a
+	// light appearing a third of a second late at 2048 units away is not
+	// something anyone can see. Each prop gets its own starting phase so a
+	// corridor of sixteen torches does not do all of its checking on the
+	// same tic.
+	const CHECK_PERIOD = 15;
 
 	// The moment of breaking: the permanent glow above is the caller's to
 	// release (it knows its own slot), this only adds the flourish on top --
@@ -114,7 +162,12 @@ class UMEDecorFX abstract play
 	// is already short-lived and self-expiring, so there is nothing to leak.
 	static void Pulse(Actor from, Color c, double radius, double intensity)
 	{
+		// Range-gated for the same reason the steady glow is, and it matters
+		// MORE here, not less: a pulse spends a fresh slot every time it
+		// fires, so an idol across the map would be churning the budget
+		// several times a second for something nobody can see.
 		if (!UMESettings.GetBool("ume_decorations", true)) return;
+		if (!InRange(from)) return;
 
 		int slot = level.AddShape(1, 2,
 			from.pos.x, from.pos.y, from.pos.z + from.height * 0.6,

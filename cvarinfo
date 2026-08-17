@@ -1578,3 +1578,10 @@ server bool ume_scenery = true;
 // sprite on a floor. Its own cvar because it is the one thing here that can
 // affect whether a map is completable. See ume_keys.zs.
 server bool ume_key_glow = true;
+
+// How close you must be for a prop's light to exist at all. The Shape budget
+// is 128 slots shared with kill marks, liquid rings and FancyWorld's own
+// emitters, and a prop's light is permanent while it holds one -- so a hell
+// map with sixty torches would exhaust the whole budget on lights nobody is
+// near. Same default and same reasoning as fw_range.
+server float ume_light_range = 2048.0;
