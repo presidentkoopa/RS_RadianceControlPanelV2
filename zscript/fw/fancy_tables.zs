@@ -1,19 +1,12 @@
 // ============================================================================
-//  Environmental FancyWorld -- what the texture table still does.
+//  Environmental FancyWorld -- the texture table.
 // ============================================================================
 //
-//  This used to also build the wall, floor and ceiling emitter tables and the
-//  one-row thing-emitter matcher -- the lookup behind the whole ambience scan.
-//  That scan is gone. Two readings of the map's textures earned their keep
-//  independently of it and stay:
-//
-//  BuildFog() is what lets the mist take its colour from the liquid you are
-//  standing in (fw_scan.zs's IndexLiquids reads it at load, GlowHandler.zs's
-//  fog colour mode 4 reads the result every frame). BuildSteps() is what
-//  fancy_steps.zs asks per footfall to know what you just stepped on. Neither
-//  needs a scanner, a lattice or an emitter -- both are answered by a single
-//  array read against the same lookup machinery, which is the part worth
-//  keeping this class for.
+//  RESTORED after the ambience scan was removed and then asked back:
+//  BuildWalls(), BuildFloors(), BuildCeilings() and FancyThingEmitter() all
+//  work as they did before. BuildFog() (the liquid-colour reading for Fog's
+//  mode 4) and BuildSteps() (footsteps) never left -- neither one needed the
+//  scanner, only this class's lookup machinery.
 //
 // ============================================================================
 
@@ -84,6 +77,163 @@ class FancyTexTable play
 
 	Name RowClass(int row) const { return emitClass[row - 1]; }
 	int RowTint(int row) const { return emitTint[row - 1]; }
+
+	// ---- walls ------------------------------------------------------------
+	//
+	// RESTORED. Floors, ceilings and things are still pending.
+	static FancyTexTable BuildWalls()
+	{
+		let t = new("FancyTexTable");
+
+		// Plutonia waterfalls, plus the WADSMOOSH names for the same thing.
+		t.Define("FancyWallWaterfall", 0,
+			"WFALL1 WFALL2 WFALL3 WFALL4 PWFALL1 PWFALL2 PWFALL3 PWFALL4");
+
+		t.Define("FancyWallBloodfall", 0, "BFALL1 BFALL2 BFALL3 BFALL4");
+		t.Define("FancyWallSlimefall", 0, "SFALL1 SFALL2 SFALL3 SFALL4");
+
+		// ObAddon lavafalls and the CC4 set.
+		t.Define("FancyWallLavafall", 0,
+			"LFALL1 LFALL2 LFALL3 LFALL4 LFAL21 LFAL22 LFAL23 LFAL24 "
+			"LAVFALL1 LAVFALL2 LAVFALL3 LAVFALL4");
+
+		t.Define("FancyWallSlimedrip", 0, "SLADRIP1 SLADRIP2 SLADRIP3");
+		t.Define("FancyWallGargfont", 0, "GSTFONT1 GSTFONT2 GSTFONT3");
+
+		// A wall that is a PICTURE of dripping blood, in doom.wad and
+		// doom2.wad both, and named nowhere in this file until now. It sits
+		// next to SLADRIP and GSTFONT because it is the same idea found in the
+		// same place -- the difference is that this one fires one-shots rather
+		// than holding a loop. See FancyWallBloodDrip.
+		t.Define("FancyWallBloodDrip", 0, "BLODRIP1 BLODRIP2 BLODRIP3 BLODRIP4");
+
+		t.Define("FancyWallCompstation", 0,
+			"COMPSTA1 COMPSTA2 COMPSTA3 COMPSTA4 COMPSTA5 COMPSTA6 COMPTALR");
+
+		t.Define("FancyWallFireblu", 0, "FIREBLU1 FIREBLU2");
+
+		t.Define("FancyWallFirewall", 0,
+			"FIREMAG1 FIREMAG2 FIREMAG3 FIREWALL FIREWALA FIREWALB "
+			"FIRELAVA FIRELAV2 FIRELAV3");
+
+		t.Define("FancyWallTechhum", 0,
+			"COMPTALL COMP2 SPACEW3 COMPUTE1 PLANET1 "
+			"COMPUTE4 COMPUTE7 COMPUTE8 COMPUTE9");
+
+		// COMPFUZ1-4 ARE NOT IN doom.wad OR doom2.wad -- checked by reading
+		// TEXTURE1/TEXTURE2 out of both -- but they are real: a texture set
+		// that ships in Brutal Doom and a number of other community mods and
+		// texture packs. Bind() no-ops on a name that doesn't resolve in
+		// whatever WAD is actually loaded, so there is no cost to listing a
+		// name that is only sometimes present, and real cost to leaving it
+		// out for the WADs that do ship it.
+		//
+		// COMPOHSO, COMPWERD and COMPSPAN are the three garbled-screen
+		// textures actually in the vanilla IWADs (COMPOHSO in doom1,
+		// COMPWERD and COMPSPAN in both) and stay alongside COMPFUZ rather
+		// than in place of it. COMPBLUE and COMPTILE were also considered and
+		// are deliberately NOT here: COMPBLUE is a general-purpose tech wall
+		// used across whole episodes of Doom 1, and a strobing broken monitor
+		// on every one of them is the FLAT2 mistake with a sound attached --
+		// that one is a real judgement call, not a name that might not
+		// resolve.
+		t.Define("FancyWallStatic", 0,
+			"COMPOHSO COMPWERD COMPSPAN COMPFUZ1 COMPFUZ2 COMPFUZ3 COMPFUZ4");
+		t.Define("FancyWallFaces", 0, "SP_FACE1");
+
+		// WALL LIGHTS, SPLIT BY COLOUR.
+		//
+		// The old code had all eighteen of these in one array feeding one
+		// class, which meant a blue light and a red light produced the same
+		// nothing. The map has been telling us the colour the whole time --
+		// it is right there in the texture name -- so each family gets its
+		// own row and its own tint, and a corridor of LITERED now actually
+		// runs red.
+		t.Define("FancyWallLights", 0xFFE8B0,
+			"LITE2 LITE3 LITE4 LITE5 LITE96 LITEMET LITESTON BRICKLIT BSTONE3");
+		t.Define("FancyWallLights", 0x4080FF, "LITEBLU1 LITEBLU4");
+		t.Define("FancyWallLights", 0xFF3828, "LITERED LITERED1 LITERED2");
+		t.Define("FancyWallLights", 0x40FF60, "LITEGRN1");
+		t.Define("FancyWallLights", 0xFFD040, "LITEYEL1 LITEYEL2 LITEYEL3");
+
+		return t;
+	}
+
+	// ---- floors -----------------------------------------------------------
+	//
+	// RESTORED. Ceilings and things are still pending.
+	static FancyTexTable BuildFloors()
+	{
+		let t = new("FancyTexTable");
+
+		t.Define("FancySectorNukageCore", 0, "NUKAGE1 NUKAGE2 NUKAGE3 NUKAGE4");
+		t.Define("FancySectorWaterCore", 0, "FWATER1 FWATER2 FWATER3 FWATER4");
+
+		t.Define("FancySectorSlimeCore", 0,
+			"SLIME01 SLIME02 SLIME03 SLIME04 SLIME05 SLIME06 SLIME07 SLIME08 "
+			"SLUDGE01 SLUDGE02 SLUDGE03 SLUDGE04");
+
+		// BLOOD IS NOT SLIME. It used to be on the row above, which lit it
+		// green while the fog table gave the same four flats dark red. See
+		// FancySectorBloodCore in fancy_floors.zs for why it is quieter than
+		// everything else here.
+		t.Define("FancySectorBloodCore", 0, "BLOOD1 BLOOD2 BLOOD3 BLOOD4");
+
+		t.Define("FancySectorLavaCore", 0,
+			"LAVA1 LAVA2 LAVA3 LAVA4 QLAVA1 QLAVA2 QLAVA3 QLAVA4");
+
+		t.Define("FancySectorHotCore", 0, "SLIME09 SLIME10 SLIME11 SLIME12");
+		t.Define("FancySectorXWaterCore", 0, "XWATER1 XWATER2 XWATER3 XWATER4");
+
+		// Teleporter pads. These are the "old way" scan -- one emitter at the
+		// sector's centre spot -- because a teleporter pad is a small square
+		// and its centre is always inside it.
+		t.Define("FancySectorTeleporterCore", 0,
+			"GATE1 GATE2 GATE3 GATE4 "
+			"GATE3TN GATE4BL GATE4GN GATE4OR GATE4RD GATE4YL");
+
+		return t;
+	}
+
+	// ---- ceilings ---------------------------------------------------------
+	//
+	// RESTORED. Things are still pending.
+	static FancyTexTable BuildCeilings()
+	{
+		let t = new("FancyTexTable");
+
+		t.Define("FancySectorSky", 0, "F_SKY1");
+
+		t.Define("FancySectorCeilingLite", 0,
+			"CEIL1_2 CEIL1_3 CEIL3_6 FLAT2 FLAT17 GRNLITE1 "
+			"TLITE6_1 TLITE6_4 TLITE6_5 TLITE6_6");
+
+		// WET ROCK, AND ONLY ROCK. GRNROCK and the RROCK family are Doom II's
+		// broken-stone flats, and a sector with one of them as its CEILING is
+		// an enclosed cave -- an outdoor one would have F_SKY1 up there
+		// instead.
+		t.Define("FancyCeilingDrip", 0, "GRNROCK RROCK03 RROCK04 RROCK13");
+
+		return t;
+	}
+
+	// ---- things ------------------------------------------------------------
+	//
+	// RESTORED. Not a FancyTexTable -- a thing has no texture, so `is` checks
+	// against the actor class stand in for the Bind()/Find() lookup. Adding
+	// the hanging bodies, the barrel or the EvilEye is one line here and one
+	// class beside FancyThingTorch. None of them ship: each would cost a
+	// manifest entry and an sndinfo block for a decoration that appears a
+	// handful of times per megawad.
+	static Name FancyThingEmitter(Actor a)
+	{
+		if (a is 'RedTorch'   || a is 'GreenTorch'   || a is 'BlueTorch'
+		 || a is 'ShortRedTorch' || a is 'ShortGreenTorch' || a is 'ShortBlueTorch'
+		 || a is 'BurningBarrel')
+			return 'FancyThingTorch';
+
+		return '';
+	}
 
 	// ---- fog ------------------------------------------------------------
 	//

@@ -59,9 +59,10 @@ slightly behind your aim the way a thing held at the end of an arm does.
 **Kills leave marks**, numbers count in the world where things died, and the
 walls pulse harder as monsters close in — a health bar you feel instead of read.
 
-**Your footsteps match the floor.** Doom has never had them -- the sound
-comes from whatever flat is under you: metal, wood, gravel, dirt, rock, tile,
-flesh, or a splash in liquid.
+**And the map itself makes noise.** Every waterfall, computer, lavafall and
+lit ceiling flat in the level gets found automatically and given sound, light
+and particles. Footsteps match what you are standing on. Sounds muffle when
+you lose sight of them.
 
 ---
 
@@ -94,7 +95,7 @@ Two buttons worth knowing:
 | **↳ Edit one band** | All ten settings for a single band, with a selector. |
 | **↳ Grid options** | The lattice inside a band — spacing, width, rotation, drift, flicker, and whether it hangs in the air. |
 | **Volumetric Flashlight** | Mount, range, cone angles, intensity, colour cycling, dust, bounce fill, beam drag, and whether it wakes monsters. |
-| **Footsteps** | Volume and stride -- how far you walk between footfalls. |
+| **World Ambience** | The texture scan: lights and their detail, particles, footsteps and their stride, how hard sounds muffle when you cannot see them, emitter range and spacing. |
 | **Colours Change the Fight** | The room's current colour carries a rule — monsters tougher, weaker, faster, slower, or health raining down. Reached from the sweep's gameplay page. |
 | **Glow waves / Texture in the glow** | Undulation along a surface, and structure inside the lit area. |
 | **Shapes** | Marks stamped on the floor by kills and shots. |
@@ -124,15 +125,27 @@ used); code from Kinsie, Gutawer, FishyClockwork, phantombeta, Marisa Kirisame,
 Accensus; logo by Accensus. Its own flashlight and fog were removed, as this
 mod already had both.
 
-**Environmental FancyWorld** — the footstep sounds began as the 2019 mod of
-that name, along with the texture research behind them: the mapping from
-Doom's flat names to what material they actually depict. The ambience scan
-built on top of that research — emitters read off waterfalls, computers,
-lavafalls and lit ceilings — was removed for being more maintenance than it
-was worth; the implementation was never original to the source mod regardless.
-The original does not name its author anywhere in its own files; if you know
-who wrote it, please say so and the credit goes in. Assets are sourced from
-several commercial games and no ownership is claimed over them.
+**Environmental FancyWorld** — the ambience layer began as the 2019 mod of that
+name, which contributed its sound and sprite assets and its texture research.
+The implementation is not original to it. The original does not name its author
+anywhere in its own files; if you know who wrote it, please say so and the
+credit goes in. Assets are sourced from several commercial games and no
+ownership is claimed over them.
+
+**Ambience additions** — the sky wind, the cave drip, the wall drips and the
+torches come from three community ambience mods: *Universal Ambience*,
+*Ambient Decorations*, and a Cosmo ambience script. Their own samples trace
+back to S.T.A.L.K.E.R., Half-Life 1 and 2, Portal, Silent Hill and Resident
+Evil. As with FancyWorld above, none of those three name an author anywhere
+in their own files; if you know who wrote them, please say so and the credit
+goes in. No ownership is claimed over any of it. (The klaxon on the sweep
+band and the four preset voices these mods also contributed are not
+currently part of this build.)
+
+Everything here was downmixed to mono on the way in, and that is not a
+housekeeping note. GZDoom does not spatialise a stereo sound: it plays flat at
+your head, at full volume, everywhere in the map. A stereo file in this mod
+would be exactly the thing this mod exists to avoid.
 
 **Tooltip menu library** by ToxicFrog, MIT.
 

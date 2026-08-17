@@ -11,24 +11,20 @@ version "4.14"
 #include "zscript/ColorLaw.zs"
 
 // ============================================================
-//  What survives of Environmental FancyWorld.
+//  Environmental FancyWorld, restored after removal. Only the
+//  klaxon (and gitd_voice, which fed it and the wall/floor
+//  dialects) stays out, on a separate decision.
 //
-//  The texture-scanned ambience layer -- emitters placed on
-//  every liquid floor, lit ceiling and interesting wall, four
-//  preset dialects, the sweep klaxon -- was removed for being
-//  more maintenance than it was worth. Two things it did stay,
-//  because neither one depends on the part that got cut:
-//
-//  Footsteps, matched to the flat under you. And the fog
-//  taking its colour from whichever liquid you are nearest,
-//  which is why fw_scan.zs is still here -- trimmed to reading
-//  the map's liquid sectors once at load for Render.zs's fog
-//  colour mode 4, and nothing else.
-//
-//  ORDER: fancy_tables.zs must parse before fw_scan.zs, which
-//  reads FancyTexTable.BuildFog() from it.
+//  ORDER: the emitter base and the tables must parse before
+//  anything that inherits from or reads them. fw_scan.zs stays
+//  last because it is the one file that names every class the
+//  others define.
 // ============================================================
 #include "zscript/fw/fancy_common.zs"
 #include "zscript/fw/fancy_tables.zs"
 #include "zscript/fw/fancy_steps.zs"
+#include "zscript/fw/fancy_walls.zs"
+#include "zscript/fw/fancy_floors.zs"
+#include "zscript/fw/fancy_ceilings.zs"
+#include "zscript/fw/fancy_things.zs"
 #include "zscript/fw/fw_scan.zs"
