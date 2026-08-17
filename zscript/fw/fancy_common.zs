@@ -26,6 +26,15 @@
 //     knows every lavafall, every broken monitor, every lit ceiling flat in
 //     the map. It was spending all of that on audio alone.
 //
+//  A THIRD THING CHANGED LATER (2026-08-17): the light stopped being a real
+//  DynamicLight. A_AttachLight/A_RemoveLight put every lit emitter on the
+//  engine's own dynamic-light budget -- exactly the cost Sector Sweep and
+//  the beams stopped paying years ago by asking the fragment shader a
+//  question instead of placing an object. level.AddShape is that same
+//  question, already proven by kill marks and Standing Shapes: a slot in a
+//  128-entry array read once a frame, not a live light every draw call has
+//  to account for. See fwShapeSlot and the wantLight arm in FancyUpdate.
+//
 // ============================================================================
 
 // CVar reads, wrapped so a missing cvar is a default and not a crash. Marked
@@ -128,6 +137,21 @@ class FancyEmitter : Actor
 	private double	fwOccl;      // where the volume actually is, 0..1
 	private double	fwOcclTgt;   // where the sight test says it should be
 
+	// [BB] THE LIGHT IS A SHAPE NOW, NOT A DYNAMICLIGHT.
+	//
+	// A_AttachLight was a real per-actor GZDoom dynamic light, and every one
+	// of them competes for the engine's own dynamic-light budget -- the exact
+	// thing Sector Sweep and the beams stopped doing years ago by asking the
+	// fragment shader a question instead of placing an object. level.AddShape
+	// is that same question, already proven (kill marks, Standing Shapes),
+	// and it costs a slot in a 128-entry array read once a frame rather than
+	// a live light some renderer has to account for every draw.
+	//
+	// -1 = no slot held. Tracked here rather than inferred from fwLit alone
+	// because RemoveShape needs the actual slot number, and AddShape hands
+	// that back once, at attach time.
+	private int		fwShapeSlot;
+
 	Default
 	{
 		-SOLID
@@ -159,19 +183,35 @@ class FancyEmitter : Actor
 	// reachable only from the console is a value nobody will ever see.
 	int FancyVoice() { return FancySettings.GetInt("gitd_voice", 0); }
 
-	// -1 for no light. Otherwise a DynamicLight.ELightType.
+	// -1 for no light, any other value for one. USED ONLY AS A SIGN NOW.
+	// Before the Shapes swap this selected a DynamicLight.ELightType
+	// (PulseLight/FlickerLight/RandomFlickerLight/PointLight); FancyUpdate
+	// no longer reads the value for that, only whether it is >= 0, because a
+	// Shape has no equivalent "light type" -- it has one look, not four.
+	// Subclasses returning a specific ELightType still compile and still
+	// gate correctly; the distinction between which one just stopped
+	// mattering. Not swept clean across every subclass in this pass -- see
+	// FancyLightParam below for why that is a stated debt, not an oversight.
 	virtual int FancyLightType() { return -1; }
 	virtual Color FancyLightColor() { return 0xFFFFFF; }
 	virtual int FancyLightRadius() { return 0; }
+
+	// DEAD since the Shapes swap. A Shape has no secondary radius -- there
+	// is one size, not a min/max pulse range -- so nothing calls this
+	// anymore. Left defined, not deleted, because roughly a dozen
+	// subclasses across fancy_walls.zs/fancy_floors.zs/fancy_ceilings.zs
+	// still override it, and cutting the base virtual out from under them
+	// would be a compile error in every one rather than a clean removal.
+	// Stated here so the next person does not go looking for the caller.
 	virtual int FancyLightRadius2() { return 0; }
 
-	// Third GLDEFS parameter, and it means something different per type:
-	// seconds for PulseLight, a 0..1 chance for FlickerLight, and for
-	// RandomFlickerLight TICS DIVIDED BY 360 -- AttachLightDirect multiplies
-	// everything except PulseLight by 360 before storing it (a_dynlight.cpp:
-	// 926), and this type then compares its tick count against that number
-	// directly. The old note here said "tics", which cost FancyWallStatic a
-	// forty-one-second interval nobody could see. Ignored by PointLight.
+	// DEAD for the same reason -- this was the third GLDEFS parameter
+	// (seconds for PulseLight, a 0..1 chance for FlickerLight, tics/360 for
+	// RandomFlickerLight), and a Shape has no per-type animation parameter
+	// to hand it to. Every subclass override of this is now inert but
+	// harmless: it computes a value nothing reads. Worth an actual cleanup
+	// pass across the emitter files at some point, not bundled into the
+	// swap that made it dead.
 	virtual double FancyLightParam() { return 0.0; }
 
 	// How much of a light this is, against fw_light_detail:
@@ -313,18 +353,38 @@ class FancyEmitter : Actor
 		{
 			Color c = fwHasTint ? fwTint : FancyLightColor();
 			double scale = FancySettings.GetFloat("fw_light_scale", 1.0);
-			A_AttachLight('fancy', type, c,
-				int(FancyLightRadius() * scale),
-				int(FancyLightRadius2() * scale),
-				DynamicLight.LF_ATTENUATE,
-				(0, 0, 0),
-				FancyLightParam());
+
+			// kind 1 (disc), orient 2 (any nearby surface) -- every emitter
+			// this base serves is already sitting flush against real
+			// geometry (a wall light is ON the wall, a liquid glow is ON
+			// the floor), never floating free, so there is no case here
+			// that needs Standing Shapes' full plane math. "Any" rather
+			// than picking floor/wall/ceiling per class is a deliberate
+			// simplification: it costs nothing extra and there is no
+			// FancyEmitter subclass that sits at a boundary ambiguous
+			// enough for it to matter.
+			fwShapeSlot = level.AddShape(
+				1, 2,
+				pos.x, pos.y, pos.z,
+				max(FancyLightRadius() * scale, 1.0),
+				0.0, 4.0,
+				c, 1.4, 0.0);
 			fwLit = true;
 		}
 		else if (!wantLight && fwLit)
 		{
-			A_RemoveLight('fancy');
+			if (fwShapeSlot >= 0) level.RemoveShape(fwShapeSlot);
+			fwShapeSlot = -1;
 			fwLit = false;
+		}
+		else if (wantLight && fwLit && fwShapeSlot >= 0)
+		{
+			// Range didn't change but the map or a preset might have moved
+			// the tint/colour under it (voice changes do not touch colour,
+			// but a future FancyLightColor() override reasonably could) --
+			// MoveShape is nearly free, so just re-assert position every
+			// pass rather than add a second dirty flag nothing sets yet.
+			level.MoveShape(fwShapeSlot, pos.x, pos.y, pos.z);
 		}
 	}
 
@@ -379,6 +439,18 @@ class FancyEmitter : Actor
 		if (rate > 0 && random(0, 255) < rate) FancyPuff();
 	}
 
+	// A DynamicLight died with the actor it was attached to, automatically --
+	// that guarantee does not exist here. A Shape slot is a plain array
+	// entry on FLevelLocals with no idea an actor was ever involved, so an
+	// emitter that gets Thing_Remove'd (or anything else that skips the
+	// range-based release above) while lit would hold its slot forever.
+	override void OnDestroy()
+	{
+		if (fwShapeSlot >= 0) level.RemoveShape(fwShapeSlot);
+		fwShapeSlot = -1;
+		Super.OnDestroy();
+	}
+
 	States
 	{
 	Spawn:
@@ -396,6 +468,7 @@ class FancyEmitter : Actor
 			fwVol   = frandom(0.85, 1.0);
 			fwOccl  = 1.0;
 			fwOcclTgt = 1.0;
+			fwShapeSlot = -1;
 		}
 		TNT1 A 0 { FancyUpdate(); }
 	Idle:
