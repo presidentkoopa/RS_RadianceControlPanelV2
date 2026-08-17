@@ -110,12 +110,17 @@ behind it — you can be hurt while adjusting.
 ## Playing with other mods
 
 Liquids already splash — nukage, blood, slime, water and lava all have real
-TERRAIN-driven splashes built in, not just ambience. Load a **different
-liquid pack** on top and normal load order applies: whichever loads last
-wins for any flat both define, same as any other TERRAIN lump. Either way,
-liquid flats neither this mod nor a loaded pack recognise still feed the fog
-colour through a neutral fallback — see `TERRAIN` in the mod root for the
-`floor optional` entries already covering FreeDoom and Eviternity.
+TERRAIN-driven splashes built in, not just ambience, plus a ring across the
+surface and a couple of bubbles after. Load a **different liquid pack** on
+top and normal load order applies: whichever loads last wins for any flat
+both define, same as any other TERRAIN lump. Either way, liquid flats
+neither this mod nor a loaded pack recognise still feed the fog colour
+through a neutral fallback — see `TERRAIN` in the mod root for the `floor
+optional` entries already covering FreeDoom and Eviternity.
+
+Want the splash itself to be a real animated 3D mesh instead of this mod's
+own shader ring? Load **Universal Map Enhancements** after this mod. Same
+load-order rule applies, and its splash actors take over.
 
 Do **not** load *Environmental FancyWorld* separately. It is built in.
 
@@ -143,6 +148,14 @@ assets further back to Heretic and Hexen. The TERRAIN lump and the ZScript
 splash classes in this mod are written for it, not copied from MTOLiquids'
 own DECORATE — only the sprites, sounds, and the general shape of the idea
 (TERRAIN-driven splashes rather than a scan) carried over.
+
+**Liquid flourishes** — the ring and the bubbles are this mod's own shader
+Shapes, not ported code, but the idea of putting *something* there came from
+looking at *Universal Map Enhancements* (a Brutal Doom v21 companion pack by
+BROS_ETT_311)'s comparable effects. No assets or DECORATE from it are used —
+it states no licence over its own splash actors or its animated 3D splash
+model the way MTOLiquids does over its sprites, so only the concept carried
+over, same as the rest of that pack still waiting on its own component.
 
 **Ambience additions** — the sky wind, the cave drip, the wall drips and the
 torches come from three community ambience mods: *Universal Ambience*,

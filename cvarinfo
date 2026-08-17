@@ -1542,6 +1542,11 @@ server bool  gitd_steps            = true;
 server float gitd_steps_volume     = 1.0;
 server float gitd_steps_stride     = 52.0;   // world units travelled per footfall
 
+// Liquid flourishes. A ring spreads where something crosses a liquid's
+// surface, a couple of bubbles rise after -- layered on the splash itself,
+// which runs regardless of this cvar (see fancy_liquids.zs).
+server bool fw_liquid_flourish = true;
+
 // Muffle emitters you cannot see. A real sight trace, run only on things
 // already in range and already audible.
 //

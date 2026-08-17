@@ -2338,6 +2338,14 @@ OptionMenu "GITDFancyWorld"
 	StaticText "own. In room-scale VR, tune to your stride.", darkgray
 	StaticText ""
 
+	StaticText "Liquid flourishes", gold
+	Option "Rings and bubbles",		"fw_liquid_flourish", "OnOff"
+	StaticText "A ring spreads where something breaks the", darkgray
+	StaticText "surface, and a couple of bubbles rise after", darkgray
+	StaticText "it. Independent of World Ambience above --", darkgray
+	StaticText "the splash itself already was.", darkgray
+	StaticText ""
+
 	StaticText "Through walls", gold
 	Option "Muffle what you can't see",	"gitd_occlusion", "OnOff"
 	Slider "  How much",			"gitd_occlusion_amount", 0.0, 1.0, 0.05, 2
