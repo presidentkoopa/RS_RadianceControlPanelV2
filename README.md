@@ -32,37 +32,43 @@ build your own.
 
 ## What it does
 
-**The world is dark.** Not a filter over the screen — real darkness, with four
-curves to choose from, that can also grow with distance and pool below a
-height so pits and stairwells go deeper than the rooms around them.
+Three components under one roof, shipped as one pk3. Each has its own menu
+page and its own cvar namespace, and any of them can be switched off without
+touching the others.
 
-**Surfaces glow.** Four independent lanes — the bottom of walls, the top of
-walls, the ceiling, the floor — each cycling through eight colours in patterns
-you choose. Corners blend so a wall meeting a floor reads as one light source
-rather than two arguing.
+### GITD — the light
 
-**Bands of light sweep the map.** Up to eight at once, travelling as spheres,
-cylinders or planes, wrapping floor to wall to ceiling in one unbroken line.
-They can brighten, darken, reveal, or wake monsters — a wave the AI hears. They
-can carry a lattice inside them, which is the corridor of lasers.
+- **Per-pixel darkness** — real darkness rather than a filter, four curves, growing with distance and pooling below a height so pits go deeper than the rooms around them.
+- **Surfaces glow** — four independent lanes (wall bottom, wall top, ceiling, floor), eight colours each, corners blending so a wall meeting a floor reads as one source.
+- **Bands sweep the map** — up to eight at once as spheres, cylinders or planes, wrapping floor to wall to ceiling in one unbroken line; they can brighten, darken, reveal or wake monsters.
+- **A lattice inside a band** — the corridor of lasers, hanging in the air.
+- **Mist you stand in** — a layer with a real surface that follows the floor, pooling in low ground and taking its colour from the pool it lies over.
+- **The mist reacts** — gunfire, deaths, explosions, monsters shouldering through it, and your own wake closing behind you.
+- **A tornado** — a funnel of that same mist you can stand inside, with an origin that can hunt the nearest monster.
+- **The floor remembers** — where the fighting happened accumulates and stays.
+- **A volumetric flashlight** — a real cone in the air with dust hanging in it, dragging behind your aim the way a thing held at arm's length does.
+- **Kills leave marks** — SDF shapes stamped into the floor by deaths and shots.
+- **Shapes that stand up** — freestanding in open air with full yaw/pitch/roll, continuous rotation rates, and parent-child linking so they compose into structures.
+- **Numbers in the world** — a kill counter and damage numbers where things died.
+- **Bloom** — threshold, knee, anamorphic streak, tint, chromatic fringing, exposure.
+- **Colour changes the fight** — the room's current colour carries a rule: monsters tougher, weaker, faster, slower.
+- **Eight presets** — one tap for Blackout, Low Power, Red Alert, Black and White and the rest.
 
-**There is mist you stand in.** A layer with a real surface you can look down
-at, that follows the floor so it pools in low ground and thins on high. It
-takes colour from the pool it is lying over. You part it as you walk and it
-closes behind you. Gunfire, deaths and explosions disturb it.
+### FancyWorld — the ambience
 
-**Your torch is a real cone in the air**, with dust hanging in it, and it drags
-slightly behind your aim the way a thing held at the end of an arm does.
+- **The map makes noise** — every waterfall, computer, lavafall and lit ceiling flat is found at load and given sound, light and particles, on WADs that never heard of this mod.
+- **Footsteps** — the material comes from the flat under you: metal, grating, wood, gravel, dirt, rock, tile, flesh.
+- **Sound muffles through walls** — a real sight trace, so a waterfall behind a sealed door stops being as loud as one in front of you.
+- **Liquids tint the mist** — the fog takes its colour from the pool it is lying over.
+- **Liquids splash** — real TERRAIN-driven splashes on nukage, blood, slime, water and lava, not a timed guess.
+- **And ring after** — a wave spreads across the surface where something broke it, and a couple of bubbles rise behind it.
 
-**The floor remembers.** Where the fighting happened accumulates and stays.
+### Universal Map Enhancements — the props
 
-**Kills leave marks**, numbers count in the world where things died, and the
-walls pulse harder as monsters close in — a health bar you feel instead of read.
-
-**And the map itself makes noise.** Every waterfall, computer, lavafall and
-lit ceiling flat in the level gets found automatically and given sound, light
-and particles. Footsteps match what you are standing on. Sounds muffle when
-you lose sight of them.
+- **Lit props** — fifteen vanilla decorations that already animate bright (torches, tech lamps, candles, the burning barrel) now cast the light they were always implying, and break in one hit.
+- **Two of them breathe** — the evil eye and the floating skull pulse rather than glow, and go wrong under Lovecraftian Fog.
+- **Breakable scenery** — thirteen unlit props (columns, impaled heads, trees, stalagmites) shatter into debris. No glow: none of them are lit in vanilla.
+- **Keys you can find** — each key carries its own light in its lock's colour, because a keycard is a small flat sprite and this mod makes floors black.
 
 ---
 
