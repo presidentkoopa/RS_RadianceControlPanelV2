@@ -421,6 +421,10 @@ OptionMenu "GITDOptions"
 	StaticText "Ambience read out of the map's own textures", darkgray
 	StaticText "-- lights, mist, footsteps, muffled sound.", darkgray
 	StaticText ""
+	Submenu "Enhancements...",		"GITDUnivMapEnh"
+	StaticText "Decorative props the map already placed, given", darkgray
+	StaticText "a real light and a reason to shoot them.", darkgray
+	StaticText ""
 	StaticText ""
 
 	Command "The Hallway",			"gitd_hallway"
@@ -2364,6 +2368,29 @@ OptionMenu "GITDFancyWorld"
 	Option "Floor/ceiling spacing",	"fw_spacing", "FWSpacing"
 	Option "Wall spacing",			"fw_wall_spacing", "FWWallSpacing"
 	StaticText "Both apply on the next map.", darkgray
+}
+
+//============================================================================
+//  Universal Map Enhancements -- the third component. Independent of
+//  FancyWorld above; see zscript/ume/ume_common.zs for why.
+//============================================================================
+OptionMenu "GITDUnivMapEnh"
+{
+	Class "DarkDoomZ_OptionMenu"
+	Title "Universal Map Enhancements"
+	StaticText ""
+
+	Option "Decorative props",		"ume_decorations", "OnOff"
+	StaticText "Every vanilla torch, tech lamp and the burning", darkgray
+	StaticText "barrel already animates BRIGHT in its own", darkgray
+	StaticText "sprite -- this gives what it was already", darkgray
+	StaticText "implying a real light, and one hit breaks it.", darkgray
+	StaticText "Columns, candles and skulls are left alone:", darkgray
+	StaticText "they don't already claim to be lit.", darkgray
+	StaticText ""
+	StaticText "More of this pack -- gore, the vehicles, the", darkgray
+	StaticText "per-map decoration database -- is deliberately", darkgray
+	StaticText "not here. See README.md for why.", darkgray
 }
 
 OptionValue "FWLightDetail"

@@ -120,7 +120,9 @@ optional` entries already covering FreeDoom and Eviternity.
 
 Want the splash itself to be a real animated 3D mesh instead of this mod's
 own shader ring? Load **Universal Map Enhancements** after this mod. Same
-load-order rule applies, and its splash actors take over.
+load-order rule applies, and its splash actors take over — and if it also
+loads after, its own torch and lamp replacers win over this mod's for the
+same reason: last `replaces` for a given actor wins.
 
 Do **not** load *Environmental FancyWorld* separately. It is built in.
 
@@ -155,7 +157,24 @@ looking at *Universal Map Enhancements* (a Brutal Doom v21 companion pack by
 BROS_ETT_311)'s comparable effects. No assets or DECORATE from it are used —
 it states no licence over its own splash actors or its animated 3D splash
 model the way MTOLiquids does over its sprites, so only the concept carried
-over, same as the rest of that pack still waiting on its own component.
+over.
+
+**Universal Map Enhancements, the third component** — decorative props
+(torches, tech lamps, the burning barrel) that already animate BRIGHT in
+their own vanilla IWAD sprite now cast a real light and break in one hit,
+the same idea GITD already applies to lit ceiling flats and wall textures.
+Every class is a `replaces` for a stock Doom actor, keeping that actor's own
+sprite and size unchanged — nothing is copied from UME's DECORATE or its
+assets, only the observation that these props were already implying a light
+source. The rest of that pack — roughly 2,000 more actors covering gore,
+Sgt Mark IV's vehicles, active/disabled bosses, and a hand-authored per-map
+decoration database spanning dozens of specific vanilla and community maps
+— is deliberately not here. Gore's own mechanic (20-30 real flying giblet
+actors per death) is the actor-swarm pattern this mod exists to avoid, not
+a borderline case; the vehicles carry an explicit "ask me first" notice from
+their actual author; the per-map database is a scale of hand-placed,
+non-portable content a single component shouldn't try to absorb wholesale.
+None of that is ruled out forever, just not part of this first slice.
 
 **Ambience additions** — the sky wind, the cave drip, the wall drips and the
 torches come from three community ambience mods: *Universal Ambience*,

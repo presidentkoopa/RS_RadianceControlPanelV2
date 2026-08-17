@@ -1555,3 +1555,14 @@ server bool fw_liquid_flourish = true;
 // should still reach you -- just not as though it were in front of your face.
 server bool  gitd_occlusion        = true;
 server float gitd_occlusion_amount = 0.45;
+
+// ============================================================================
+//  Universal Map Enhancements -- the third component. Independent of
+//  FancyWorld's fw_* cvars on purpose; see zscript/ume/ume_common.zs.
+// ============================================================================
+
+// Replaces every vanilla decoration that already animates BRIGHT (torches,
+// tech lamps, the burning barrel) with a version that casts a real Shape
+// light and breaks in one hit. See ume_decorations.zs for why those and not
+// the columns/candles/skulls that don't already imply a light source.
+server bool ume_decorations = true;

@@ -29,3 +29,10 @@ version "4.14"
 #include "zscript/fw/fancy_things.zs"
 #include "zscript/fw/fancy_liquids.zs"
 #include "zscript/fw/fw_scan.zs"
+
+// ============================================================
+//  Universal Map Enhancements, the third component. Independent
+//  of FancyWorld on purpose -- see ume_common.zs.
+// ============================================================
+#include "zscript/ume/ume_common.zs"
+#include "zscript/ume/ume_decorations.zs"
