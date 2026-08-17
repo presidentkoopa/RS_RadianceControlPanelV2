@@ -37,6 +37,17 @@ class UMESettings abstract play
 		let c = CVar.FindCVar(cv);
 		return c ? c.GetFloat() : def;
 	}
+
+	// Only ever used to read gitd_voice (see UMEDecorFX.Pulse) -- a plain
+	// CVar read by name, not a call into any FancyWorld/GITD class, so it
+	// costs this file nothing of the independence the header above insists
+	// on. The active preset's voice is closer to shared world state than to
+	// anyone's private variable.
+	static int GetInt(string cv, int def)
+	{
+		let c = CVar.FindCVar(cv);
+		return c ? c.GetInt() : def;
+	}
 }
 
 // ---- shared behaviour for the decoration replacers -------------------------
@@ -88,5 +99,26 @@ class UMEDecorFX abstract play
 				0, 0, -0.10,
 				0.8, 0.016, 0.05);
 		}
+	}
+
+	// A BREATHING light rather than a steady one, for the two props that are
+	// an ominous THING more than a light fixture (EvilEye, FloatingSkull).
+	// There is no oscillating parameter on a Shape -- grow only ever moves
+	// one direction -- so this fakes a pulse the same way a heartbeat reads
+	// as continuous from discrete beats: the caller's own Tick() re-invokes
+	// this every 12-20 tics with a life longer than that interval, so the
+	// next swell starts before the last one has finished fading and the
+	// light never actually goes dark between calls.
+	//
+	// Not tracked or released on destroy like Glow's slot is -- every pulse
+	// is already short-lived and self-expiring, so there is nothing to leak.
+	static void Pulse(Actor from, Color c, double radius, double intensity)
+	{
+		if (!UMESettings.GetBool("ume_decorations", true)) return;
+
+		int slot = level.AddShape(1, 2,
+			from.pos.x, from.pos.y, from.pos.z + from.height * 0.6,
+			radius, 0.0, 3.0, c, intensity, 1.15);
+		if (slot >= 0) level.SetShapeMotion(slot, 0.0, 0.0, radius * 0.3);
 	}
 }

@@ -272,3 +272,192 @@ class UMEBurningBarrel : BurningBarrel replaces BurningBarrel
 		Stop;
 	}
 }
+
+// ---- Column ----------------------------------------------------------------
+//
+// Missed in the first pass -- Column (COLU) is BRIGHT in the IWAD exactly
+// like the tech lamps, and belongs to the same family: the plain tech-base
+// aesthetic reads as internally lit, not as carved stone.
+
+class UMEColumn : Column replaces Column
+{
+	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	private int umeSlot;
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		umeSlot = UMEDecorFX.Glow(self, 0xFFE8B0, 60.0, 1.3);
+	}
+	override void OnDestroy()
+	{
+		if (umeSlot >= 0) level.RemoveShape(umeSlot);
+		Super.OnDestroy();
+	}
+	States
+	{
+	Death:
+		TNT1 A 0
+		{
+			if (umeSlot >= 0) { level.RemoveShape(umeSlot); umeSlot = -1; }
+			UMEDecorFX.Shatter(self, 0xFFE8B0, 60.0);
+		}
+		Stop;
+	}
+}
+
+// ---- Candles -----------------------------------------------------------
+
+class UMECandlestick : Candlestick replaces Candlestick
+{
+	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	private int umeSlot;
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		umeSlot = UMEDecorFX.Glow(self, 0xFFB050, 36.0, 1.1);
+	}
+	override void OnDestroy()
+	{
+		if (umeSlot >= 0) level.RemoveShape(umeSlot);
+		Super.OnDestroy();
+	}
+	States
+	{
+	Death:
+		TNT1 A 0
+		{
+			if (umeSlot >= 0) { level.RemoveShape(umeSlot); umeSlot = -1; }
+			UMEDecorFX.Shatter(self, 0xFFB050, 36.0);
+		}
+		Stop;
+	}
+}
+
+class UMECandelabra : Candelabra replaces Candelabra
+{
+	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	private int umeSlot;
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		umeSlot = UMEDecorFX.Glow(self, 0xFFB050, 44.0, 1.2);
+	}
+	override void OnDestroy()
+	{
+		if (umeSlot >= 0) level.RemoveShape(umeSlot);
+		Super.OnDestroy();
+	}
+	States
+	{
+	Death:
+		TNT1 A 0
+		{
+			if (umeSlot >= 0) { level.RemoveShape(umeSlot); umeSlot = -1; }
+			UMEDecorFX.Shatter(self, 0xFFB050, 44.0);
+		}
+		Stop;
+	}
+}
+
+class UMEHeadCandles : HeadCandles replaces HeadCandles
+{
+	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	private int umeSlot;
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		umeSlot = UMEDecorFX.Glow(self, 0xFFC868, 40.0, 1.2);
+	}
+	override void OnDestroy()
+	{
+		if (umeSlot >= 0) level.RemoveShape(umeSlot);
+		Super.OnDestroy();
+	}
+	States
+	{
+	Death:
+		TNT1 A 0
+		{
+			if (umeSlot >= 0) { level.RemoveShape(umeSlot); umeSlot = -1; }
+			UMEDecorFX.Shatter(self, 0xFFC868, 40.0);
+		}
+		Stop;
+	}
+}
+
+// ---- The ominous ones --------------------------------------------------
+//
+// EvilEye and FloatingSkull are BRIGHT too, but they aren't light fixtures --
+// they're things watching you. A steady glow like the torches would flatten
+// that into "another lamp"; a breathing pulse (UMEDecorFX.Pulse) keeps it
+// reading as alive. Both read gitd_voice directly -- see UMESettings.GetInt
+// for why that one read doesn't compromise this component's independence --
+// and go a shade wronger and a beat faster under Lovecraftian Fog, the same
+// move FancyWallFaces already makes on the SP_FACE1 wall texture.
+//
+// No permanent slot to release on destroy: every pulse already expires on
+// its own life, so there is nothing OnDestroy needs to clean up here.
+
+class UMEEvilEye : EvilEye replaces EvilEye
+{
+	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	private int umePulseClock;
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		// Randomised start so a room with three of these doesn't breathe
+		// in lockstep.
+		umePulseClock = random(0, 19);
+	}
+
+	override void Tick()
+	{
+		Super.Tick();
+		if (--umePulseClock > 0) return;
+
+		bool wrong = UMESettings.GetInt("gitd_voice", 0) == 4;
+		umePulseClock = wrong ? 12 : 20;
+
+		Color c = wrong ? Color(255, 130, 20, 60) : Color(255, 160, 40, 210);
+		UMEDecorFX.Pulse(self, c, 60.0, wrong ? 2.0 : 1.5);
+	}
+
+	States
+	{
+	Death:
+		TNT1 A 0 { UMEDecorFX.Shatter(self, 0xA02838, 60.0); }
+		Stop;
+	}
+}
+
+class UMEFloatingSkull : FloatingSkull replaces FloatingSkull
+{
+	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	private int umePulseClock;
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		umePulseClock = random(0, 19);
+	}
+
+	override void Tick()
+	{
+		Super.Tick();
+		if (--umePulseClock > 0) return;
+
+		bool wrong = UMESettings.GetInt("gitd_voice", 0) == 4;
+		umePulseClock = wrong ? 12 : 20;
+
+		Color c = wrong ? Color(255, 90, 200, 80) : Color(255, 200, 216, 232);
+		UMEDecorFX.Pulse(self, c, 52.0, wrong ? 1.8 : 1.3);
+	}
+
+	States
+	{
+	Death:
+		TNT1 A 0 { UMEDecorFX.Shatter(self, 0xC8D8E8, 52.0); }
+		Stop;
+	}
+}
