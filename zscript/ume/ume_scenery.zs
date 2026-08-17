@@ -49,6 +49,32 @@ class UMEScenery abstract play
 	}
 }
 
+// It can be shot, and it is not an aim target.
+//
+// +NOTAUTOAIMED matters more here than anywhere: P_AimLineAttack takes any
+// MF_SHOOTABLE actor as an aim candidate (p_map.cpp) and MF6_NOTAUTOAIMED is
+// the only escape, so without it a hall of columns quietly competes with the
+// monsters for every shot you fire. These are scenery -- they should be
+// hittable when you aim at them and invisible to aiming when you do not.
+//
+// Only the Default block is shared. The Death state stays per class, because
+// it is already one line there and the debris colour reads better sitting
+// next to the prop it belongs to than routed through a field -- a mixin
+// cannot declare a virtual that the same class then overrides (it is
+// inserted textually, so both land in one class and collide), so sharing the
+// state would mean adding a PostBeginPlay to every scenery class purely to
+// set two values. Not worth it to save one line each.
+mixin class UMEBreakable
+{
+	Default
+	{
+		Health 1;
+		+SHOOTABLE
+		+NOBLOOD
+		+NOTAUTOAIMED
+	}
+}
+
 // ---- Columns ---------------------------------------------------------------
 //
 // Column itself is NOT here -- it is BRIGHT in vanilla and so lives in
@@ -56,44 +82,44 @@ class UMEScenery abstract play
 
 class UMETallGreenColumn : TallGreenColumn replaces TallGreenColumn
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.GREEN, 40.0); } Stop; }
 }
 
 class UMEShortGreenColumn : ShortGreenColumn replaces ShortGreenColumn
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.GREEN, 32.0); } Stop; }
 }
 
 class UMETallRedColumn : TallRedColumn replaces TallRedColumn
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.RED, 40.0); } Stop; }
 }
 
 class UMEShortRedColumn : ShortRedColumn replaces ShortRedColumn
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.RED, 32.0); } Stop; }
 }
 
 class UMESkullColumn : SkullColumn replaces SkullColumn
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.BONE, 34.0); } Stop; }
 }
 
 // The one column that is meat rather than masonry, and the debris says so.
 class UMEHeartColumn : HeartColumn replaces HeartColumn
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.MEAT, 34.0); } Stop; }
 }
 
 class UMETechPillar : TechPillar replaces TechPillar
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.RUBBLE, 48.0); } Stop; }
 }
 
@@ -101,13 +127,13 @@ class UMETechPillar : TechPillar replaces TechPillar
 
 class UMEHeadOnAStick : HeadOnAStick replaces HeadOnAStick
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.BONE, 28.0); } Stop; }
 }
 
 class UMEHeadsOnAStick : HeadsOnAStick replaces HeadsOnAStick
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.BONE, 34.0); } Stop; }
 }
 
@@ -122,24 +148,25 @@ class UMEHeadsOnAStick : HeadsOnAStick replaces HeadsOnAStick
 
 class UMETorchTree : TorchTree replaces TorchTree
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
+	// Embers rather than woodchips -- this is the tree that is on fire.
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, 0xC86828, 36.0); } Stop; }
 }
 
 class UMEBigTree : BigTree replaces BigTree
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.WOOD, 44.0); } Stop; }
 }
 
 class UMEStalagtite : Stalagtite replaces Stalagtite
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.RUBBLE, 30.0); } Stop; }
 }
 
 class UMEStalagmite : Stalagmite replaces Stalagmite
 {
-	Default { Health 1; +SHOOTABLE; +NOBLOOD; }
+	mixin UMEBreakable;
 	States { Death: TNT1 A 0 { UMEScenery.Shatter(self, UMEScenery.RUBBLE, 30.0); } Stop; }
 }
