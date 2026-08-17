@@ -36,3 +36,5 @@ version "4.14"
 // ============================================================
 #include "zscript/ume/ume_common.zs"
 #include "zscript/ume/ume_decorations.zs"
+#include "zscript/ume/ume_scenery.zs"
+#include "zscript/ume/ume_keys.zs"

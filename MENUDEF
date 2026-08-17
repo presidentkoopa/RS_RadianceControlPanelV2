@@ -2381,12 +2381,31 @@ OptionMenu "GITDUnivMapEnh"
 	StaticText ""
 
 	Option "Decorative props",		"ume_decorations", "OnOff"
-	StaticText "Every vanilla torch, tech lamp and the burning", darkgray
-	StaticText "barrel already animates BRIGHT in its own", darkgray
-	StaticText "sprite -- this gives what it was already", darkgray
+	StaticText "Every vanilla torch, tech lamp, candle and the", darkgray
+	StaticText "burning barrel already animates BRIGHT in its", darkgray
+	StaticText "own sprite -- this gives what it was already", darkgray
 	StaticText "implying a real light, and one hit breaks it.", darkgray
-	StaticText "Columns, candles and skulls are left alone:", darkgray
-	StaticText "they don't already claim to be lit.", darkgray
+	StaticText "The evil eye and the floating skull breathe", darkgray
+	StaticText "instead of glowing, and go wrong under", darkgray
+	StaticText "Lovecraftian Fog.", darkgray
+	StaticText ""
+
+	Option "Breakable scenery",		"ume_scenery", "OnOff"
+	StaticText "Columns, impaled heads, trees and stalagmites", darkgray
+	StaticText "break in one hit. No glow on any of them --", darkgray
+	StaticText "none are lit in vanilla, and lighting them", darkgray
+	StaticText "would be inventing something the map never", darkgray
+	StaticText "said. Its own switch because this changes what", darkgray
+	StaticText "the world does, not how it looks.", darkgray
+	StaticText ""
+
+	Option "Keys glow",				"ume_key_glow", "OnOff"
+	StaticText "A keycard is a small flat sprite on a floor,", darkgray
+	StaticText "and this mod makes floors black. Each key", darkgray
+	StaticText "carries its own light in its own colour, so a", darkgray
+	StaticText "blue glow across a dark room IS the sentence", darkgray
+	StaticText "'the blue key is over there'. Nothing about", darkgray
+	StaticText "the pickup itself changes.", darkgray
 	StaticText ""
 	StaticText "More of this pack -- gore, the vehicles, the", darkgray
 	StaticText "per-map decoration database -- is deliberately", darkgray

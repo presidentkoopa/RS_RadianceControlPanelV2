@@ -160,13 +160,25 @@ model the way MTOLiquids does over its sprites, so only the concept carried
 over.
 
 **Universal Map Enhancements, the third component** — decorative props
-(torches, tech lamps, the burning barrel) that already animate BRIGHT in
-their own vanilla IWAD sprite now cast a real light and break in one hit,
-the same idea GITD already applies to lit ceiling flats and wall textures.
+(torches, tech lamps, candles, the burning barrel) that already animate
+BRIGHT in their own vanilla IWAD sprite now cast a real light and break in
+one hit, the same idea GITD already applies to lit ceiling flats and wall
+textures. Props that are *not* lit in vanilla — columns, impaled heads,
+trees, stalagmites — get the breaking without the glow, on their own
+switch: lighting them would be inventing something the map never said.
 Every class is a `replaces` for a stock Doom actor, keeping that actor's own
 sprite and size unchanged — nothing is copied from UME's DECORATE or its
 assets, only the observation that these props were already implying a light
-source. The rest of that pack — roughly 2,000 more actors covering gore,
+source.
+
+The glowing keys are not from that pack at all. UME touches the six vanilla
+keys only cosmetically; the reason to light them is this mod's own premise —
+a map crushed toward black, and a keycard that is a small flat sprite on a
+dark floor. A blue glow across a black room *is* the sentence "the blue key
+is over there". Nothing about the pickup changes, and it has its own off
+switch, being the one thing here that can affect whether a map is finishable.
+
+The rest of that pack — roughly 2,000 more actors covering gore,
 Sgt Mark IV's vehicles, active/disabled bosses, and a hand-authored per-map
 decoration database spanning dozens of specific vanilla and community maps
 — is deliberately not here. Gore's own mechanic (20-30 real flying giblet
