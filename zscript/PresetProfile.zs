@@ -65,9 +65,34 @@ class GITD_PresetProfile abstract
 	// touches an engine cvar, and nothing in it should. When profiles reach
 	// bloom and exposure, those have to be written from MENU scope instead --
 	// see GlowHandler.zs, the same wall the reset button hit.
-	clearscope static void F(string n, double v) { let c = CVar.FindCVar(n); if (c) { Capture(n); c.SetFloat(v); } }
-	clearscope static void I(string n, int v)    { let c = CVar.FindCVar(n); if (c) { Capture(n); c.SetInt(v); } }
-	clearscope static void B(string n, bool v)   { let c = CVar.FindCVar(n); if (c) { Capture(n); c.SetInt(v ? 1 : 0); } }
+	// [FIX] COMPARE BEFORE WRITING. Every cvar these touch is `server`, and a
+	// server cvar write emits a DEM_SINFCHANGED net record whether or not the
+	// value actually changed -- the engine's setter has no equality check.
+	//
+	// That matters because THE PRESET SYSTEM RE-APPLIES ITSELF EVERY TIC. Sync
+	// compares HeldPreset() against the selected preset, and the marker that
+	// answers HeldPreset can never survive: gitd_preset_backup is a server
+	// string, so MarkHeld's write is queued rather than applied, and the first
+	// Capture that follows re-reads the stale value and overwrites it. So
+	// held(0) != preset forever, and Restore(); Apply(preset) runs again on
+	// every single tic.
+	//
+	// Unguarded, that was ~250 server writes per tic -- about 20KB of net data
+	// against a 14000-byte packet -- so selecting any preset would overflow the
+	// stream and hard-exit within a tic or two. With the compare, the second
+	// and every later apply writes a value that is already set, sends nothing,
+	// and costs one comparison.
+	//
+	// This does NOT fix the record itself, and that is a separate, non-fatal
+	// bug worth stating plainly: because the captures clobber each other,
+	// gitd_preset_backup ends up holding roughly one record, so "Disable
+	// Preset" hands back about one setting instead of all of them. Fixing that
+	// needs the record accumulated somewhere other than a server cvar, and
+	// ZScript does not allow a mutable static to hold it -- so it wants a real
+	// home (a handler field) rather than a quick patch here.
+	clearscope static void F(string n, double v) { let c = CVar.FindCVar(n); if (c && c.GetFloat() != v) { Capture(n); c.SetFloat(v); } }
+	clearscope static void I(string n, int v)    { let c = CVar.FindCVar(n); if (c && c.GetInt() != v)   { Capture(n); c.SetInt(v); } }
+	clearscope static void B(string n, bool v)   { let c = CVar.FindCVar(n); if (c && c.GetInt() != (v ? 1 : 0)) { Capture(n); c.SetInt(v ? 1 : 0); } }
 
 	// Same value across all four lanes, which is the common case -- a preset
 	// that wants the lanes to differ says so explicitly.
