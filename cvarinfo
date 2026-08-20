@@ -912,7 +912,7 @@ server bool  gitd_fog_enabled = false;
 server int   gitd_fog_top = 40;
 
 // Per 1000 units of travel through the slab. Low is haze, high is soup.
-server float gitd_fog_density = 1.2;
+server float gitd_fog_density = 1.75;
 
 // How many units the top edge fades over. A hard cut reads as a plane of
 // coloured glass lying across the room; this is what turns it into a surface.
@@ -922,7 +922,7 @@ server color gitd_fog_color = "b4 18 10";
 
 // SCATTER -- the flashlight cone lights the mist it passes through. This is
 // the difference between standing in fog and standing in fog WITH A TORCH.
-server float gitd_fog_scatter = 0.7;
+server float gitd_fog_scatter = 1.35;
 
 // PICKUP -- how much of whatever is behind it the mist takes on. Without this
 // the slab is a flat colour over the scene and reads as a filter; mist in
@@ -1005,7 +1005,7 @@ server int gitd_ss_fill8 = 0;
 // A second at an angle and a different period makes them interfere, and
 // interference is what looks like a surface rolling rather than a pattern
 // scrolling.
-server float gitd_fog_surf = 0.0;        // units the top rises and falls; 0 = flat
+server float gitd_fog_surf = 7.0;        // units the top rises and falls; 0 = flat -- ON: a dead-flat top is the single biggest tell that mist is a plane and not air
 server float gitd_fog_surf_len = 256.0;  // wavelength
 server float gitd_fog_surf_speed = 1.0;
 server float gitd_fog_surf_cross = 0.6;  // strength of the second, angled wave
@@ -1148,9 +1148,9 @@ server float gitd_tornado_scatter = 1.2;
 // the far end and the banks appear pinned to the walls.
 //
 // Depth 0 restores exactly the old uniform behaviour.
-server float gitd_fog_noise = 0.0;        // 0 = uniform, 1 = strongly banked
+server float gitd_fog_noise = 0.55;       // 0 = uniform, 1 = strongly banked -- ON: a uniform slab reads as a filter, not a volume
 server float gitd_fog_noise_scale = 0.004; // smaller = larger, slower banks
-server float gitd_fog_noise_drift = 6.0;   // units per second the field moves
+server float gitd_fog_noise_drift = 11.0;   // units per second the field moves
 
 // ---- The wake, stretched --------------------------------------------------
 //
@@ -1169,10 +1169,10 @@ server float gitd_fog_wake_stretch = 0.0;
 // A ring recoiling from your muzzle is the one that sells fog as a physical
 // medium, because it proves the mist is BETWEEN you and the wall rather than
 // painted on it.
-server bool  gitd_fog_react = false;
-server float gitd_fog_react_shot = 0.55;   // ring from your own gunfire
+server bool  gitd_fog_react = true;
+server float gitd_fog_react_shot = 0.85;   // ring from your own gunfire
 server float gitd_fog_react_shot_size = 88;
-server float gitd_fog_react_death = 0.8;   // burst where a monster dies
+server float gitd_fog_react_death = 1.15;  // burst where a monster dies
 server float gitd_fog_react_death_size = 130;
 server float gitd_fog_react_ignite = 1.4;  // explosions LIGHT the mist (mode 2)
 server float gitd_fog_react_ignite_size = 140.0; // radius of that flash
@@ -1185,7 +1185,7 @@ server float gitd_fog_react_life = 1.6;    // seconds before it has faded out
 // Monsters shoulder the mist aside. Uses the same eight slots, so a busy
 // firefight spends them on whatever happened most recently -- which is the
 // right answer, since that is also what you are looking at.
-server float gitd_fog_displace = 0.0;      // 0 = actors do not touch the mist
+server float gitd_fog_displace = 0.45;     // 0 = actors do not touch the mist -- ON: a monster walking through mist that ignores it is the tell
 server float gitd_fog_displace_size = 64;
 server int   gitd_fog_displace_count = 4;  // how many of the nearest to track
 
@@ -1194,7 +1194,7 @@ server int   gitd_fog_displace_count = 4;  // how many of the nearest to track
 // Wisps rising off the surface. A lattice rather than a set of objects: one
 // per cell of a fract() grid, so four hundred of them cost what one costs.
 // The tornado's own maths at small scale.
-server float gitd_fog_tendril = 0.0;       // 0 = off
+server float gitd_fog_tendril = 0.30;      // 0 = off -- ON: wisps rising off the surface are what sell it as moving air
 server float gitd_fog_tendril_spacing = 96.0;
 server float gitd_fog_tendril_radius = 10.0;
 server float gitd_fog_tendril_height = 96.0;
