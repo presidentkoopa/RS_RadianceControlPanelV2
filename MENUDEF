@@ -567,13 +567,10 @@ OptionMenu "GITDDarkness"
 	StaticText "floor. A sector multiplier cannot do either.", darkgray
 	StaticText ""
 
-	Submenu "Colour drain...",		"GITDDrain"
-	StaticText "Colour vision fails in low light, and draining", darkgray
-	StaticText "it reads as dark rather than merely dim. Also", darkgray
-	StaticText "holds the rules for what SURVIVES the drain,", darkgray
-	StaticText "the sky, Doom's own blinking lights and the", darkgray
-	StaticText "muzzle flash.", darkgray
-	StaticText ""
+	// [REMOVED] Colour drain is gone from the menu. It is colour-based
+	// and the wanted behaviour is actor-based, so the whole approach is
+	// wrong rather than mistuned. ddz_desat already defaults to 0, so it
+	// is inert; the shader path can be excised by someone able to test.
 
 	Submenu "Bloom Options...",		"GITDBloom"
 	StaticText "Engine settings, reached by name. Bloom is", darkgray
@@ -615,20 +612,9 @@ OptionMenu "GITDAir"
 	StaticText "a bell by gunfire.", darkgray
 	StaticText ""
 
-	StaticText "Tornado", gold
-	Option "Tornado",				"gitd_tornado_enabled", "OnOff"
-	Submenu "  Tornado options...",	"GITDTornado"
-	StaticText "The same mist gathered around a vertical axis", darkgray
-	StaticText "instead of spread under a plane -- a funnel", darkgray
-	StaticText "you can walk into and stand inside. Its centre", darkgray
-	StaticText "is hollow, so from within you are looking out", darkgray
-	StaticText "through the far wall of it.", darkgray
-	StaticText ""
-	StaticText "FULLY INDEPENDENT OF THE FLOOR FOG. Run either,", darkgray
-	StaticText "or both at once with different colours -- they", darkgray
-	StaticText "share the maths, not the settings.", darkgray
-	StaticText ""
-	StaticText "This is the expensive one. Off costs nothing.", darkgray
+	// [REMOVED] The tornado is gone from the menu. The cvars and the
+	// shader path remain but default OFF, so it costs nothing at runtime
+	// and can be excised properly by someone able to compile-test it.
 	StaticText ""
 
 	StaticText "Flashlight", gold
@@ -915,7 +901,7 @@ OptionMenu "GITDFloorFog"
 	StaticText "World Z of the mist's surface. The player is", darkgray
 	StaticText "56 tall and the view sits near 41, so about", darkgray
 	StaticText "40 is knee deep on a flat floor.", darkgray
-	Slider "Bottom height",			"gitd_fog_bottom", -512, 512, 4, 0
+	Slider "Bottom height",			"gitd_fog_bottom", -32768, 512, 64, 0
 
 	StaticText "It follows the floor", gold
 	Slider "Top follows",			"gitd_fog_follow_top", -1.0, 1.0, 0.05, 2
@@ -1281,7 +1267,7 @@ OptionMenu "GITDFlashlight"
 	StaticText ""
 	StaticText "Shape", gold
 	Slider "Range",					"fl_range", 128, 4096, 64, 0
-	Slider "Beam drag",				"fl_lag", 0.0, 0.9, 0.05, 2
+	Slider "Beam drag",				"fl_lag", 0.0, 0.95, 0.05, 2
 	StaticText "0 welds the beam to your aim. Higher and it", darkgray
 	StaticText "settles in after you, the way a torch held at", darkgray
 	StaticText "the end of an arm does. The far end drags about", darkgray
@@ -1299,10 +1285,16 @@ OptionMenu "GITDFlashlight"
 	StaticText "Dust", gold
 	Slider "Amount",				"fl_dust", 0.0, 1.0, 0.05, 2
 	Slider "Fineness",				"fl_dust_scale", 0.005, 0.2, 0.005, 3
-	Slider "Drift",					"fl_dust_drift", 0.0, 60.0, 1.0, 0
+	Slider "Drift",					"fl_dust_drift", 0.0, 2.0, 0.02, 2
+	Tooltip "How fast the dust field slides through the room.\n\nThis slider used to run 0 to 60 in whole numbers while the cvar ships 0.10 and every preset writes between 0.02 and 0.38 -- so the default displayed as '0' and the smallest value you could reach was ten times it. Now it can express its own defaults."
 	StaticText "Dust hangs in the room, so sweeping the", darkgray
-	StaticText "beam reveals different motes. Fine dust", darkgray
-	StaticText "needs higher beam quality to resolve.", darkgray
+	StaticText "beam reveals different motes.", darkgray
+	StaticText ""
+	Slider "Beam visibility",		"vol_beam_axisfade", 0.0, 1.0, 0.05, 2
+	Tooltip "How much the beam fades when you are looking straight down it.\n\nTHIS IS THE DIAL THAT DECIDES WHETHER THE TORCH LOOKS LIKE ANYTHING. It ships at 0.85, and the default mainhand mount points the beam along your own view -- so out of the box, on a flat screen, the cone renders at roughly fifteen percent strength and the dust inside it is invisible.\n\nIt was a console-only setting until now, which is why the torch has always looked weaker than its other controls suggest. Turn it DOWN to see more beam."
+	StaticText "Lower = the beam stays visible even when", darkgray
+	StaticText "you look along it. The single biggest lever", darkgray
+	StaticText "on how strong the torch reads.", darkgray
 	StaticText ""
 	StaticText "Colour", gold
 	Option "Colours in rotation",	"fl_slots", "GITDSlots"

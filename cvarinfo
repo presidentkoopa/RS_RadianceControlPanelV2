@@ -230,7 +230,7 @@ server bool fl_model = false;     // show the flashlight model -- requires the o
 //
 // Smoothed rather than sprung, deliberately. A spring overshoots, and a beam
 // that swings past what you aimed at and comes back is a torch on a rope.
-server float fl_lag = 0.68;   // raised: the beam should feel heavier in the hand
+server float fl_lag = 0.80;   // per-tic closure fraction, not a time constant: 0.55 settled in ~0.1s, which is barely perceptible
 
 // Shape.
 server int fl_range = 1024;
