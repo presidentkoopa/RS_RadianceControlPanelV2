@@ -3139,6 +3139,43 @@ class GITD_PresetCustomiser : StaticEventHandler
 {
 	int lastPreset;
 
+	// [FIX] WHERE THE PRESET RECORD IS BUILT, and it lives here for a reason
+	// rather than by preference.
+	//
+	// gitd_preset_backup is a `server string`, and a server cvar write is
+	// QUEUED as a net command rather than applied -- the local value does not
+	// change until a later tic. So GITD_PresetProfile's old
+	//
+	//     cur = backup.GetString();  backup.SetString(cur .. one_record);
+	//
+	// re-read the same stale `cur` on all ~250 calls in one apply, and every
+	// write clobbered the previous one. MarkHeld's marker, written first, was
+	// wiped by the first Capture after it.
+	//
+	// That is what made the preset system never converge: with no marker,
+	// HeldPreset() returned 0, never matched the selected preset, and Sync ran
+	// Restore(); Apply() AGAIN on every tic forever -- which overflowed the
+	// 14000-byte net packet and hard-exited. It is also why "Disable Preset"
+	// handed back about one setting: one record was all that survived.
+	//
+	// The record has to accumulate somewhere that can be read back in the same
+	// tic it was written. ZScript rejects a mutable static field on a class
+	// ("static not allowed"), so it cannot live next to the code that uses it
+	// in GITD_PresetProfile. A StaticEventHandler instance is the nearest
+	// thing to a module-level variable this language has, and this handler is
+	// already registered, already static, and already the thing that drives
+	// preset application -- so it owns the record.
+	string presetPending;
+	bool   presetBatching;
+
+	// Reached from GITD_PresetProfile's clearscope statics. Null is a real
+	// answer before the handler registers, and every caller treats it as
+	// "no batch in progress" and falls back to writing straight through.
+	static GITD_PresetCustomiser Rec()
+	{
+		return GITD_PresetCustomiser(StaticEventHandler.Find("GITD_PresetCustomiser"));
+	}
+
 	// freshMap is gone. It existed to tell a map LOAD apart from the player
 	// CHOOSING a preset, because applying a profile was gated on having seen
 	// the change. Nothing is gated on that any more -- see
