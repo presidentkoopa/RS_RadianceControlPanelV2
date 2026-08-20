@@ -222,7 +222,11 @@ class GITD_Render abstract
 			GetI("gitd_ss_fill_grad_axis", 0));
 
 		for (int i = 1; i <= 8; i++)
-			level.SetSweepBandFill(i - 1, clamp(GetI("gitd_ss_fill" .. i, 0), 0, 3));
+			// 0-4 now: 4 is Pickets, which measures its own spacing from the
+			// room box rather than from absolute world space. Clamping this at
+			// 3 would have swallowed the new mode silently, which is the kind
+			// of thing that reads as "the option does nothing".
+			level.SetSweepBandFill(i - 1, clamp(GetI("gitd_ss_fill" .. i, 0), 0, 4));
 
 		level.SetSweepFillAir(max(GetF("gitd_ss_fill_air", 0.0), 0.0));
 	}

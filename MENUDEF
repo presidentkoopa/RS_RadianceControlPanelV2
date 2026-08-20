@@ -770,6 +770,7 @@ OptionValue "GITDSweepFillMode"
 	1, "Grid"
 	2, "Dots (where lines cross)"
 	3, "Solid slab"
+	4, "Pickets (floor to ceiling)"
 }
 
 OptionValue "GITDFillGradAxis"
