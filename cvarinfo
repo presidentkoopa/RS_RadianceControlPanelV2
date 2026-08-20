@@ -1467,8 +1467,8 @@ server float gitd_shape_rep_spin = 20.0;   // deg/sec, or grid drift units/sec
 //
 // The surface swell rides on top of whatever this produces, so the layer can
 // climb a stair AND roll while it does it.
-server float gitd_fog_follow_top = 0.0;
-server float gitd_fog_follow_bottom = 0.0;
+server float gitd_fog_follow_top = 0.35;      // ON: the layer climbs a staircase as a slope, which is what makes it read as weather rather than a plane
+server float gitd_fog_follow_bottom = 0.55;   // the underside tracks harder than the top, so mist POOLS in low ground and thins on high
 
 // ---- Fog colour from the lanes ---------------------------------------------
 //
