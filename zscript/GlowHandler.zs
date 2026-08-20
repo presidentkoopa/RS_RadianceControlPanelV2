@@ -3370,8 +3370,43 @@ class GITD_PresetCustomiser : StaticEventHandler
 	// native null dereference -- not a catchable VM abort -- the moment a name
 	// does not resolve, and every caller below builds its name by concatenating
 	// a preset number. One out-of-range number took the process down.
-	static void SetF(string name, double v) { let c = CVar.FindCVar(name); if (c) c.SetFloat(v); }
-	static void SetI(string name, int v)    { let c = CVar.FindCVar(name); if (c) c.SetInt(v); }
+	// [FIX] WRITING A CVAR ITS OWN VALUE IS NOT FREE, AND IT WAS CRASHING THE
+	// GAME.
+	//
+	// Every cvar these two touch is `server`. A server cvar write does not
+	// just set a local value -- it emits a DEM_SINFCHANGED net event, and the
+	// engine's SetGenericRep has NO equality check, so writing the identical
+	// value still costs a full net record with the cvar's name in it.
+	//
+	// CommitLane/CommitSweep run from GITD_PresetCustomiser.WorldTick with no
+	// guard at all, so at stock settings this was 41 server writes EVERY
+	// world tic -- about 800 bytes of net data per tic, forever, whether
+	// anything had changed or not.
+	//
+	// That is survivable while tics run one at a time. It stops being
+	// survivable during a stall: TryRunTics catches up to 35 tics at once and
+	// every one of their writes lands in the SAME net stream, which is then
+	// packed into a single 14000-byte packet. Past roughly 17 caught-up tics
+	// the packet overflows and the engine calls I_Error("Attempted to write
+	// past end of stream") -- a hard fatal exit.
+	//
+	// A map load in a debug build compiling Vulkan pipelines is exactly that
+	// stall, which is why this read as "crashes on mapload, sometimes loads":
+	// it was a timing threshold, not a state.
+	//
+	// Comparing first is the whole fix. The overwhelming majority of these
+	// writes are a value re-writing itself, and those now cost one compare
+	// and send nothing.
+	static void SetF(string name, double v)
+	{
+		let c = CVar.FindCVar(name);
+		if (c && c.GetFloat() != v) c.SetFloat(v);
+	}
+	static void SetI(string name, int v)
+	{
+		let c = CVar.FindCVar(name);
+		if (c && c.GetInt() != v) c.SetInt(v);
+	}
 
 	// Reads need the same guard as writes -- GetBool() on a null CVar is the
 	// same native dereference as SetInt().
