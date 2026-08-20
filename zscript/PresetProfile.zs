@@ -38,67 +38,23 @@ class GITD_PresetProfile abstract
 	// and the playsim decide whether a profile still needs applying. Anything
 	// that clears it is saying "the player's settings are their own again".
 
-	// [FIX] The record is accumulated in memory and published ONCE. See the
-	// long note on GITD_PresetCustomiser.presetPending for why a server cvar
-	// cannot hold it: writes are queued, so reading one back in the same tic
-	// returns the stale value and every append clobbers the last.
-	//
-	// Begin/Flush bracket one apply. Outside a batch everything still works
-	// exactly as before -- a lone Capture is a single write, and a single
-	// write was never the problem.
-	clearscope static void Begin()
-	{
-		let r = GITD_PresetCustomiser.Rec();
-		if (!r) return;
-		let b = CVar.FindCVar("gitd_preset_backup");
-		// Seeded from what is already published, so a preset applied over a
-		// held one still honours "first write wins".
-		r.presetPending = b ? b.GetString() : "";
-		r.presetBatching = true;
-	}
-
-	clearscope static void Flush()
-	{
-		let r = GITD_PresetCustomiser.Rec();
-		if (!r || !r.presetBatching) return;
-		r.presetBatching = false;
-
-		let b = CVar.FindCVar("gitd_preset_backup");
-		// One write, and only if it differs -- a server write is a net record
-		// even when the value is identical.
-		if (b && b.GetString() != r.presetPending) b.SetString(r.presetPending);
-	}
-
 	clearscope static void Capture(string name)
 	{
-		let r = GITD_PresetCustomiser.Rec();
-		bool batching = r && r.presetBatching;
+		let b = CVar.FindCVar("gitd_preset_backup");
+		if (!b) return;
+
+		string cur = b.GetString();
 
 		// Match ";name=" against ";" .. record, so a name is only found at
 		// the start of a record and never inside a value or as the prefix of
 		// a longer name. gitd_pc_sat must not count as having captured
 		// gitd_pc_satvar; the trailing "=" is what keeps those apart.
-		string cur;
-		if (batching) cur = r.presetPending;
-		else
-		{
-			let b = CVar.FindCVar("gitd_preset_backup");
-			if (!b) return;
-			cur = b.GetString();
-		}
-
 		if ((";" .. cur).IndexOf(";" .. name .. "=") >= 0) return;
 
 		let c = CVar.FindCVar(name);
 		if (!c) return;
 
-		string next = cur .. name .. "=" .. c.GetString() .. ";";
-		if (batching) r.presetPending = next;
-		else
-		{
-			let b = CVar.FindCVar("gitd_preset_backup");
-			if (b) b.SetString(next);
-		}
+		b.SetString(cur .. name .. "=" .. c.GetString() .. ";");
 	}
 
 	// ---- writers, all null-guarded --------------------------------------
@@ -225,18 +181,6 @@ class GITD_PresetProfile abstract
 
 	clearscope static void MarkHeld(int preset)
 	{
-		// Through the same in-memory record as Capture. Written straight to
-		// the cvar, this marker was clobbered by the very next Capture -- and
-		// a missing marker is what left the preset system re-applying itself
-		// on every tic forever.
-		let r = GITD_PresetCustomiser.Rec();
-		if (r && r.presetBatching)
-		{
-			if (r.presetPending.IndexOf(HELDKEY .. "=") >= 0) return;
-			r.presetPending = HELDKEY .. "=" .. preset .. ";" .. r.presetPending;
-			return;
-		}
-
 		let b = CVar.FindCVar("gitd_preset_backup");
 		if (!b) return;
 		if (b.GetString().IndexOf(HELDKEY .. "=") >= 0) return;   // first write wins, as with Capture
@@ -618,30 +562,20 @@ class GITD_PresetProfile abstract
 		// apart before -- that is exactly what left OMGWTF as 273 lines with
 		// no dispatch case -- and a switch that silently falls through is a
 		// cheaper failure than one that runs the wrong preset.
-		// ONE APPLY IS ONE BATCH. Begin seeds the record, the profile fills
-		// it, Flush publishes it in a single write.
-		//
-		// The cases BREAK rather than return, and that is not tidying: they
-		// returned before, so a Flush placed after the switch would never
-		// have executed and the record would never have been published at all.
-		Begin();
-
 		if (HasProfile(preset)) MarkHeld(preset);
 
 		switch (preset)
 		{
-			case 1:  Blackout();        break;
-			case 2:  LowPower();        break;
-			case 3:  RedAlert();        break;
-			case 4:  ColdWar();         break;
-			case 6:  NeonUnison();      break;
-			case 7:  NeonChaos();       break;
-			case 9:  LovecraftianFog(); break;
-			case 11: BlackAndWhite();   break;
-			default: break;   // no profile yet: colours only, as before
+			case 1:  Blackout(); return;
+			case 2:  LowPower(); return;
+			case 3:  RedAlert(); return;
+			case 4:  ColdWar(); return;
+			case 6:  NeonUnison(); return;
+			case 7:  NeonChaos(); return;
+			case 9:  LovecraftianFog(); return;
+			case 11: BlackAndWhite(); return;
+			default: return;   // no profile yet: colours only, as before
 		}
-
-		Flush();
 	}
 
 	// ---- the engine half ------------------------------------------------

@@ -444,7 +444,18 @@ class GITD_FlashlightModel : Actor
 	States
 	{
 	Spawn:
-		TNT1 A -1;
+		// [FIX] A REAL SPRITE FRAME, NOT TNT1.
+		//
+		// hw_sprites.cpp early-outs on `thing->sprite == 0`, and sprite 0 IS
+		// TNT1 by construction -- 93 lines before it ever looks up a model
+		// frame. So a model bound to TNT1 is discarded before the renderer
+		// considers it, and this option could never have worked no matter
+		// what the cvar said.
+		//
+		// FLSHA0 is a 1x1 fully transparent pixel: enough to get past the
+		// sprite test, invisible in its own right, and the thing modeldef
+		// hangs the real mesh on.
+		FLSH A -1;
 		Stop;
 	}
 

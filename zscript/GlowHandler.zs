@@ -3043,7 +3043,32 @@ class GITD_ResetHandler : EventHandler
 			"gitd_law_enabled",       // colours change the fight
 			"gitd_dd_perpixel",       // per-fragment darkness
 			"fl_enabled",             // the torch -- ships ON
-			"gitd_dd_enabled"         // the darkness curve -- ships ON
+			"gitd_dd_enabled",        // the darkness curve -- ships ON
+
+			// [FIX] THE OTHER TWO COMPONENTS WERE NEVER IN THIS LIST.
+			//
+			// The button promises "every system switched OFF except the four
+			// lanes -- including the ones that ship on", and then left
+			// FancyWorld and the Enhancements running untouched. Every one of
+			// these ships ON, so a clean room still had the texture scan
+			// placing emitters, footsteps underfoot, liquids ringing, and
+			// every torch and key in the map lit.
+			//
+			// This is exactly the failure the comment above warns about: a
+			// system missing from this list is still running on a screen that
+			// was supposed to be clear. They went missing because the list
+			// was written before either component existed and nothing brought
+			// it forward when they landed.
+			"fw_enabled",             // FancyWorld master -- ships ON
+			"fw_lights",              // its emitter lights -- ships ON
+			"fw_particles",           // its mist and embers -- ships ON
+			"fw_liquid_flourish",     // liquid rings and bubbles -- ships ON
+			"gitd_steps",             // footsteps -- ships ON
+			"gitd_occlusion",         // sound muffling -- ships ON
+			"ume_decorations",        // lit props -- ships ON
+			"ume_scenery",            // breakable scenery -- ships ON
+			"ume_key_glow",           // glowing keys -- ships ON
+			"gitd_ss_room"            // the sweep's room bound -- ships ON
 		};
 		for (int i = 0; i < masters.Size(); i++) Off(masters[i]);
 

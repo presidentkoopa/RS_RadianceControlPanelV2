@@ -8,5 +8,5 @@ Model GITD_FlashlightModel
 	Skin 0 "flashlight.jpg"
 	Scale 1.0 1.0 1.0
 	AngleOffset 90
-	FrameIndex TNT1 A 0 0
+	FrameIndex FLSH A 0 0
 }
