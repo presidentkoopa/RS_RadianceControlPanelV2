@@ -1585,3 +1585,10 @@ server bool ume_key_glow = true;
 // map with sixty torches would exhaust the whole budget on lights nobody is
 // near. Same default and same reasoning as fw_range.
 server float ume_light_range = 2048.0;
+
+// The sweep's air lattice is an infinite plane, so without a room it stands
+// wherever that plane reaches -- including through windows, in rooms the
+// sweep never entered. This bounds it to the space you are actually in.
+// See zscript/SweepRoom.zs for how "the room" is decided.
+server bool  gitd_ss_room      = true;
+server float gitd_ss_room_soft = 96.0;   // fade distance at the edge, in units

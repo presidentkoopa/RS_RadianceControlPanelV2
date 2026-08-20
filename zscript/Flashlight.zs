@@ -481,6 +481,12 @@ class GITD_FlashlightHandler : StaticEventHandler
 	override void WorldLoaded(WorldEvent e)
 	{
 		if (!GITD_Flashlight.Get()) GITD_Flashlight.Spawn();
+
+		// [GITD] Riding this handler rather than adding a second one: both
+		// are map-local thinkers that have to exist before the first tick,
+		// and one WorldLoaded doing two spawns is cheaper to reason about
+		// than two handlers racing to be first. See SweepRoom.zs.
+		if (!GITD_SweepRoomTracker.Get()) GITD_SweepRoomTracker.Spawn();
 	}
 
 	override void PlayerEntered(PlayerEvent e)
