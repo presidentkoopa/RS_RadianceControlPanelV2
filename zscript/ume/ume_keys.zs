@@ -70,11 +70,13 @@ class UMEKeyGlow abstract play
 
 class UMEBlueCard : BlueCard replaces BlueCard
 {
-	private int umeSlot;
-	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; }
+	private int umeSlot, umeClock;
+	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; umeClock = random(1, UMEDecorFX.CHECK_PERIOD); }
 	override void Tick()
 	{
 		Super.Tick();
+		if (--umeClock > 0) return;
+		umeClock = UMEDecorFX.CHECK_PERIOD;
 		umeSlot = UMEKeyGlow.Update(self, umeSlot, 0x4070FF, 40.0);
 	}
 	override void OnDestroy()
@@ -86,11 +88,13 @@ class UMEBlueCard : BlueCard replaces BlueCard
 
 class UMEYellowCard : YellowCard replaces YellowCard
 {
-	private int umeSlot;
-	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; }
+	private int umeSlot, umeClock;
+	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; umeClock = random(1, UMEDecorFX.CHECK_PERIOD); }
 	override void Tick()
 	{
 		Super.Tick();
+		if (--umeClock > 0) return;
+		umeClock = UMEDecorFX.CHECK_PERIOD;
 		umeSlot = UMEKeyGlow.Update(self, umeSlot, 0xFFD030, 40.0);
 	}
 	override void OnDestroy()
@@ -102,11 +106,13 @@ class UMEYellowCard : YellowCard replaces YellowCard
 
 class UMERedCard : RedCard replaces RedCard
 {
-	private int umeSlot;
-	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; }
+	private int umeSlot, umeClock;
+	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; umeClock = random(1, UMEDecorFX.CHECK_PERIOD); }
 	override void Tick()
 	{
 		Super.Tick();
+		if (--umeClock > 0) return;
+		umeClock = UMEDecorFX.CHECK_PERIOD;
 		umeSlot = UMEKeyGlow.Update(self, umeSlot, 0xFF3830, 40.0);
 	}
 	override void OnDestroy()
@@ -123,11 +129,13 @@ class UMERedCard : RedCard replaces RedCard
 
 class UMEBlueSkull : BlueSkull replaces BlueSkull
 {
-	private int umeSlot;
-	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; }
+	private int umeSlot, umeClock;
+	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; umeClock = random(1, UMEDecorFX.CHECK_PERIOD); }
 	override void Tick()
 	{
 		Super.Tick();
+		if (--umeClock > 0) return;
+		umeClock = UMEDecorFX.CHECK_PERIOD;
 		umeSlot = UMEKeyGlow.Update(self, umeSlot, 0x4070FF, 40.0);
 	}
 	override void OnDestroy()
@@ -139,11 +147,13 @@ class UMEBlueSkull : BlueSkull replaces BlueSkull
 
 class UMEYellowSkull : YellowSkull replaces YellowSkull
 {
-	private int umeSlot;
-	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; }
+	private int umeSlot, umeClock;
+	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; umeClock = random(1, UMEDecorFX.CHECK_PERIOD); }
 	override void Tick()
 	{
 		Super.Tick();
+		if (--umeClock > 0) return;
+		umeClock = UMEDecorFX.CHECK_PERIOD;
 		umeSlot = UMEKeyGlow.Update(self, umeSlot, 0xFFD030, 40.0);
 	}
 	override void OnDestroy()
@@ -155,11 +165,13 @@ class UMEYellowSkull : YellowSkull replaces YellowSkull
 
 class UMERedSkull : RedSkull replaces RedSkull
 {
-	private int umeSlot;
-	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; }
+	private int umeSlot, umeClock;
+	override void PostBeginPlay() { Super.PostBeginPlay(); umeSlot = -1; umeClock = random(1, UMEDecorFX.CHECK_PERIOD); }
 	override void Tick()
 	{
 		Super.Tick();
+		if (--umeClock > 0) return;
+		umeClock = UMEDecorFX.CHECK_PERIOD;
 		umeSlot = UMEKeyGlow.Update(self, umeSlot, 0xFF3830, 40.0);
 	}
 	override void OnDestroy()

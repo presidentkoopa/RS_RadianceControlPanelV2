@@ -487,6 +487,18 @@ class GITD_FlashlightHandler : StaticEventHandler
 		// and one WorldLoaded doing two spawns is cheaper to reason about
 		// than two handlers racing to be first. See SweepRoom.zs.
 		if (!GITD_SweepRoomTracker.Get()) GITD_SweepRoomTracker.Spawn();
+
+		// [FIX] CLEAR THE OLD MAP'S ROOM BOX. FLevelLocals is reused between
+		// levels and nothing in the engine resets these, so without this the
+		// previous map's bounds stay live until the tracker's first publish --
+		// up to half a second of the lattice being clipped to a room that is
+		// not there any more, on geometry that has nothing to do with it.
+		//
+		// Cleared to unbounded rather than to something guessed: for the few
+		// tics before the first publish, the old behaviour (no bound) is
+		// wrong in a way you can see and understand, where a stale box is
+		// wrong in a way that looks like a rendering bug.
+		level.SetSweepRoom(0, 0, 0, 0, 0, 0, 0);
 	}
 
 	override void PlayerEntered(PlayerEvent e)
