@@ -210,24 +210,87 @@ splash MTOYellowLava
 
 // ---- terrain types ----------------------------------------------------------
 
-terrain MTOWater       { splash MTOWater;       footclip 10; liquid }
-terrain MTOYellowWater { splash MTOYellowWater; footclip 10; liquid }
-terrain MTOGreenGoo    { splash MTOGreenGoo;    footclip 10; liquid }
-terrain MTOGunkGoo     { splash MTOGunkGoo;     footclip 10; liquid }
-terrain MTORedGoo      { splash MTORedGoo;      footclip 10; liquid }
-terrain MTOBrownWater  { splash MTOBrownWater;  footclip 10; liquid }
-terrain MTOBrownGoo    { splash MTOBrownGoo;    footclip 10; liquid }
-terrain MTOMilkGoo     { splash MTOMilkGoo;     footclip 10; liquid }
-terrain MTOPurpleGoo   { splash MTOPurpleGoo;   footclip 10; liquid }
-terrain MTOBlackGoo    { splash MTOBlackGoo;    footclip 10; liquid }
-terrain MTOLava        { splash MTOLava;        footclip 10; liquid }
-terrain MTOYellowLava  { splash MTOYellowLava;  footclip 10; liquid }
+terrain MTOWater
+{
+	splash MTOWater
+	footclip 10
+	liquid
+}
+terrain MTOYellowWater
+{
+	splash MTOYellowWater
+	footclip 10
+	liquid
+}
+terrain MTOGreenGoo
+{
+	splash MTOGreenGoo
+	footclip 10
+	liquid
+}
+terrain MTOGunkGoo
+{
+	splash MTOGunkGoo
+	footclip 10
+	liquid
+}
+terrain MTORedGoo
+{
+	splash MTORedGoo
+	footclip 10
+	liquid
+}
+terrain MTOBrownWater
+{
+	splash MTOBrownWater
+	footclip 10
+	liquid
+}
+terrain MTOBrownGoo
+{
+	splash MTOBrownGoo
+	footclip 10
+	liquid
+}
+terrain MTOMilkGoo
+{
+	splash MTOMilkGoo
+	footclip 10
+	liquid
+}
+terrain MTOPurpleGoo
+{
+	splash MTOPurpleGoo
+	footclip 10
+	liquid
+}
+terrain MTOBlackGoo
+{
+	splash MTOBlackGoo
+	footclip 10
+	liquid
+}
+terrain MTOLava
+{
+	splash MTOLava
+	footclip 10
+	liquid
+}
+terrain MTOYellowLava
+{
+	splash MTOYellowLava
+	footclip 10
+	liquid
+}
 
 // Solid, hot rock -- SLIME09-12 in this mod's own floor table (see
 // fancy_tables.zs) are already treated as "hot surface, not a pool" for
 // the same reason: they read as scorched stone, not something you wade
 // into. A splash without the liquid flag, so footsteps still land solid.
-terrain MTOLavaSolid { splash MTOLava }
+terrain MTOLavaSolid
+{
+	splash MTOLava
+}
 
 // ---- floor -> terrain --------------------------------------------------------
 

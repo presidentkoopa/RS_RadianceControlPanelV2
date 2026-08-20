@@ -337,17 +337,24 @@ OptionMenu "GITDNeon"
 OptionMenu "GITDOptions"
 {
 	Class "DarkDoomZ_OptionMenu"
-	Title "Glow In The Dark"
+	Title "Radiance Control Panel"
 	StaticText ""
 
-	Option "Glow In The Dark",		"gitd_enabled", "OnOff"
-	StaticText ""
+	// Three components, three switches -- there is no single umbrella
+	// switch, because there never was one cvar that gated all of them.
+	// This row is GITD's own; FancyWorld and the enhancements have theirs
+	// on their own pages.
+	Option "Glow In The Dark  (light)",	"gitd_enabled", "OnOff"
+	Tooltip "The master switch for the LIGHT component: per-pixel darkness, the four glow lanes, the sector sweep, the floor fog and the volumetric torch.\n\nThis is one of three components and it only switches its own. World Ambience (the texture scan, footsteps, liquids) and Enhancements (props, scenery, keys) each have their own switch on their own page, and either will keep running with this off."
 	StaticText ""
 
 	StaticText "Presets  (override every glow setting)", gold
 	Option "  Preset",				"gitd_preset", "GITDPreset"
+	Tooltip "Eight complete looks, one tap each. This is the whole setup if you want one -- pick a preset and play.\n\nA preset REPLACES your glow settings rather than layering on them, and Disable puts back exactly what you had when you chose it, including anything you changed while it was on. Nothing is lost.\n\nBlack and White refuses almost every system here -- no sweep, no lattice, no wisps. What is left is composition: held stares on four clocks that never agree, a hand-cut edge on every band of light, and a floor that quietly remembers who died on it.\n\nEvery preset leaves Bloom alone. A preset that fights your Bloom page is a preset you cannot use."
 	Submenu "  Customise this preset","GITDPresetOptions"
+	Tooltip "Generates a palette from a hue range and applies it to the current preset.\n\nThe eight presets above are written out colour by colour instead, so this has nothing to alter on any of them -- it is for building your own look, not for editing theirs."
 	Command "  Disable Preset",		"gitd_preset 0"
+	Tooltip "Hands back exactly the settings you had before the preset was applied, including any edits you made while it was running."
 	StaticText "A preset REPLACES your settings and hands", darkgray
 	StaticText "them back on Disable, so nothing is lost.", darkgray
 	StaticText "Disable puts back exactly what you had when", darkgray
@@ -392,9 +399,13 @@ OptionMenu "GITDOptions"
 
 	StaticText "Darkness", gold
 	Option "DarkDoom",				"gitd_dd_enabled", "OnOff"
+	Tooltip "Crushes the map toward black. This is the floor the whole mod stands on -- every glow, band and torch below only reads as light because this took the ambient light away first.\n\nTurn it off and the mod still runs, but you are adding light to an already-lit room and almost none of it will show."
 	Option "  How dark",			"ddz_preset", "GITDDarkLevel", "gitd_dd_enabled"
+	Tooltip "How far down the darkening pulls the map.\n\nRead by the four DIAL modes only. The three fixed DarkDoom modes on the row below ignore this entirely and are looks rather than levels, so if moving this does nothing, check which curve you are on."
 	Option "  Darkness curve",		"ddz_mode", "GITDDarkMode", "gitd_dd_enabled"
+	Tooltip "The shape of the falloff -- how quickly a room loses light as it gets further from a source.\n\nFour of these are dials and read How dark above. Three are fixed DarkDoom looks that ignore it."
 	Submenu "  More darkness...",	"GITDDarkness"
+	Tooltip "The rest of it: gains either side of the curve, per-pixel darkness curves, distance falloff, height pooling so pits go deeper than the rooms above them, and Bloom."
 	StaticText "The two dials that decide how dark the game", darkgray
 	StaticText "is, up here because they are the ones you", darkgray
 	StaticText "reach for first. Gains, the light floor, the", darkgray
@@ -418,13 +429,9 @@ OptionMenu "GITDOptions"
 	StaticText "in the world and the heatmap.", darkgray
 	StaticText ""
 	Submenu "World...",				"GITDFancyWorld"
-	StaticText "Ambience read out of the map's own textures", darkgray
-	StaticText "-- lights, mist, footsteps, muffled sound.", darkgray
-	StaticText ""
+	Tooltip "COMPONENT TWO -- FancyWorld, the ambience layer. Its own switch, independent of Glow In The Dark at the top of this page.\n\nAt load it matches every wall texture and floor flat in the map against a table and places emitters where they hit. A waterfall becomes something you can hear and see mist from; a lavafall gets a roar, a flicker and embers. No map edits and no per-WAD setup -- it works on WADs that have never heard of this mod.\n\nAlso here: footsteps that read the flat under you, sound that muffles when you cannot see its source, and real TERRAIN liquid splashes with rings and bubbles."
 	Submenu "Enhancements...",		"GITDUnivMapEnh"
-	StaticText "Decorative props the map already placed, given", darkgray
-	StaticText "a real light and a reason to shoot them.", darkgray
-	StaticText ""
+	Tooltip "COMPONENT THREE -- Universal Map Enhancements, the props. Its own switches, independent of the other two.\n\nEvery vanilla decoration that already animates BRIGHT in its own sprite -- torches, tech lamps, candles, the burning barrel -- now casts the light it was always implying, and breaks in one hit. Props that are not lit in vanilla break without a glow, because lighting them would be inventing something the map never said.\n\nAnd every key carries its own light in its lock's colour, because this mod makes floors black and a keycard is a small flat sprite lying on one."
 	StaticText ""
 
 	Command "The Hallway",			"gitd_hallway"
@@ -436,6 +443,7 @@ OptionMenu "GITDOptions"
 	StaticText ""
 
 	SafeCommand "Back to a clean room",	"netevent gitd_reset"
+	Tooltip "Every value back to its default and every system switched OFF except the four glow lanes -- including the ones that ship on, like the torch and the darkness curve.\n\nAn active preset survives and is re-applied on top. This clears your work; it does not destroy it.\n\nBloom and exposure are engine settings and are not touched -- reset those from the Bloom page."
 	StaticText "Every value back to its default, and every", darkgray
 	StaticText "system switched OFF except the four lanes --", darkgray
 	StaticText "including the ones that ship on, like the", darkgray
@@ -1618,7 +1626,7 @@ OptionMenu "GITDLanes"
 
 AddOptionMenu "OptionsMenu"
 {
-	Submenu "Glow In The Dark", "GITDOptions"
+	Submenu "Radiance Control Panel", "GITDOptions"
 }
 
 OptionValue "GITDSweepTrigger"

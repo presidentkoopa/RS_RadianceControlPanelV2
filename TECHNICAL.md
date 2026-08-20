@@ -1,4 +1,4 @@
-# Glow In The Dark
+# Radiance Control Panel
 
 Lighting for a fork of GZDoom built around darkness. Four independent glow
 lanes, travelling bands of light that wrap every surface, real beams, mist you
@@ -21,7 +21,7 @@ slab, reactive fog, tornadoes, the heatmap, real beams, selective desaturation,
 and the bloom threshold and knee are all engine features that do not exist in
 stock GZDoom. On stock this mod will not load.
 
-Everything lives under **Options → Glow In The Dark**.
+Everything lives under **Options → Radiance Control Panel**.
 
 ## What is here
 

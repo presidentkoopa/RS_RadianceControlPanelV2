@@ -9,7 +9,7 @@ no patches and no per-WAD setup.
 
 **Requires the forked engine.** It will not load on stock GZDoom.
 
-Everything is under **Options → Glow In The Dark**.
+Everything is under **Options → Radiance Control Panel**.
 
 ---
 
@@ -74,10 +74,10 @@ touching the others.
 
 ## Options
 
-Every page below is under **Options → Glow In The Dark**.
+Every page below is under **Options → Radiance Control Panel**.
 
 ### On the front page
-Master switch, the preset picker and **Customise this preset**, seamless
+The GITD light switch, the preset picker and **Customise this preset**, seamless
 corners, and every submenu below.
 
 Two buttons worth knowing:
@@ -102,6 +102,7 @@ Two buttons worth knowing:
 | **↳ Grid options** | The lattice inside a band — spacing, width, rotation, drift, flicker, and whether it hangs in the air. |
 | **Volumetric Flashlight** | Mount, range, cone angles, intensity, colour cycling, dust, bounce fill, beam drag, and whether it wakes monsters. |
 | **World Ambience** | The texture scan: lights and their detail, particles, footsteps and their stride, how hard sounds muffle when you cannot see them, emitter range and spacing. |
+| **Enhancements** | Lit props, breakable scenery, and whether keys carry their own light. |
 | **Colours Change the Fight** | The room's current colour carries a rule — monsters tougher, weaker, faster, slower, or health raining down. Reached from the sweep's gameplay page. |
 | **Glow waves / Texture in the glow** | Undulation along a surface, and structure inside the lit area. |
 | **Shapes** | Marks stamped on the floor by kills and shots. |
@@ -208,8 +209,6 @@ Everything here was downmixed to mono on the way in, and that is not a
 housekeeping note. GZDoom does not spatialise a stereo sound: it plays flat at
 your head, at full volume, everywhere in the map. A stereo file in this mod
 would be exactly the thing this mod exists to avoid.
-
-**Tooltip menu library** by ToxicFrog, MIT.
 
 ---
 
