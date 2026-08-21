@@ -36,7 +36,7 @@ Three components under one roof, shipped as one pk3. Each has its own menu
 page and its own cvar namespace, and any of them can be switched off without
 touching the others.
 
-### GITD — the light
+### Glow In The Dark — the light
 
 - **Per-pixel darkness** — real darkness rather than a filter, four curves, growing with distance and pooling below a height so pits go deeper than the rooms around them.
 - **Surfaces glow** — four independent lanes (wall bottom, wall top, ceiling, floor), eight colours each, corners blending so a wall meeting a floor reads as one source.
